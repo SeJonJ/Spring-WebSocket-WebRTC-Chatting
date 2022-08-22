@@ -9,12 +9,11 @@ import webChat.dto.ChatRoom;
 class ChatServiceTest {
 
     @Autowired
-    private ChatService service;
+    private ChatService_미사용 service;
 
 
     @Test
     void createRoom() {
-        ChatRoom room = service.createRoom("TEST");
-        System.out.println(room.toString());
+
     }
 }
