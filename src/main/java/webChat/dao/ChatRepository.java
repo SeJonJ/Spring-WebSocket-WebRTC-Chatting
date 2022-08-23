@@ -30,8 +30,10 @@ public class ChatRepository {
     }
 
     public ChatRoom createChatRoom(String roomName){
-        ChatRoom chatRoom = new ChatRoom().create(roomName);
-        chatRoomMap.put(chatRoom.getRoomId(), chatRoom);
+        ChatRoom chatRoom = new ChatRoom().create(roomName); // 채팅룸 이름으로 채팅 룸 생성 후
+
+        // map 에 채팅룸 아이디와 만들어진 채팅룸을 저장장
+       chatRoomMap.put(chatRoom.getRoomId(), chatRoom);
 
         return chatRoom;
     }
