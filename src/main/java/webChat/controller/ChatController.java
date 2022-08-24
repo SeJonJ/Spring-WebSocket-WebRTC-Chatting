@@ -16,11 +16,6 @@ public class ChatController {
 
     private final SimpMessageSendingOperations template;
 
-    @GetMapping("/chat")
-    public String goChat(){
-        return "/chat";
-    }
-
     // MessageMapping 을 통해 webSocket 로 들어오는 메시지를 발신 처리한다.
     // 이때 클라이언트에서는 /pub/chat/message 로 요청하게 되고 이것을 controller 가 받아서 처리한다.
     // 처리가 완료되면 /sub/chat/room/roomId 로 메시지가 전송된다.
@@ -34,6 +29,7 @@ public class ChatController {
 
         } else if (ChatDTO.MessageType.TALK.equals(chat.getType())) {
             chat.setMessage(chat.getMessage());
+
         } else if (ChatDTO.MessageType.LEAVE.equals(chat.getType())) {
             chat.setMessage(chat.getMessage() + " 님이 퇴장하셨습니다");
         }

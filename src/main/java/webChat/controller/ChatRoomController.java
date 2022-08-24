@@ -1,6 +1,5 @@
 package webChat.controller;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,15 +10,18 @@ import webChat.dto.ChatRoom;
 import java.util.List;
 
 @Controller
+@RequestMapping("/chat")
 public class ChatRoomController {
 
     @Autowired
     private ChatRepository chatRepository;
 
     // 채팅 리스트 화면
-    @GetMapping("/room")
-    public String rooms(Model model) {
-        return "/chat/room";
+    @GetMapping("/chatlist")
+    public String goChatRoom(Model model){
+        model.addAttribute("list", chatRepository.findAllRoom());
+//        model.addAttribute("user", "hey");
+        return "roomlist";
     }
 
     // 모든 채팅방 목록 반환
@@ -30,7 +32,7 @@ public class ChatRoomController {
     }
 
     // 채팅방 생성
-    @PostMapping("/room")
+    @PostMapping("/createroom")
     @ResponseBody
     public ChatRoom createRoom(@RequestParam String name) {
         return chatRepository.createChatRoom(name);
@@ -42,7 +44,7 @@ public class ChatRoomController {
     @GetMapping("/room/enter/{roomId}")
     public String roomDetail(Model model, @PathVariable String roomId){
         model.addAttribute("roomId", roomId);
-        return "/chat/roomdetail";
+        return "/chat/chat";
     }
 
     // 특정 채팅방 조회
