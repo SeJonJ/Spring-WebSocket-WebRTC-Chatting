@@ -4,16 +4,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import webChat.dto.ChatDTO;
 
 
 @Slf4j
-@RequestMapping("/chat")
 @RequiredArgsConstructor
+@Controller
 public class ChatController {
 
     private final SimpMessageSendingOperations template;
+
+    @GetMapping("/chat")
+    public String goChat(){
+        return "/chat";
+    }
 
     // MessageMapping 을 통해 webSocket 로 들어오는 메시지를 발신 처리한다.
     // 이때 클라이언트에서는 /pub/chat/message 로 요청하게 되고 이것을 controller 가 받아서 처리한다.
@@ -23,8 +29,13 @@ public class ChatController {
     @MessageMapping("/chat/message")
     public void message(ChatDTO chat){
         if (ChatDTO.MessageType.ENTER.equals(chat.getType())) {
-            chat.setMessage(chat.getSender()+" 님 두둥 등장!!");
+            chat.setMessage(chat.getSender()+" 님 입장!!");
             template.convertAndSend("/sub/chat/room"+ chat.getRoomId(), chat);
+
+        } else if (ChatDTO.MessageType.TALK.equals(chat.getType())) {
+            chat.setMessage(chat.getMessage());
+        } else if (ChatDTO.MessageType.LEAVE.equals(chat.getType())) {
+            chat.setMessage(chat.getMessage() + " 님이 퇴장하셨습니다");
         }
     }
 
