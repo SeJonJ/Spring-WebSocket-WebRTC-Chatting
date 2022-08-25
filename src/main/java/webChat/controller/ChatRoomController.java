@@ -1,15 +1,18 @@
 package webChat.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import webChat.dao.ChatRepository;
 import webChat.dto.ChatRoom;
 
 import java.util.List;
 
 @Controller
+@Slf4j
 @RequestMapping("/chat")
 public class ChatRoomController {
 
@@ -19,8 +22,10 @@ public class ChatRoomController {
     // 채팅 리스트 화면
     @GetMapping("/chatlist")
     public String goChatRoom(Model model){
+
         model.addAttribute("list", chatRepository.findAllRoom());
 //        model.addAttribute("user", "hey");
+        log.info("SHOW ALL ChatList {}", chatRepository.findAllRoom());
         return "roomlist";
     }
 
@@ -33,9 +38,11 @@ public class ChatRoomController {
 
     // 채팅방 생성
     @PostMapping("/createroom")
-    @ResponseBody
-    public ChatRoom createRoom(@RequestParam String name) {
-        return chatRepository.createChatRoom(name);
+    public String createRoom(@RequestParam String name, RedirectAttributes rttr) {
+        ChatRoom room = chatRepository.createChatRoom(name);
+        log.info("CREATE Chat Room {}", room);
+        rttr.addFlashAttribute("roomName", room);
+        return "redirect:/chat/chatlist";
     }
 
     // 채팅방 입장 화면
