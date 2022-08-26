@@ -16,6 +16,10 @@ var colors = [
     '#ffc107', '#ff85af', '#FF9800', '#39bbb0'
 ];
 
+// roomId 파라미터 가져오기
+const url = new URL(location.href).searchParams;
+const roomId = url.get('roomId');
+
 function connect(event) {
     username = document.querySelector('#name').value.trim();
 
@@ -35,12 +39,15 @@ function connect(event) {
 
 function onConnected() {
     // Subscribe to the Public Topic
-    stompClient.subscribe('/sub', onMessageReceived);
+    stompClient.subscribe('/sub/chat/room/'+roomId, onMessageReceived);
 
     // Tell your username to the server
-    stompClient.send("/pub",
+    stompClient.send("/pub/chat/message",
         {},
-        JSON.stringify({sender: username, type: 'ENTER'})
+        JSON.stringify({
+            "roomId" : roomId,
+            sender: username,
+            type: 'ENTER'})
     )
 
     connectingElement.classList.add('hidden');
@@ -58,6 +65,7 @@ function sendMessage(event) {
 
     if(messageContent && stompClient) {
         var chatMessage = {
+            "roomId" : roomId,
             sender: username,
             message: messageInput.value,
             type: 'TALK'
@@ -71,36 +79,37 @@ function sendMessage(event) {
 
 
 function onMessageReceived(payload) {
-    var message = JSON.parse(payload.body);
+    //console.log("payload 들어오냐? :"+payload);
+    var chat = JSON.parse(payload.body);
 
     var messageElement = document.createElement('li');
 
-    if(message.type === 'ENTER') {
+    if(chat.type === 'ENTER') {
         messageElement.classList.add('event-message');
-        message.content = message.sender + ' joined!';
+        chat.content = chat.sender + chat.message;
 
-    } else if (message.type === 'LEAVE') {
+    } else if (chat.type === 'LEAVE') {
         messageElement.classList.add('event-message');
-        message.content = message.sender + ' left!';
+        chat.content = chat.sender + chat.message;
 
     } else {
         messageElement.classList.add('chat-message');
 
         var avatarElement = document.createElement('i');
-        var avatarText = document.createTextNode(message.sender[0]);
+        var avatarText = document.createTextNode(chat.sender[0]);
         avatarElement.appendChild(avatarText);
-        avatarElement.style['background-color'] = getAvatarColor(message.sender);
+        avatarElement.style['background-color'] = getAvatarColor(chat.sender);
 
         messageElement.appendChild(avatarElement);
 
         var usernameElement = document.createElement('span');
-        var usernameText = document.createTextNode(message.sender);
+        var usernameText = document.createTextNode(chat.sender);
         usernameElement.appendChild(usernameText);
         messageElement.appendChild(usernameElement);
     }
 
     var textElement = document.createElement('p');
-    var messageText = document.createTextNode(message.content);
+    var messageText = document.createTextNode(chat.message);
     textElement.appendChild(messageText);
 
     messageElement.appendChild(textElement);

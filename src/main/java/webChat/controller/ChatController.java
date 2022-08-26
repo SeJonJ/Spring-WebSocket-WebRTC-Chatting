@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
 import webChat.dto.ChatDTO;
 
 
@@ -23,15 +22,19 @@ public class ChatController {
     // 구독(subscribe, 수신)하고 view 에서 볼 수 있게 된다.
     @MessageMapping("/chat/message")
     public void message(ChatDTO chat){
+        log.info("CHAT 연결됨 {}", chat);
+
         if (ChatDTO.MessageType.ENTER.equals(chat.getType())) {
             chat.setMessage(chat.getSender()+" 님 입장!!");
-            template.convertAndSend("/sub/chat/room"+ chat.getRoomId(), chat);
+            template.convertAndSend("/sub/chat/room/"+ chat.getRoomId(), chat);
 
         } else if (ChatDTO.MessageType.TALK.equals(chat.getType())) {
             chat.setMessage(chat.getMessage());
+            template.convertAndSend("/sub/chat/room/"+ chat.getRoomId(), chat);
 
         } else if (ChatDTO.MessageType.LEAVE.equals(chat.getType())) {
             chat.setMessage(chat.getMessage() + " 님이 퇴장하셨습니다");
+            template.convertAndSend("/sub/chat/room/"+ chat.getRoomId(), chat);
         }
     }
 

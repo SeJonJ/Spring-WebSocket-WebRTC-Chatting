@@ -29,13 +29,6 @@ public class ChatRoomController {
         return "roomlist";
     }
 
-    // 모든 채팅방 목록 반환
-    @GetMapping("/rooms")
-    @ResponseBody
-    public List<ChatRoom> room(){
-        return chatRepository.findAllRoom();
-    }
-
     // 채팅방 생성
     @PostMapping("/createroom")
     public String createRoom(@RequestParam String name, RedirectAttributes rttr) {
@@ -48,16 +41,18 @@ public class ChatRoomController {
     // 채팅방 입장 화면
     // @PathVariable : url 에 넘어오는 변수를 매개변수로 받을 수 있게 하는 어노테이션
     // {roomId} 가 url 변수 -> String 타입 roomId 로 받게됨
-    @GetMapping("/room/enter/{roomId}")
-    public String roomDetail(Model model, @PathVariable String roomId){
-        model.addAttribute("roomId", roomId);
-        return "/chat/chat";
+    @GetMapping("/room")
+    public String roomDetail(Model model, String roomId){
+
+        log.info("roomId {}", roomId);
+        model.addAttribute("room", chatRepository.findRoomById(roomId));
+        return "/chatroom";
     }
 
-    // 특정 채팅방 조회
-    @GetMapping("/room/{roomId}")
-    @ResponseBody
-    public ChatRoom roomInfo(@PathVariable String roomId) {
-        return chatRepository.findRoomById(roomId);
-    }
+//    // 특정 채팅방 조회
+//    @GetMapping("/room/{roomId}")
+//    @ResponseBody
+//    public ChatRoom roomInfo(@PathVariable String roomId) {
+//        return ;
+//    }
 }
