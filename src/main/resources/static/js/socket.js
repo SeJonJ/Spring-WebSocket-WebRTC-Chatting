@@ -32,8 +32,11 @@ function connect(event) {
         stompClient = Stomp.over(socket);
 
         stompClient.connect({}, onConnected, onError);
+
     }
     event.preventDefault();
+
+
 }
 
 
@@ -42,7 +45,7 @@ function onConnected() {
     stompClient.subscribe('/sub/chat/room/'+roomId, onMessageReceived);
 
     // Tell your username to the server
-    stompClient.send("/pub/chat/message",
+    stompClient.send("/pub/chat/enterUser",
         {},
         JSON.stringify({
             "roomId" : roomId,
@@ -71,7 +74,7 @@ function sendMessage(event) {
             type: 'TALK'
         };
 
-        stompClient.send("/pub/chat/message", {}, JSON.stringify(chatMessage));
+        stompClient.send("/pub/chat/sendMessage", {}, JSON.stringify(chatMessage));
         messageInput.value = '';
     }
     event.preventDefault();
@@ -81,6 +84,7 @@ function sendMessage(event) {
 function onMessageReceived(payload) {
     //console.log("payload 들어오냐? :"+payload);
     var chat = JSON.parse(payload.body);
+    console.log("chat : "+chat);
 
     var messageElement = document.createElement('li');
 

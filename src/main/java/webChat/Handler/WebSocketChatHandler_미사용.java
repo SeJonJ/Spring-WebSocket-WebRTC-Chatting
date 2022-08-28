@@ -12,7 +12,6 @@ public class WebSocketChatHandler_미사용 extends TextWebSocketHandler {
     // 여기의 내용은 ChatController 로 대체!
 //    private final ObjectMapper mapper;
 //
-//    private final ChatService service;
 //
 //    @Override
 //    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
@@ -33,5 +32,5 @@ public class WebSocketChatHandler_미사용 extends TextWebSocketHandler {
 //
 //        // 해당 채팅방의 모든 session 에 chatMessage 발송
 //        room.handleAction(session, chatMessage, service);
-//    }
+//
 }

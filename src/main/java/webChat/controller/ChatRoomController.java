@@ -49,10 +49,4 @@ public class ChatRoomController {
         return "/chatroom";
     }
 
-//    // 특정 채팅방 조회
-//    @GetMapping("/room/{roomId}")
-//    @ResponseBody
-//    public ChatRoom roomInfo(@PathVariable String roomId) {
-//        return ;
-//    }
 }

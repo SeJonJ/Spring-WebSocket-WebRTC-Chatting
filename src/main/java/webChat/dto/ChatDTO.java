@@ -1,10 +1,11 @@
 package webChat.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ChatDTO {
     // 메시지  타입 : 입장, 채팅
     public enum MessageType{
