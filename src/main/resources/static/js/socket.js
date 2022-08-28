@@ -1,5 +1,13 @@
 'use strict';
 
+// document.write("<script src='jquery-3.6.1.js'></script>")
+document.write("<script\n" +
+    "  src=\"https://code.jquery.com/jquery-3.6.1.min.js\"\n" +
+    "  integrity=\"sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=\"\n" +
+    "  crossorigin=\"anonymous\"></script>")
+
+
+
 var usernamePage = document.querySelector('#username-page');
 var chatPage = document.querySelector('#chat-page');
 var usernameForm = document.querySelector('#usernameForm');
@@ -39,7 +47,6 @@ function connect(event) {
 
 }
 
-
 function onConnected() {
     // Subscribe to the Public Topic
     stompClient.subscribe('/sub/chat/room/'+roomId, onMessageReceived);
@@ -54,6 +61,27 @@ function onConnected() {
     )
 
     connectingElement.classList.add('hidden');
+
+}
+
+function getUserList(){
+    const $list = $("#list");
+
+    $.ajax({
+        type: "GET",
+        url : "/chat/userlist",
+        data : {
+            "roomId" : roomId
+        },
+        success : function(data){
+            var users = "";
+            for(let i=0; i<data.length; i++){
+                console.log("data[i] : "+data[i]);
+                users += "<li class='dropdown-item'>"+data[i]+"</li>"
+            }
+            $list.html(users);
+        }
+    })
 }
 
 
@@ -84,17 +112,18 @@ function sendMessage(event) {
 function onMessageReceived(payload) {
     //console.log("payload 들어오냐? :"+payload);
     var chat = JSON.parse(payload.body);
-    console.log("chat : "+chat);
 
     var messageElement = document.createElement('li');
 
     if(chat.type === 'ENTER') {
         messageElement.classList.add('event-message');
         chat.content = chat.sender + chat.message;
+        getUserList();
 
     } else if (chat.type === 'LEAVE') {
         messageElement.classList.add('event-message');
         chat.content = chat.sender + chat.message;
+        getUserList();
 
     } else {
         messageElement.classList.add('chat-message');
