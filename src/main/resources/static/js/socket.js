@@ -7,7 +7,6 @@ document.write("<script\n" +
     "  crossorigin=\"anonymous\"></script>")
 
 
-
 var usernamePage = document.querySelector('#username-page');
 var chatPage = document.querySelector('#chat-page');
 var usernameForm = document.querySelector('#usernameForm');
@@ -31,53 +30,76 @@ const roomId = url.get('roomId');
 function connect(event) {
     username = document.querySelector('#name').value.trim();
 
-    if(username) {
-        usernamePage.classList.add('hidden');
-        chatPage.classList.remove('hidden');
+    isDuplicateName();
 
-        // 연결하고자하는 Socket 의 endPoint
-        var socket = new SockJS('/ws-stomp');
-        stompClient = Stomp.over(socket);
+    usernamePage.classList.add('hidden');
+    chatPage.classList.remove('hidden');
 
-        stompClient.connect({}, onConnected, onError);
+    // 연결하고자하는 Socket 의 endPoint
+    var socket = new SockJS('/ws-stomp');
+    stompClient = Stomp.over(socket);
 
-    }
+    stompClient.connect({}, onConnected, onError);
+
+
     event.preventDefault();
 
 
 }
 
 function onConnected() {
+
     // Subscribe to the Public Topic
-    stompClient.subscribe('/sub/chat/room/'+roomId, onMessageReceived);
+    stompClient.subscribe('/sub/chat/room/' + roomId, onMessageReceived);
 
     // Tell your username to the server
     stompClient.send("/pub/chat/enterUser",
         {},
         JSON.stringify({
-            "roomId" : roomId,
+            "roomId": roomId,
             sender: username,
-            type: 'ENTER'})
+            type: 'ENTER'
+        })
     )
 
     connectingElement.classList.add('hidden');
 
 }
 
-function getUserList(){
+// 유저 닉네임 중복 확인
+function isDuplicateName() {
+
+    $.ajax({
+        type: "GET",
+        url: "/chat/duplicateName",
+        data: {
+            "username": username,
+            "roomId": roomId
+        },
+        success: function (data) {
+            console.log("함수 동작 확인 : " + data);
+
+            username = data;
+        }
+    })
+
+}
+
+// 유저 리스트 받기
+function getUserList() {
     const $list = $("#list");
 
     $.ajax({
         type: "GET",
-        url : "/chat/userlist",
-        data : {
-            "roomId" : roomId
+        url: "/chat/userlist",
+        data: {
+            "roomId": roomId
         },
-        success : function(data){
+        success: function (data) {
             var users = "";
-            for(let i=0; i<data.length; i++){
-                console.log("data[i] : "+data[i]);
-                users += "<li class='dropdown-item'>"+data[i]+"</li>"
+            for (let i = 0; i < data.length; i++) {
+                //console.log("data[i] : "+data[i]);
+                users += "<li class='dropdown-item'>" + data[i] + "</li>"
             }
             $list.html(users);
         }
@@ -94,9 +116,9 @@ function onError(error) {
 function sendMessage(event) {
     var messageContent = messageInput.value.trim();
 
-    if(messageContent && stompClient) {
+    if (messageContent && stompClient) {
         var chatMessage = {
-            "roomId" : roomId,
+            "roomId": roomId,
             sender: username,
             message: messageInput.value,
             type: 'TALK'
@@ -115,7 +137,7 @@ function onMessageReceived(payload) {
 
     var messageElement = document.createElement('li');
 
-    if(chat.type === 'ENTER') {
+    if (chat.type === 'ENTER') {
         messageElement.classList.add('event-message');
         chat.content = chat.sender + chat.message;
         getUserList();

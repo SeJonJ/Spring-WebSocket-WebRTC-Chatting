@@ -9,18 +9,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import webChat.dao.ChatRepository;
 import webChat.dto.ChatRoom;
 
-import java.util.List;
-
 @Controller
 @Slf4j
-@RequestMapping("/chat")
 public class ChatRoomController {
 
     @Autowired
     private ChatRepository chatRepository;
 
     // 채팅 리스트 화면
-    @GetMapping("/chatlist")
+    @GetMapping("/")
     public String goChatRoom(Model model){
 
         model.addAttribute("list", chatRepository.findAllRoom());
@@ -30,18 +27,18 @@ public class ChatRoomController {
     }
 
     // 채팅방 생성
-    @PostMapping("/createroom")
+    @PostMapping("/chat/createroom")
     public String createRoom(@RequestParam String name, RedirectAttributes rttr) {
         ChatRoom room = chatRepository.createChatRoom(name);
         log.info("CREATE Chat Room {}", room);
         rttr.addFlashAttribute("roomName", room);
-        return "redirect:/chat/chatlist";
+        return "redirect:/";
     }
 
     // 채팅방 입장 화면
     // @PathVariable : url 에 넘어오는 변수를 매개변수로 받을 수 있게 하는 어노테이션
     // {roomId} 가 url 변수 -> String 타입 roomId 로 받게됨
-    @GetMapping("/room")
+    @GetMapping("/chat/room")
     public String roomDetail(Model model, String roomId){
 
         log.info("roomId {}", roomId);

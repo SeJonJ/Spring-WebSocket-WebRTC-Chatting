@@ -39,4 +39,11 @@ class ChatRepositoryTest {
     @Test
     void getUserList() {
     }
+
+    @Test
+    void isDuplicateName() {
+        addUser();
+        String user = repository.isDuplicateName(room.getRoomId(), "test");
+        System.out.println("user : " + user);
+    }
 }
