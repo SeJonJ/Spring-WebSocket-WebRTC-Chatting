@@ -49,4 +49,6 @@
 ## 구동 화면
 ![](info/chatlist.png)
 
-![](info/chatTest.png)
+![](info/chatting.png)
+
+![](info/chatting.gif)

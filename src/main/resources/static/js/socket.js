@@ -30,8 +30,11 @@ const roomId = url.get('roomId');
 function connect(event) {
     username = document.querySelector('#name').value.trim();
 
+    // username 중복 확인
     isDuplicateName();
 
+    // usernamePage 에 hidden 속성 추가해서 가리고
+    // chatPage 를 등장시킴
     usernamePage.classList.add('hidden');
     chatPage.classList.remove('hidden');
 
@@ -49,10 +52,11 @@ function connect(event) {
 
 function onConnected() {
 
-    // Subscribe to the Public Topic
+    // sub 할 url => /sub/chat/room/roomId 로 구독한다
     stompClient.subscribe('/sub/chat/room/' + roomId, onMessageReceived);
 
-    // Tell your username to the server
+    // 서버에 username 을 가진 유저가 들어왔다는 것을 알림
+    // /pub/chat/enterUser 로 메시지를 보냄
     stompClient.send("/pub/chat/enterUser",
         {},
         JSON.stringify({
@@ -137,18 +141,17 @@ function onMessageReceived(payload) {
 
     var messageElement = document.createElement('li');
 
-    if (chat.type === 'ENTER') {
+    if (chat.type === 'ENTER') {  // chatType 이 enter 라면 아래 내용
         messageElement.classList.add('event-message');
         chat.content = chat.sender + chat.message;
         getUserList();
 
-    } else if (chat.type === 'LEAVE') {
+    } else if (chat.type === 'LEAVE') { // chatType 가 leave 라면 아래 내용
         messageElement.classList.add('event-message');
         chat.content = chat.sender + chat.message;
         getUserList();
 
-    } else {
-        messageElement.classList.add('chat-message');
+    } else { // chatType 이 talk 라면 아래 내용용        messageElement.classList.add('chat-message');
 
         var avatarElement = document.createElement('i');
         var avatarText = document.createTextNode(chat.sender[0]);

@@ -36,8 +36,6 @@ public class ChatRoomController {
     }
 
     // 채팅방 입장 화면
-    // @PathVariable : url 에 넘어오는 변수를 매개변수로 받을 수 있게 하는 어노테이션
-    // {roomId} 가 url 변수 -> String 타입 roomId 로 받게됨
     @GetMapping("/chat/room")
     public String roomDetail(Model model, String roomId){
 
