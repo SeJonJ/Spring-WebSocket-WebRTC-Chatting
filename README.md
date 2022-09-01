@@ -19,7 +19,7 @@
 ## 2. 다이어그램
 ![](info/Chat_diagram.png)
 
-## 5. 공부 목표
+## 3. 공부 목표
 - WebSocket 을 활용한 채팅 기능
 - Stomp 를 활용한 채팅 고도화 -> pub/sub
 - SocketJS 를 활용한 JS 공부

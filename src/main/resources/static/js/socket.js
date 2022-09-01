@@ -90,6 +90,7 @@ function isDuplicateName() {
 }
 
 // 유저 리스트 받기
+// ajax 로 유저 리스를 받으며 클라이언트가 입장/퇴장 했다는 문구가 나왔을 때마다 실행된다.
 function getUserList() {
     const $list = $("#list");
 
@@ -116,7 +117,7 @@ function onError(error) {
     connectingElement.style.color = 'red';
 }
 
-
+// 메시지 전송때는 JSON 형식을 메시지를 전달한다.
 function sendMessage(event) {
     var messageContent = messageInput.value.trim();
 
@@ -134,7 +135,8 @@ function sendMessage(event) {
     event.preventDefault();
 }
 
-
+// 메시지를 받을 때도 마찬가지로 JSON 타입으로 받으며,
+// 넘어온 JSON 형식의 메시지를 parse 해서 사용한다.
 function onMessageReceived(payload) {
     //console.log("payload 들어오냐? :"+payload);
     var chat = JSON.parse(payload.body);
@@ -151,7 +153,8 @@ function onMessageReceived(payload) {
         chat.content = chat.sender + chat.message;
         getUserList();
 
-    } else { // chatType 이 talk 라면 아래 내용용        messageElement.classList.add('chat-message');
+    } else { // chatType 이 talk 라면 아래 내용용
+        messageElement.classList.add('chat-message');
 
         var avatarElement = document.createElement('i');
         var avatarText = document.createTextNode(chat.sender[0]);

@@ -13,10 +13,12 @@ import webChat.dto.ChatRoom;
 @Slf4j
 public class ChatRoomController {
 
+    // ChatRepository Bean 가져오기
     @Autowired
     private ChatRepository chatRepository;
 
     // 채팅 리스트 화면
+    // / 로 요청이 들어오면 전체 채팅룸 리스트를 담아서 return
     @GetMapping("/")
     public String goChatRoom(Model model){
 
@@ -27,6 +29,7 @@ public class ChatRoomController {
     }
 
     // 채팅방 생성
+    // 채팅방 생성 후 다시 / 로 return
     @PostMapping("/chat/createroom")
     public String createRoom(@RequestParam String name, RedirectAttributes rttr) {
         ChatRoom room = chatRepository.createChatRoom(name);
@@ -36,12 +39,14 @@ public class ChatRoomController {
     }
 
     // 채팅방 입장 화면
+    // 파라미터로 넘어오는 roomId 를 확인후 해당 roomId 를 기준으로
+    // 채팅방을 찾아서 클라이언트를 chatroom 으로 보낸다.
     @GetMapping("/chat/room")
     public String roomDetail(Model model, String roomId){
 
         log.info("roomId {}", roomId);
         model.addAttribute("room", chatRepository.findRoomById(roomId));
-        return "/chatroom";
+        return "chatroom";
     }
 
 }
