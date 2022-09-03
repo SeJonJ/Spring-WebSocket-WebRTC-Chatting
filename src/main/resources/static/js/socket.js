@@ -179,7 +179,16 @@ function onMessageReceived(payload) {
         imgElement.setAttribute("width", "300");
         imgElement.setAttribute("height", "300");
 
+        var downBtnElement = document.createElement('button');
+        downBtnElement.setAttribute("class", "btn fa fa-download");
+        downBtnElement.setAttribute("id", "downBtn");
+        downBtnElement.setAttribute("onclick", "downloadFile()");
+
+        downBtnElement.innerHTML = "<a href="+chat.s3DataUrl+"download="+chat.fileName+"></a>";
+
+
         contentElement.appendChild(imgElement);
+        contentElement.appendChild(downBtnElement);
 
     }else{
         // 만약 s3DataUrl 의 값이 null 이라면
@@ -233,11 +242,16 @@ function uploadFile(){
             sender: username,
             message: username+"님의 파일 업로드",
             type: 'TALK',
-            s3DataUrl : data
+            s3DataUrl : data,
+            "fileName": file.name
         };
 
         stompClient.send("/pub/chat/sendMessage", {}, JSON.stringify(chatMessage));
     }).fail(function (error){
         alert(error);
     })
+}
+
+// 파일 다운로드 부분 //
+function downloadFile(){
 }
