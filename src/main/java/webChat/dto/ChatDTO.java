@@ -1,6 +1,7 @@
 package webChat.dto;
 
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @Builder
@@ -20,4 +21,8 @@ public class ChatDTO {
     private String sender; // 채팅을 보낸 사람
     private String message; // 메시지
     private String time; // 채팅 발송 시간간
+
+    /* 파일 업로드 관련 변수 */
+    private String s3DataUrl; // 파일 업로드 url
+    private String fileName; // 파일이름
 }

@@ -153,7 +153,7 @@ function onMessageReceived(payload) {
         chat.content = chat.sender + chat.message;
         getUserList();
 
-    } else { // chatType 이 talk 라면 아래 내용용
+    } else { // chatType 이 talk 라면 아래 내용
         messageElement.classList.add('chat-message');
 
         var avatarElement = document.createElement('i');
@@ -169,11 +169,26 @@ function onMessageReceived(payload) {
         messageElement.appendChild(usernameElement);
     }
 
-    var textElement = document.createElement('p');
-    var messageText = document.createTextNode(chat.message);
-    textElement.appendChild(messageText);
+    var contentElement = document.createElement('p');
 
-    messageElement.appendChild(textElement);
+    // 만약 s3DataUrl 의 값이 null 이 아니라면
+    // img 를 채팅에 보여주는 작업
+    if(chat.s3DataUrl != null){
+        var imgElement = document.createElement('img');
+        imgElement.setAttribute("src", chat.s3DataUrl);
+        imgElement.setAttribute("width", "300");
+        imgElement.setAttribute("height", "300");
+
+        contentElement.appendChild(imgElement);
+
+    }else{
+        // 만약 s3DataUrl 의 값이 null 이라면
+        // 이전에 넘어온 채팅 내용 보여주기기
+       var messageText = document.createTextNode(chat.message);
+        contentElement.appendChild(messageText);
+    }
+
+    messageElement.appendChild(contentElement);
 
     messageArea.appendChild(messageElement);
     messageArea.scrollTop = messageArea.scrollHeight;
@@ -192,3 +207,37 @@ function getAvatarColor(messageSender) {
 
 usernameForm.addEventListener('submit', connect, true)
 messageForm.addEventListener('submit', sendMessage, true)
+
+/// 파일 업로드 부분 ////
+function uploadFile(){
+    var file = $("#file")[0].files[0];
+    var formData = new FormData();
+    formData.append("file",file);
+    formData.append("roomId", roomId);
+
+    // ajax 로 multipart/form-data 를 넘겨줄 때는
+    //         processData: false,
+    //         contentType: false
+    // 처럼 설정해주어야 한다.
+    $.ajax({
+        type : 'POST',
+        url : '/s3/file',
+        data : formData,
+        processData: false,
+        contentType: false
+    }).done(function (data){
+        console.log("업로드 성공")
+
+        var chatMessage = {
+            "roomId": roomId,
+            sender: username,
+            message: username+"님의 파일 업로드",
+            type: 'TALK',
+            s3DataUrl : data
+        };
+
+        stompClient.send("/pub/chat/sendMessage", {}, JSON.stringify(chatMessage));
+    }).fail(function (error){
+        alert(error);
+    })
+}
