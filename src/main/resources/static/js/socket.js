@@ -182,9 +182,8 @@ function onMessageReceived(payload) {
         var downBtnElement = document.createElement('button');
         downBtnElement.setAttribute("class", "btn fa fa-download");
         downBtnElement.setAttribute("id", "downBtn");
-        downBtnElement.setAttribute("onclick", "downloadFile()");
-
-        downBtnElement.innerHTML = "<a href="+chat.s3DataUrl+"download="+chat.fileName+"></a>";
+        downBtnElement.setAttribute("name", chat.fileName);
+        downBtnElement.setAttribute("onclick", `downloadFile('${chat.fileName}', '${chat.fileDir}')`);
 
 
         contentElement.appendChild(imgElement);
@@ -230,7 +229,7 @@ function uploadFile(){
     // 처럼 설정해주어야 한다.
     $.ajax({
         type : 'POST',
-        url : '/s3/file',
+        url : '/s3/upload',
         data : formData,
         processData: false,
         contentType: false
@@ -242,8 +241,9 @@ function uploadFile(){
             sender: username,
             message: username+"님의 파일 업로드",
             type: 'TALK',
-            s3DataUrl : data,
-            "fileName": file.name
+            s3DataUrl : data.s3DataUrl,
+            "fileName": file.name,
+            "fileDir": data.fileDir
         };
 
         stompClient.send("/pub/chat/sendMessage", {}, JSON.stringify(chatMessage));
@@ -253,5 +253,11 @@ function uploadFile(){
 }
 
 // 파일 다운로드 부분 //
-function downloadFile(){
+function downloadFile(name, dir){
+    console.log("파일 이름 : "+name);
+    console.log("파일 경로 : " + dir);
+    let fileName = "/s3/"+name;
+    let fileDir = "?fileDir="+dir;
+
+
 }

@@ -1,20 +1,27 @@
 package webChat.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import com.amazonaws.services.s3.transfer.Upload;
+import com.amazonaws.util.IOUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import webChat.dto.FileUploadRequestDto;
-import webChat.dto.FileUploadResponseDto;
+import webChat.dto.FileUploadDto;
 
 import java.io.File;
+import java.io.IOException;
 
 
 @Service
@@ -32,14 +39,11 @@ public class S3FileService implements FileService{
     private String baseUrl;
 
     @Override
-    public FileUploadResponseDto uploadFile(FileUploadRequestDto uploadReq) {
+    public FileUploadDto uploadFile(MultipartFile file, String transaction, String roomId) {
         try{
-            MultipartFile file = uploadReq.getFile();
 
-            String transaction = uploadReq.getTransaction();
-
-            String filename = uploadReq.getFile().getOriginalFilename();
-            String key = uploadReq.getChatRoom()+"/"+transaction+"/"+filename;
+            String filename = file.getOriginalFilename(); // 파일원본 이름
+            String key = roomId+"/"+transaction+"/"+filename; // S3 파일 경로
 
             File convertedFile = convertMultipartFileToFile(file, transaction + filename);
 
@@ -52,7 +56,16 @@ public class S3FileService implements FileService{
             upload.waitForUploadResult();
             removeFile(convertedFile);
 
-            return new FileUploadResponseDto(baseUrl+"/"+key);
+            // upload 객체 빌드
+            FileUploadDto uploadReq = FileUploadDto.builder()
+                    .transaction(transaction)
+                    .chatRoom(roomId)
+                    .originFileName(filename)
+                    .fileDir(key)
+                    .s3DataUrl(baseUrl+"/"+key)
+                    .build();
+
+            return uploadReq;
 
         } catch (Exception e) {
             log.error("fileUploadException {}", e.getMessage());
@@ -65,6 +78,21 @@ public class S3FileService implements FileService{
         for (S3ObjectSummary summary : amazonS3.listObjects(bucket, path).getObjectSummaries()) {
             amazonS3.deleteObject(bucket, summary.getKey());
         }
+    }
+
+    @Override
+    public ResponseEntity<byte[]> getObject(String fileDir, String fileName) throws IOException {
+        S3Object object = amazonS3.getObject(new GetObjectRequest(bucket, fileDir));
+        S3ObjectInputStream objectInputStream = object.getObjectContent();
+        byte[] bytes = IOUtils.toByteArray(objectInputStream);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        httpHeaders.setContentDispositionFormData("attachment", fileName);
+
+        log.info("HttpHeader : [{}]", httpHeaders);
+
+        return new ResponseEntity<>(bytes, httpHeaders, HttpStatus.OK);
     }
 
 }

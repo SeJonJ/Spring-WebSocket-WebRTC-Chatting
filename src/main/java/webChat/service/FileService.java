@@ -1,23 +1,22 @@
 package webChat.service;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
-import webChat.dto.FileUploadRequestDto;
-import webChat.dto.FileUploadResponseDto;
+import webChat.dto.FileUploadDto;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
 public interface FileService {
-    // 파일 response 를 위한 멤버 변수 정의
-    FileUploadResponseDto uploadFile(FileUploadRequestDto uploadReq);
+    // 파일 업로드를 위한 메서드 선언
+    FileUploadDto uploadFile(MultipartFile file, String transaction, String roomId);
 
-    // 현재 방에 업로드된 모든 파일 삭제
+    // 현재 방에 업로드된 모든 파일 삭제 메서드
     void deleteFileDir(String path);
 
-    // 파일 업로드를 위한 메서드
-    // 정확히는 컨트롤러에서 받아온 multipartFile 을 File 로 변환시켜서 저장한 후
-    // 원래 있던 임시 파일은 삭제하기 위함
+    // 컨트롤러에서 받아온 multipartFile 을 File 로 변환시켜서 저장한 후
+    // 원래 있던 임시 파일은 삭제하는 메서드
     default File convertMultipartFileToFile(MultipartFile mfile, String tmpPath) throws IOException {
         File file = new File(tmpPath);
 
@@ -34,4 +33,6 @@ public interface FileService {
     default void removeFile(File file){
         file.delete();
     }
+
+    ResponseEntity<byte[]> getObject(String fileDir, String fileName) throws IOException;
 }
