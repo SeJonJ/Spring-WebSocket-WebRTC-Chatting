@@ -256,8 +256,23 @@ function uploadFile(){
 function downloadFile(name, dir){
     console.log("파일 이름 : "+name);
     console.log("파일 경로 : " + dir);
-    let fileName = "/s3/"+name;
-    let fileDir = "?fileDir="+dir;
+    let url = "/s3/download/"+name;
 
+    $.ajax({
+        url: "/s3/download/"+name,
+        data: {
+            "fileDir" : dir
+        },
+        dataType: 'binary',
+        xhrFields: {
+            'responseType': 'blob'
+        },
+        success: function(data, status, xhr) {
 
+            var link = document.createElement('a');
+            link.href = URL.createObjectURL(data);
+            link.download = name;
+            link.click();
+        }
+    });
 }
