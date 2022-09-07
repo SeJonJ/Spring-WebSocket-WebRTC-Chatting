@@ -171,7 +171,7 @@ function onMessageReceived(payload) {
 
     var contentElement = document.createElement('p');
 
-    // 만약 s3DataUrl 의 값이 null 이 아니라면
+    // 만약 s3DataUrl 의 값이 null 이 아니라면 => chat 내용이 파일 업로드와 관련된 내용이라면
     // img 를 채팅에 보여주는 작업
     if(chat.s3DataUrl != null){
         var imgElement = document.createElement('img');
@@ -227,6 +227,12 @@ function uploadFile(){
     //         processData: false,
     //         contentType: false
     // 처럼 설정해주어야 한다.
+
+    // 동작 순서
+    // post 로 rest 요청한다.
+    // 1. 먼저 upload 로 파일 업로드를 요청한다.
+    // 2. upload 가 성공적으로 완료되면 data 에 upload 객체를 받고,
+    // 이를 이용해 chatMessage 를 작성한다.
     $.ajax({
         type : 'POST',
         url : '/s3/upload',
@@ -234,18 +240,19 @@ function uploadFile(){
         processData: false,
         contentType: false
     }).done(function (data){
-        console.log("업로드 성공")
+        // console.log("업로드 성공")
 
         var chatMessage = {
             "roomId": roomId,
             sender: username,
             message: username+"님의 파일 업로드",
             type: 'TALK',
-            s3DataUrl : data.s3DataUrl,
-            "fileName": file.name,
-            "fileDir": data.fileDir
+            s3DataUrl : data.s3DataUrl, // Dataurl
+            "fileName": file.name, // 원본 파일 이름
+            "fileDir": data.fileDir // 업로드 된 위치
         };
 
+        // 해당 내용을 발신한다.
         stompClient.send("/pub/chat/sendMessage", {}, JSON.stringify(chatMessage));
     }).fail(function (error){
         alert(error);
@@ -253,21 +260,24 @@ function uploadFile(){
 }
 
 // 파일 다운로드 부분 //
+// 버튼을 누르면 downloadFile 메서드가 실행됨
+// 다운로드 url 은 /s3/download+원본파일이름
 function downloadFile(name, dir){
-    console.log("파일 이름 : "+name);
-    console.log("파일 경로 : " + dir);
+    // console.log("파일 이름 : "+name);
+    // console.log("파일 경로 : " + dir);
     let url = "/s3/download/"+name;
 
+    // get 으로 rest 요청한다.
     $.ajax({
-        url: "/s3/download/"+name,
+        url: "/s3/download/"+name, // 요청 url 은 download/{name}
         data: {
-            "fileDir" : dir
+            "fileDir" : dir // 파일의 경로를 파라미터로 넣는다.
         },
-        dataType: 'binary',
+        dataType: 'binary', // 파일 다운로드를 위해서는 binary 타입으로 받아야한다.
         xhrFields: {
-            'responseType': 'blob'
+            'responseType': 'blob' // 여기도 마찬가지
         },
-        success: function(data, status, xhr) {
+        success: function(data) {
 
             var link = document.createElement('a');
             link.href = URL.createObjectURL(data);
