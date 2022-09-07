@@ -55,3 +55,5 @@
 ![](info/chatimg2.png)
 
 ![](info/chatting.gif)
+
+![](info/chattingFileUpload.gif)
