@@ -12,13 +12,24 @@
             crossorigin="anonymous"></script>
     <script th:inline="javascript">
 
+        var roomId;
+
+        $(function(){
+            $("#enterRoomModal").on("show.bs.modal", function (event) {
+                console.log("room : "+$(event.relatedTarget).data('id'))
+            });
+        })
+
+
         function createRoom() {
 
-            var name = $("#roomName").val();
-            var pwd = $("#roomPwd").val();
+            let name = $("#roomName").val();
+            let pwd = $("#roomPwd").val();
+            let secret = $("#secret").is(':checked');
+            let secretChk = $("#secretChk");
 
-            console.log("name : " + name);
-            console.log("pwd : " + pwd);
+            // console.log("name : " + name);
+            // console.log("pwd : " + pwd);
 
             if (name === "") {
                 alert("방 이름은 필수입니다")
@@ -33,53 +44,79 @@
                 return false;
             }
 
+            if (secret) {
+                secretChk.attr('value', true);
+            } else {
+                secretChk.attr('value', false);
+            }
+
             return true;
         }
+
+        function enterRoom(){
+            let $enterPwd = $("#enterPwd").val();
+
+
+
+        }
+
+
+
     </script>
     <style>
         a {
             text-decoration: none;
         }
-        #table{
+
+        #table {
             margin-top: 40px;
         }
-        h2{
+
+        h2 {
             margin-top: 40px;
         }
     </style>
 </head>
 <body>
+<div class="container">
     <div class="container">
-        <div class="container">
-            <h2>채팅방 리스트</h2>
-            <table class="table table-hover" id="table">
-                <tr>
-                    <th scope="col">채팅방명</th>
-                    <th scope="col">잠금 여부</th>
-                    <th scope="col">참여 인원</th>
+        <h2>채팅방 리스트</h2>
+        <table class="table table-hover" id="table">
+            <tr>
+                <th scope="col">채팅방명</th>
+                <th scope="col">잠금 여부</th>
+                <th scope="col">참여 인원</th>
+                <th scope="col">채팅방 설정</th>
+            </tr>
+            <th:block th:fragment="content">
+
+                <tr th:each="room : ${list}">
+                    <span class="hidden" th:id="${room.roomName}"></span>
+                    <td th:if="${room.secretChk}">
+                        <a href="#enterRoomModal" data-bs-toggle="modal" data-target="#enterRoomModal" th:data-id="${room.roomId}">[[${room.roomName}]]</a>
+                    </td>
+                    <td th:if="${!room.secretChk}">
+                        <a th:href="@{/chat/room(roomId=${room.roomId})}">[[${room.roomName}]]</a>
+                    </td>
+                    <td>
+                        <span th:if="${room.secretChk}">
+                            🔒︎
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary rounded-pill">[[${room.userCount}]]명</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" id="configRoom">채팅방 설정</button>
+                    </td>
                 </tr>
-                <th:block th:fragment="content">
+            </th:block>
 
-                    <tr th:each="room : ${list}">
-                        <span class="hidden" th:id="${room.roomName}"></span>
+        </table>
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#roomModal">방 생성</button>
 
-                        <td>
-                            <a th:href="@{/chat/room(roomId=${room.roomId})}">[[${room.roomName}]]</a>
-                        </td>
-                        <td>
-                            잠금여부
-                        </td>
-                        <td>
-                            <span class="badge bg-primary rounded-pill">[[${room.userCount}]]명</span>
-                        </td>
-                    </tr>
-                </th:block>
-
-            </table>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#roomModal">방 생성</button>
-
-        </div>
     </div>
+</div>
 
 
 <div class="modal fade" id="roomModal" tabindex="-1" aria-labelledby="roomModalLabel" aria-hidden="true">
@@ -98,12 +135,40 @@
                         <label for="roomPwd" class="col-form-label">방 설정 번호(방 삭제시 필요합니다)</label>
                         <input type="text" class="form-control" id="roomPwd" name="roomPwd">
                     </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="secret">
+                        <input type="hidden" name="secretChk" id="secretChk" value="">
+                        <label class="form-check-label" for="secret">
+                            채팅방 잠금
+                        </label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <input type="submit" class="btn btn-primary" value="방 생성하기">
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="enterRoomModal" tabindex="-1" aria-labelledby="enterRoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="roomName" class="col-form-label">방 비밀번호</label>
+                    <input type="text" class="form-control" id="enterPwd" name="enterPwd">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="return enterRoom">입장하기</button>
+                </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

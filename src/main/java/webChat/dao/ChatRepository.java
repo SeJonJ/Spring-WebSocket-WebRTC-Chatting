@@ -34,7 +34,7 @@ public class ChatRepository {
     }
 
     // roomName 로 채팅방 만들기
-    public ChatRoom createChatRoom(String roomName, String roomPwd){
+    public ChatRoom createChatRoom(String roomName, String roomPwd, boolean secretChk){
         // roomName 와 roomPwd 로 chatRoom 빌드 후 return
 
         ChatRoom chatRoom = ChatRoom.builder()
@@ -43,6 +43,7 @@ public class ChatRepository {
                 .roomPwd(roomPwd)
                 .userlist(new HashMap<String, String>())
                 .userCount(0)
+                .secretChk(secretChk)
                 .build();
 
         // map 에 채팅룸 아이디와 만들어진 채팅룸을 저장장

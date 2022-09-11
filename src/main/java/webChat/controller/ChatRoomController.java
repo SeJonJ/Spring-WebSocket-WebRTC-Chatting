@@ -31,11 +31,12 @@ public class ChatRoomController {
     // 채팅방 생성
     // 채팅방 생성 후 다시 / 로 return
     @PostMapping("/chat/createroom")
-    public String createRoom(@RequestParam("roomName") String name, @RequestParam("roomPwd")String roomPwd, RedirectAttributes rttr) {
+    public String createRoom(@RequestParam("roomName") String name, @RequestParam("roomPwd")String roomPwd, @RequestParam(value = "secretChk")String secretChk, RedirectAttributes rttr) {
 
-        ChatRoom room = chatRepository.createChatRoom(name, roomPwd);
+//        log.info("chk {}", secretChk);
+        ChatRoom room = chatRepository.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk));
 
-        log.info("CREATE Chat Room {}", room);
+//        log.info("CREATE Chat Room {}", room);
 
         rttr.addFlashAttribute("roomName", room);
         return "redirect:/";
@@ -50,6 +51,11 @@ public class ChatRoomController {
         log.info("roomId {}", roomId);
         model.addAttribute("room", chatRepository.findRoomById(roomId));
         return "chatroom";
+    }
+
+    @PostMapping("/chat/confirmPwd/{roomPwd}")
+    public String confirmPwd(@PathVariable String roomPwd){
+        return null;
     }
 
 }
