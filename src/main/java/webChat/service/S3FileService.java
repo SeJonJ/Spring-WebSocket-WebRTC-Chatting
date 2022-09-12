@@ -83,6 +83,8 @@ public class S3FileService implements FileService{
         }
     }
 
+    // path 아래있는 모든 파일을 삭제한다.
+    // 이때 path 는 roomId 가 된다 => S3 에 roomId/변경된 파일명(uuid)/
     @Override
     public void deleteFileDir(String path) {
         for (S3ObjectSummary summary : amazonS3.listObjects(bucket, path).getObjectSummaries()) {

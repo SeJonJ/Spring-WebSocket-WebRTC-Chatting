@@ -53,9 +53,22 @@ public class ChatRoomController {
         return "chatroom";
     }
 
-    @PostMapping("/chat/confirmPwd/{roomPwd}")
-    public String confirmPwd(@PathVariable String roomPwd){
-        return null;
+    @PostMapping("/chat/confirmPwd/{roomId}")
+    @ResponseBody
+    public boolean confirmPwd(@PathVariable String roomId, @RequestParam String roomPwd){
+
+        // 넘어온 roomId 와 roomPwd 를 이용해서 비밀번호 찾기
+        // 찾아서 입력받은 roomPwd 와 room pwd 와 비교해서 맞으면 true, 아니면  false
+        return chatRepository.confirmPwd(roomId, roomPwd);
+    }
+
+    @GetMapping("/chat/delRoom/{roomId}")
+    public String delChatRoom(@PathVariable String roomId){
+
+        // roomId 기준으로 chatRoomMap 에서 삭제, 해당 채팅룸 안에 있는 사진 삭제
+        chatRepository.delChatRoom(roomId);
+
+        return "redirect:/";
     }
 
 }

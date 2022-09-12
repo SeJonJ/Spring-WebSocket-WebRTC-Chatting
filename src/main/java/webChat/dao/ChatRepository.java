@@ -1,8 +1,11 @@
 package webChat.dao;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import webChat.dto.ChatRoom;
+import webChat.service.FileService;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
@@ -18,6 +21,10 @@ public class ChatRepository {
     private void init() {
         chatRoomMap = new LinkedHashMap<>();
     }
+
+    // 채팅방 삭제에 따른 채팅방의 사진 삭제를 위한 fileService 선언
+    @Autowired
+    FileService fileService;
 
     // 전체 채팅방 조회
     public List<ChatRoom> findAllRoom(){
@@ -113,5 +120,28 @@ public class ChatRepository {
         // value 값만 뽑아내서 list 에 저장 후 reutrn
         room.getUserlist().forEach((key, value) -> list.add(value));
         return list;
+    }
+
+    // 채팅방 비밀번호 조회
+    public boolean confirmPwd(String roomId, String roomPwd) {
+//        String pwd = chatRoomMap.get(roomId).getRoomPwd();
+        return roomPwd.equals(chatRoomMap.get(roomId).getRoomPwd());
+    }
+
+    // 채팅방 삭제
+    public void delChatRoom(String roomId) {
+        try {
+            // 채팅방 삭제
+            chatRoomMap.remove(roomId);
+
+            // 채팅방 안에 있는 파일 삭제
+            fileService.deleteFileDir(roomId);
+
+            log.info("삭제 완료 roomId : {}", roomId);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
     }
 }

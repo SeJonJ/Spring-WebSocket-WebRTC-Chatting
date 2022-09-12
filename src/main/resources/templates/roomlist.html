@@ -15,12 +15,61 @@
         var roomId;
 
         $(function(){
+            // 모달창 열릴 때 이벤트 처리 => roomId 가져오기
             $("#enterRoomModal").on("show.bs.modal", function (event) {
-                console.log("room : "+$(event.relatedTarget).data('id'))
+                roomId = $(event.relatedTarget).data('id');
+                // console.log("roomId: " + roomId);
+
             });
+
+            $("#confirmPwdModal").on("show.bs.modal", function (e) {
+                roomId = $(e.relatedTarget).data('id');
+                // console.log("roomId: " + roomId);
+
+            });
+
+            // 채팅방 설정 시 비밀번호 확인 - keyup 펑션 활용
+            $("#confirmPwd").on("keyup", function(){
+                let $confirmPwd = $("#confirmPwd").val();
+                const $configRoomBtn = $("#configRoomBtn");
+                let $confirmLabel = $("#confirmLabel");
+
+                $.ajax({
+                    type : "post",
+                    url : "/chat/confirmPwd/"+roomId,
+                    data : {
+                        "roomPwd" : $confirmPwd
+                    },
+                    success : function(result){
+                        // console.log("동작완료")
+                        if(result){
+                            $configRoomBtn.attr("class", "btn btn-primary");
+                            $configRoomBtn.attr("aria-disabled", false);
+
+                            $confirmLabel.html("<span id='confirm'>비밀번호 확인 완료</span>");
+                            $("#confirm").css({
+                                "color" : "#0D6EFD",
+                                "font-weight" : "bold",
+                            });
+
+                        }else{
+                            $configRoomBtn.attr("class", "btn btn-primary disabled");
+                            $configRoomBtn.attr("aria-disabled", true);
+
+                            $confirmLabel.html("<span id='confirm'>비밀번호가 틀립니다</span>");
+                            $("#confirm").css({
+                                "color" : "#FA3E3E",
+                                "font-weight" : "bold",
+                            });
+
+                        }
+                    }
+                })
+            })
         })
 
 
+        // 채팅방 생성
         function createRoom() {
 
             let name = $("#roomName").val();
@@ -53,13 +102,31 @@
             return true;
         }
 
+        // 채팅방 입장 시 비밀번호 확인
         function enterRoom(){
             let $enterPwd = $("#enterPwd").val();
 
-
-
+            $.ajax({
+                type : "post",
+                url : "/chat/confirmPwd/"+roomId,
+                data : {
+                    "roomPwd" : $enterPwd
+                },
+                success : function(result){
+                    // console.log("동작완료")
+                    if(result){
+                        location.href = "/chat/room?roomId="+roomId;
+                    }else{
+                        alert("비밀번호가 틀립니다. \n 비밀번호를 확인해주세요")
+                    }
+                }
+            })
         }
 
+        // 채팅방 삭제
+        function delRoom(){
+            location.href = "/chat/delRoom/"+roomId;
+        }
 
 
     </script>
@@ -107,7 +174,7 @@
                         <span class="badge bg-primary rounded-pill">[[${room.userCount}]]명</span>
                     </td>
                     <td>
-                        <button class="btn btn-primary btn-sm" id="configRoom">채팅방 설정</button>
+                        <button class="btn btn-primary btn-sm" id="configRoom" data-bs-toggle="modal" data-bs-target="#confirmPwdModal" th:data-id="${room.roomId}">채팅방 설정</button>
                     </td>
                 </tr>
             </th:block>
@@ -123,6 +190,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
+                <h5 class="modal-title">채팅방 생성</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="/chat/createroom" onsubmit="return createRoom()">
@@ -156,6 +224,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
+                <h5 class="modal-title">채팅방 비밀번호를 입력해주세요</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -165,10 +234,67 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="return enterRoom">입장하기</button>
+                    <button type="button" class="btn btn-primary" onclick="enterRoom()">입장하기</button>
                 </div>
                 </form>
             </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="confirmPwdModal" aria-hidden="true" aria-labelledby="ModalToggleLabel" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">채팅방 설정을 위한 패스워드 확인</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label for="confirmPwd" class="col-form-label" id="confirmLabel">비밀번호 확인</label>
+                <input type="text" class="form-control" id="confirmPwd">
+            </div>
+            <div class="modal-footer">
+                <button id="configRoomBtn" class="btn btn-primary disabled" data-bs-target="#configRoomModal" data-bs-toggle="modal" aria-disabled="true">채팅방 설정하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="configRoomModal" tabindex="-1" aria-labelledby="roomModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">채팅방 설정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="chPwd" class="col-form-label">비밀번호 변경</label>
+                        <input type="text" class="form-control" id="chPwd" name="roomName">
+                    </div>
+                    <div class="mb-3">
+                        <label for="chRoomName" class="col-form-label">채팅방 이름 변경</label>
+                        <input type="text" class="form-control" id="chRoomName" name="roomPwd">
+                    </div>
+                    <div class="mb-3">
+                        <label for="chRoomUserCnt" class="col-form-label">채팅방 인원 변경</label>
+                        <input type="text" class="form-control" id="chRoomUserCnt" name="roomPwd">
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="chSecret">
+                        <input type="hidden" name="secretChk" id="chSecretChk" value="">
+                        <label class="form-check-label" for="secret">
+                            채팅방 잠금
+                        </label>
+                    </div>
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-primary" onclick="delRoom()">방 삭제</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
         </div>
     </div>
 </div>
