@@ -84,7 +84,8 @@ public class S3FileService implements FileService{
     }
 
     // path 아래있는 모든 파일을 삭제한다.
-    // 이때 path 는 roomId 가 된다 => S3 에 roomId/변경된 파일명(uuid)/
+    // 이때 path 는 roomId 가 된다 => S3 에 roomId/변경된 파일명(uuid)/원본 파일명 으로 되어있기 때문에
+    // roomId 를 적어주면 기준이 되는 roomId 아래의 모든 파일이 삭제된다.
     @Override
     public void deleteFileDir(String path) {
         for (S3ObjectSummary summary : amazonS3.listObjects(bucket, path).getObjectSummaries()) {
@@ -93,7 +94,6 @@ public class S3FileService implements FileService{
     }
 
     // byte 배열 타입을 return 한다.
-
     @Override
     public ResponseEntity<byte[]> getObject(String fileDir, String fileName) throws IOException {
         // bucket 와 fileDir 을 사용해서 S3 에 있는 객체 - object - 를 가져온다.
