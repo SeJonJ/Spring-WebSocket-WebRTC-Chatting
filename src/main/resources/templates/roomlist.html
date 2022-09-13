@@ -13,7 +13,7 @@
 
     <script th:inline="javascript">
 
-        var roomId;
+        let roomId;
 
         $(function(){
             const $maxChk = $("#maxChk");
@@ -126,13 +126,15 @@
             $.ajax({
                 type : "post",
                 url : "/chat/confirmPwd/"+roomId,
+                async : false,
                 data : {
                     "roomPwd" : $enterPwd
                 },
                 success : function(result){
                     // console.log("동작완료")
-                    if(result && chkRoomUserCnt(roomId)){
-                        // console.log("확인 : "+chkRoomUserCnt(roomId))
+                    console.log("확인 : "+chkRoomUserCnt(roomId))
+
+                    if(result&&chkRoomUserCnt(roomId)){
 
                         location.href = "/chat/room?roomId="+roomId;
                     }else{
@@ -149,23 +151,22 @@
 
         // 채팅방 입장 시 인원 수에 따라서 입장 여부 결정
         function chkRoomUserCnt(roomId){
-            let chk = false;
+            let chk;
 
-            // console.log("실행되나? "+roomId)
             $.ajax({
                 type : "GET",
                 url : "/chat/chkUserCnt/"+roomId,
+                async : false,
                 success : function(result){
 
-                    console.log("result : "+result)
-
+                    console.log("여기가 먼저")
                     if (!result) {
                         alert("채팅방이 꽉 차서 입장 할 수 없습니다");
-                        chk = result;
                     }
+
+                    chk = result;
                 }
             })
-            console.log("chk : " + chk);
             return chk;
         }
 
@@ -209,7 +210,7 @@
                     </td>
                     <td th:if="${!room.secretChk}">
                         <!-- thymeleaf 의 변수를 onclick 에 넣는 방법 -->
-                        <a th:href="@{/chat/room(roomId=${room.roomId})}" th:roomId="${room.roomId}" onclick="return chkRoomUserCnt(this.getAttribute('roomId'))">[[${room.roomName}]]</a>
+                        <a th:href="@{/chat/room(roomId=${room.roomId})}" th:roomId="${room.roomId}" onclick="return chkRoomUserCnt(this.getAttribute('roomId'));">[[${room.roomName}]]</a>
                     </td>
                     <td>
                         <span th:if="${room.secretChk}">
