@@ -153,7 +153,7 @@ public class ChatRepository {
 
             log.info("삭제 완료 roomId : {}", roomId);
 
-        } catch (Exception e) {
+        } catch (Exception e) { // 만약에 예외 발생시 확인하기 위해서 try catch
             System.out.println(e.getMessage());
         }
     }

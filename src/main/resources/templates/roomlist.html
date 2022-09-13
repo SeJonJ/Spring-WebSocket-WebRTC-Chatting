@@ -16,8 +16,8 @@
         let roomId;
 
         $(function(){
-            const $maxChk = $("#maxChk");
-            const $maxUserCnt = $("#maxUserCnt");
+            let $maxChk = $("#maxChk");
+            let $maxUserCnt = $("#maxUserCnt");
 
             // 모달창 열릴 때 이벤트 처리 => roomId 가져오기
             $("#enterRoomModal").on("show.bs.modal", function (event) {
@@ -46,7 +46,10 @@
                     },
                     success : function(result){
                         // console.log("동작완료")
-                        if(result){
+
+                        // result 의 결과에 따라서 아래 내용 실행
+                        if(result){ // true 일때는
+                            // $configRoomBtn 를 활성화 상태로 만들고 비밀번호 확인 완료를 출력
                             $configRoomBtn.attr("class", "btn btn-primary");
                             $configRoomBtn.attr("aria-disabled", false);
 
@@ -56,7 +59,8 @@
                                 "font-weight" : "bold",
                             });
 
-                        }else{
+                        }else{ // false 일때는
+                            // $configRoomBtn 를 비활성화 상태로 만들고 비밀번호가 틀립니다 문구를 출력
                             $configRoomBtn.attr("class", "btn btn-primary disabled");
                             $configRoomBtn.attr("aria-disabled", true);
 
@@ -77,6 +81,7 @@
             // 체크박스 체크에 따라 인원 설정칸 활성화 여부
             $maxChk.change(function(){
                 if($maxChk.is(':checked')){
+                    $maxUserCnt.val('');
                     $maxUserCnt.show();
                 }else{
                     $maxUserCnt.hide();
@@ -93,6 +98,7 @@
             let pwd = $("#roomPwd").val();
             let secret = $("#secret").is(':checked');
             let secretChk = $("#secretChk");
+            let $maxUserCnt = $("#maxUserCnt");
 
             // console.log("name : " + name);
             // console.log("pwd : " + pwd);
@@ -107,6 +113,12 @@
             }
             if (pwd === "") {
                 alert("비밀번호는 필수입니다")
+                return false;
+            }
+
+            // 최소 방 인원 수는 2
+            if($maxUserCnt.val() <= 1){
+                alert("혼자서는 채팅이 불가능해요ㅠ.ㅠ");
                 return false;
             }
 
@@ -132,11 +144,12 @@
                 },
                 success : function(result){
                     // console.log("동작완료")
-                    console.log("확인 : "+chkRoomUserCnt(roomId))
+                    // console.log("확인 : "+chkRoomUserCnt(roomId))
 
-                    if(result&&chkRoomUserCnt(roomId)){
-
-                        location.href = "/chat/room?roomId="+roomId;
+                    if(result){
+                        if (chkRoomUserCnt(roomId)) {
+                            location.href = "/chat/room?roomId="+roomId;
+                        }
                     }else{
                         alert("비밀번호가 틀립니다. \n 비밀번호를 확인해주세요")
                     }
@@ -153,13 +166,16 @@
         function chkRoomUserCnt(roomId){
             let chk;
 
+            // 비동기 처리 설정 false 로 변경 => ajax 통신이 완료된 후 return 문 실행
+            // 기본설정 async = true 인 경우에는 ajax 통신 후 결과가 나올 때까지 기다리지 않고 먼저 return 문이 실행되서
+            // 제대로된 값 - 원하는 값 - 이 return 되지 않아서 문제가 발생한다.
             $.ajax({
                 type : "GET",
                 url : "/chat/chkUserCnt/"+roomId,
                 async : false,
                 success : function(result){
 
-                    console.log("여기가 먼저")
+                    // console.log("여기가 먼저")
                     if (!result) {
                         alert("채팅방이 꽉 차서 입장 할 수 없습니다");
                     }
@@ -169,7 +185,6 @@
             })
             return chk;
         }
-
 
     </script>
     <style>
@@ -252,7 +267,7 @@
                     <div class="mb-3">
                         <label for="maxUserCnt" class="col-form-label">채팅방 인원 설정(미체크 시 기본 100명)
                             <input class="form-check-input" type="checkbox" id="maxChk"></label>
-                        <input type="text" class="form-control" id="maxUserCnt" name="maxUserCnt">
+                        <input type="text" class="form-control" id="maxUserCnt" name="maxUserCnt" value="100">
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="secret">
