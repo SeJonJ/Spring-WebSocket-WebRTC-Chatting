@@ -41,16 +41,17 @@ public class ChatRepository {
     }
 
     // roomName 로 채팅방 만들기
-    public ChatRoom createChatRoom(String roomName, String roomPwd, boolean secretChk){
+    public ChatRoom createChatRoom(String roomName, String roomPwd, boolean secretChk, int maxUserCnt){
         // roomName 와 roomPwd 로 chatRoom 빌드 후 return
 
         ChatRoom chatRoom = ChatRoom.builder()
                 .roomId(UUID.randomUUID().toString())
                 .roomName(roomName)
-                .roomPwd(roomPwd)
+                .roomPwd(roomPwd) // 채팅방 패스워드
+                .secretChk(secretChk) // 채팅방 잠금 여부
                 .userlist(new HashMap<String, String>())
-                .userCount(0)
-                .secretChk(secretChk)
+                .userCount(0) // 채팅방 참여 인원수
+                .maxUserCnt(maxUserCnt) // 최대 인원수 제한
                 .build();
 
         // map 에 채팅룸 아이디와 만들어진 채팅룸을 저장장
@@ -69,6 +70,19 @@ public class ChatRepository {
     public void minusUserCnt(String roomId){
         ChatRoom room = chatRoomMap.get(roomId);
         room.setUserCount(room.getUserCount()-1);
+    }
+
+    // maxUserCnt 에 따른 채팅방 입장 여부
+    public boolean chkRoomUserCnt(String roomId){
+        ChatRoom room = chatRoomMap.get(roomId);
+
+        log.info("참여인원 확인 [{}, {}]", room.getUserCount(), room.getMaxUserCnt());
+
+        if (room.getUserCount() + 1 > room.getMaxUserCnt()) {
+            return false;
+        }
+
+        return true;
     }
 
     // 채팅방 유저 리스트에 유저 추가
@@ -142,6 +156,5 @@ public class ChatRepository {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-
     }
 }

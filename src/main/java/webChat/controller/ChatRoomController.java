@@ -31,12 +31,14 @@ public class ChatRoomController {
     // 채팅방 생성
     // 채팅방 생성 후 다시 / 로 return
     @PostMapping("/chat/createroom")
-    public String createRoom(@RequestParam("roomName") String name, @RequestParam("roomPwd")String roomPwd, @RequestParam(value = "secretChk")String secretChk, RedirectAttributes rttr) {
+    public String createRoom(@RequestParam("roomName") String name, @RequestParam("roomPwd")String roomPwd, @RequestParam("secretChk")String secretChk,
+                             @RequestParam(value = "maxUserCnt", defaultValue = "100")String maxUserCnt,  RedirectAttributes rttr) {
 
 //        log.info("chk {}", secretChk);
-        ChatRoom room = chatRepository.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk));
+        // 매개변수 : 방 이름, 패스워드, 방 잠금 여부, 방 인원수
+        ChatRoom room = chatRepository.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt));
 
-//        log.info("CREATE Chat Room {}", room);
+        log.info("CREATE Chat Room [{}]", room);
 
         rttr.addFlashAttribute("roomName", room);
         return "redirect:/";
@@ -53,6 +55,7 @@ public class ChatRoomController {
         return "chatroom";
     }
 
+    // 채팅방 비밀번호 확인
     @PostMapping("/chat/confirmPwd/{roomId}")
     @ResponseBody
     public boolean confirmPwd(@PathVariable String roomId, @RequestParam String roomPwd){
@@ -62,6 +65,7 @@ public class ChatRoomController {
         return chatRepository.confirmPwd(roomId, roomPwd);
     }
 
+    // 채팅방 삭제
     @GetMapping("/chat/delRoom/{roomId}")
     public String delChatRoom(@PathVariable String roomId){
 
@@ -69,6 +73,13 @@ public class ChatRoomController {
         chatRepository.delChatRoom(roomId);
 
         return "redirect:/";
+    }
+
+    @GetMapping("/chat/chkUserCnt/{roomId}")
+    @ResponseBody
+    public boolean chUserCnt(@PathVariable String roomId){
+
+        return chatRepository.chkRoomUserCnt(roomId);
     }
 
 }

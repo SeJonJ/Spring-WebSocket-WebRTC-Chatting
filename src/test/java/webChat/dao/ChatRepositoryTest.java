@@ -18,7 +18,7 @@ class ChatRepositoryTest {
     ChatRoom room;
 
     void createRoom(){
-        room = repository.createChatRoom("newTEST", "newPwd", true);
+        room = repository.createChatRoom("newTEST", "newPwd", true, 120);
     }
 
     @Test
