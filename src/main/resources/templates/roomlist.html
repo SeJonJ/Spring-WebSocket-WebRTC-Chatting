@@ -11,6 +11,11 @@
             integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa"
             crossorigin="anonymous"></script>
 
+    <link rel="stylesheet"
+          href="https://use.fontawesome.com/releases/v5.1.0/css/all.css"
+          integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt"
+          crossorigin="anonymous">
+    <script src="/js/bootstrap-show-password.min.js"></script>
     <script th:inline="javascript">
 
         let roomId;
@@ -203,6 +208,15 @@
         input#maxUserCnt {
             width: 160px;
         }
+
+        span.input-group-text.input-password-hide {
+            height: 40px;
+        }
+
+        span.input-group-text.input-password-show {
+            height: 40px;
+        }
+
     </style>
 </head>
 <body>
@@ -262,7 +276,13 @@
                     </div>
                     <div class="mb-3">
                         <label for="roomPwd" class="col-form-label">방 설정 번호(방 삭제시 필요합니다)</label>
-                        <input type="text" class="form-control" id="roomPwd" name="roomPwd">
+                        <div class="input-group">
+
+                            <input type="password" name="roomPwd" id="roomPwd" class="form-control" data-toggle="password">
+                            <div class="input-group-append">
+                                <span class="input-group-text"><i class="fa fa-eye"></i></span>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="maxUserCnt" class="col-form-label">채팅방 인원 설정(미체크 시 기본 100명)

@@ -45,7 +45,12 @@ dependencies {
 	implementation 'com.google.code.gson:gson:2.9.0'
 
 	// aws s3
-	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.1.RELEASE'
+	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
+	// security
+	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security
+	implementation 'org.springframework.boot:spring-boot-starter-security:2.7.3'
+
 
 }
 
