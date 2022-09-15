@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
@@ -40,8 +40,9 @@
     <h2>Sorry! Your browser doesn't support Javascript</h2>
 </noscript>
 
+
 <div id="username-page">
-    <div class="username-page-container">
+    <div th:if="${user == null}" class="username-page-container">
         <h1 class="title">Type your username</h1>
         <form id="usernameForm" name="usernameForm">
             <div class="form-group">

@@ -224,11 +224,15 @@
     <div class="container">
 
         <h2>채팅방 리스트</h2>
-        <div class="row">
+
+        <div th:if="${user == null}" class="row">
             <div class="col">
                 <a href="/chatlogin"><button type="button" class="btn btn-primary">로그인하기</button></a>
             </div>
         </div>
+        <h5 th:if="${user != null}">
+            [[${user.userName}]]
+        </h5>
         <table class="table table-hover" id="table">
             <tr>
                 <th scope="col">채팅방명</th>

@@ -1,12 +1,12 @@
 package webChat.service.social;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import webChat.dto.ChatUser;
 
 // OAuth2 로그인 시 -> 즉 소셜 로그인 시 DefaultOAuth2UserService 아래의 loadUser 메서드가 실행됨
 // 즉 OAuth2 로그인 후 후처리 - 회원 가입, 회원 정보에 따른 등록 등 - 관현 클래스와 메서드에 해당함
@@ -25,7 +25,7 @@ public class PrincipalOauth2UserService extends DefaultOAuth2UserService {
         log.info("clientRegistration 정보 [{}] ", userRequest.getClientRegistration());
         log.info("accessToken 정보 [{}] ",userRequest.getAccessToken().getTokenValue());
 
-
+        return oAuth2UserLogin(userRequest, oauth2user);
     }
 
     private OAuth2User oAuth2UserLogin(OAuth2UserRequest userRequest, OAuth2User oAuth2User){
@@ -35,6 +35,22 @@ public class PrincipalOauth2UserService extends DefaultOAuth2UserService {
         // provider 정보 확인 => 어떤 SNS 로 로그인했는지 확인
         String provider = userRequest.getClientRegistration().getRegistrationId();
 
+        if ("kakao".equals(provider)) {
+            login = new KaKaoLogin(oAuth2User.getAttributes());
+        } else if ("naver".equals(provider)) {
+            login = new NaverLogin(oAuth2User.getAttributes());
+        }
 
+        ChatUser user = ChatUser.builder()
+                .userName(login.getNickName())
+                .email(login.getEmail())
+                .provider(login.getProvider())
+                .build();
+
+        // 다시 한번!! 왜 return new PrincipalDetails 가 가능한가?
+        // PrincipalDetails 는 OAuth2User 인터페이스를 를 구현한 구현 클래스이기 때문!!
+        // 또한 oAuth2User 를 동시에! 상속받았기 때문에 sns 유저에 역시 같이 들고 다닐 수 있다!!
+        // 이 정보들은 SecuritySession 의 Authentication 안에 담김
+        return new PrincipalDetails(user, oAuth2User.getAttributes(), "user");
     }
 }
