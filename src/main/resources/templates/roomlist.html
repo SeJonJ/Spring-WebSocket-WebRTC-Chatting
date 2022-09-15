@@ -15,7 +15,7 @@
           href="https://use.fontawesome.com/releases/v5.1.0/css/all.css"
           integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt"
           crossorigin="anonymous">
-    <script src="/js/bootstrap-show-password.min.js"></script>
+    <script src="/js/roomlist/bootstrap-show-password.min.js"></script>
     <script th:inline="javascript">
 
         let roomId;
@@ -222,7 +222,13 @@
 <body>
 <div class="container">
     <div class="container">
+
         <h2>채팅방 리스트</h2>
+        <div class="row">
+            <div class="col">
+                <a href="/chatlogin"><button type="button" class="btn btn-primary">로그인하기</button></a>
+            </div>
+        </div>
         <table class="table table-hover" id="table">
             <tr>
                 <th scope="col">채팅방명</th>

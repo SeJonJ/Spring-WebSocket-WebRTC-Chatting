@@ -1,11 +1,10 @@
 package webChat.dao;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import webChat.dto.ChatRoom;
-import webChat.service.FileService;
+import webChat.service.fileService.FileService;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
