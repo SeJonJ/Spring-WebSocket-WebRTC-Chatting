@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatUser {
-    private String userName;
-    private String email;
-    private String provider;
+    private String userName; // 소셜에서 제공받은 유저명 => 유저 닉네임
+    private String email; // 소셜에서 제공받은 이메일
+    private String provider; // 소셜 제공자 -> ex) 네이버, 카카오 ----
 }

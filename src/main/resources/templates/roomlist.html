@@ -287,7 +287,6 @@
                     <div class="mb-3">
                         <label for="roomPwd" class="col-form-label">방 설정 번호(방 삭제시 필요합니다)</label>
                         <div class="input-group">
-
                             <input type="password" name="roomPwd" id="roomPwd" class="form-control" data-toggle="password">
                             <div class="input-group-append">
                                 <span class="input-group-text"><i class="fa fa-eye"></i></span>
@@ -326,7 +325,12 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label for="roomName" class="col-form-label">방 비밀번호</label>
-                    <input type="text" class="form-control" id="enterPwd" name="enterPwd">
+                    <div class="input-group">
+                        <input type="password" name="roomPwd" id="enterPwd" class="form-control" data-toggle="password">
+                        <div class="input-group-append">
+                            <span class="input-group-text"><i class="fa fa-eye"></i></span>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -349,7 +353,12 @@
             </div>
             <div class="modal-body">
                 <label for="confirmPwd" class="col-form-label" id="confirmLabel">비밀번호 확인</label>
-                <input type="text" class="form-control" id="confirmPwd">
+                <div class="input-group">
+                    <input type="password" name="confirmPwd" id="confirmPwd" class="form-control" data-toggle="password">
+                    <div class="input-group-append">
+                        <span class="input-group-text"><i class="fa fa-eye"></i></span>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button id="configRoomBtn" class="btn btn-primary disabled" data-bs-target="#configRoomModal" data-bs-toggle="modal" aria-disabled="true">채팅방 설정하기</button>
@@ -367,15 +376,20 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="chPwd" class="col-form-label">비밀번호 변경</label>
-                        <input type="text" class="form-control" id="chPwd" name="roomName">
+                        <div class="input-group">
+                            <input type="password" name="confirmPwd" id="chPwd" class="form-control" data-toggle="password">
+                            <div class="input-group-append">
+                                <span class="input-group-text"><i class="fa fa-eye"></i></span>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="chRoomName" class="col-form-label">채팅방 이름 변경</label>
-                        <input type="text" class="form-control" id="chRoomName" name="roomPwd">
+                        <input type="text" class="form-control" id="chRoomName" name="chRoomName">
                     </div>
                     <div class="mb-3">
                         <label for="chRoomUserCnt" class="col-form-label">채팅방 인원 변경</label>
-                        <input type="text" class="form-control" id="chRoomUserCnt" name="roomPwd">
+                        <input type="text" class="form-control" id="chRoomUserCnt" name="chUserCnt">
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="chSecret">

@@ -7,8 +7,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import webChat.service.social.PrincipalOauth2UserService;
 
-import javax.annotation.PostConstruct;
-
 // springSecurity Config
 @Configuration
 @EnableWebSecurity
@@ -23,7 +21,7 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
         http.csrf().disable()
                     .authorizeHttpRequests()
                     // "/" 아래로 접근하는 모든 유저에 대해서 허용 => 즉 모든 경로에 대해서 허용
-                    // 일단 임시로 모든 경로에 대해서 허용해둠
+                    // 로그인 안해도 채팅은 가능하기 때문에 로그인 없이도 모든 경로에 접근할 수 있도록 설정
                     .antMatchers("/**").permitAll()
                 .and()
                     // Security 의 기본 login 페이지가 아닌 커스텀 페이지를 사용하기 위한 설정

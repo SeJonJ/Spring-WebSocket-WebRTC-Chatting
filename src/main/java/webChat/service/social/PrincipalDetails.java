@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+// SpringSecurity 를 이용한 로그인 시 세션에 저장되는 UserDetails, OAuth2User 를 상속받은
+// 구현 클래스
 @Data
 public class PrincipalDetails implements UserDetails, OAuth2User {
 
