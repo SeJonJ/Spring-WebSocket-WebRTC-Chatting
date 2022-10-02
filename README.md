@@ -1,4 +1,7 @@
 # SpringBoot WebSocket Chatting Project
+
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FSeJonJ%2FSpring-WebSocket-Chatting&count_bg=%233310C8&title_bg=%2316C86B&icon=&icon_color=%23E7E7E7&title=HITS&edge_flat=true)](https://hits.seeyoufarm.com)
+
 ## 0. Spring Boot 와 WebSocket 을 활용한 채팅 만들기 프로젝트
 - 개인적으로 정말정말 해보고 싶었던 실시간 채팅 만들기를 드디어 구현했습니다.
 - 사실 이전에 팀프로젝트로 만들었던 채팅이 있긴한데...정말 말도 안될정도로 조잡해서 아쉬웠는데
