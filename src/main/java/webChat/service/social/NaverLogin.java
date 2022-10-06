@@ -13,14 +13,12 @@ public class NaverLogin implements SocialLogin{
 
     @Override
     public String getProvider() {
-        // TODO Auto-generated method stub
 
         return "naver";
     }
 
     @Override
     public String getEmail() {
-        // TODO Auto-generated method stub
         Map<String, Object> map = (Map<String, Object>) naverAttributes.get("response");
 
         return (String) map.get("email");
@@ -28,7 +26,6 @@ public class NaverLogin implements SocialLogin{
 
     @Override
     public String getNickName() {
-        // TODO Auto-generated method stub
         Map<String, Object> map = (Map<String, Object>) naverAttributes.get("response");
         return (String) map.get("nickname");
     }

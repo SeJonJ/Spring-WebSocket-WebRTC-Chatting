@@ -44,7 +44,7 @@ public class PrincipalDetails implements UserDetails, OAuth2User {
 
     @Override
     public String getName() {
-        return user.getUserName();
+        return user.getNickName();
     }
 
     // 해당 유저의 권한을 return
@@ -73,7 +73,7 @@ public class PrincipalDetails implements UserDetails, OAuth2User {
 
     @Override
     public String getUsername() {
-        return user.getUserName();
+        return user.getNickName();
     }
 
     @Override

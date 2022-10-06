@@ -48,7 +48,7 @@ public class PrincipalOauth2UserService extends DefaultOAuth2UserService {
 
         // ChatUser 에 소셜 로그인 후 받아서 나눠진 정보를 담는다
         ChatUser user = ChatUser.builder()
-                .userName(login.getNickName())
+                .nickName(login.getNickName())
                 .email(login.getEmail())
                 .provider(login.getProvider())
                 .build();

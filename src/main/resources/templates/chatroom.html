@@ -49,7 +49,7 @@
                 <input type="text" id="name" placeholder="Username" autocomplete="off" class="form-control"/>
             </div>
             <div  th:if="${user != null}" class="form-group">
-                <input type="text" id="name" placeholder="Username" autocomplete="off" class="form-control" th:value="${user.userName}"/>
+                <input type="text" id="name" placeholder="Username" autocomplete="off" class="form-control" th:value="${user.nickName}"/>
             </div>
             <div class="form-group">
                 <button type="submit" class="accent username-submit">Start Chatting</button>

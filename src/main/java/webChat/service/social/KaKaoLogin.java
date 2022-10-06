@@ -15,15 +15,12 @@ public class KaKaoLogin implements SocialLogin{
     // 제공자 가져오기
     @Override
     public String getProvider() {
-        // TODO Auto-generated method stub
-
         return "kakao";
     }
 
     // 이메일 파싱해서 가져오기
     @Override
     public String getEmail() {
-        // TODO Auto-generated method stub
         HashMap<String, Object> account = (HashMap<String, Object>) kakaoAttributes.get("kakao_account");
 
         String email = (String) account.get("email");
@@ -35,7 +32,6 @@ public class KaKaoLogin implements SocialLogin{
     // 닉네임 파싱해서 가져오기
     @Override
     public String getNickName() {
-        // TODO Auto-generated method stub
         HashMap<String, Object> properties = (HashMap<String, Object>) kakaoAttributes.get("properties");
         String nickName = (String) properties.get("nickname");
 
