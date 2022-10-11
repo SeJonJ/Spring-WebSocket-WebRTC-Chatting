@@ -8,7 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import webChat.dao.ChatRepository;
-import webChat.dto.ChatRoom;
+import webChat.dto.ChatRoomDto;
 import webChat.service.social.PrincipalDetails;
 
 @Controller
@@ -49,7 +49,7 @@ public class ChatRoomController {
 
 //        log.info("chk {}", secretChk);
         // 매개변수 : 방 이름, 패스워드, 방 잠금 여부, 방 인원수
-        ChatRoom room = chatRepository.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt));
+        ChatRoomDto room = chatRepository.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt));
 
         log.info("CREATE Chat Room [{}]", room);
 

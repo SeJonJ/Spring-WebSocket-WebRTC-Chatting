@@ -3,7 +3,7 @@ package webChat.dao;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import webChat.dto.ChatRoom;
+import webChat.dto.ChatRoomDto;
 import webChat.service.fileService.FileService;
 
 import javax.annotation.PostConstruct;
@@ -14,7 +14,7 @@ import java.util.*;
 @Slf4j
 public class ChatRepository {
 
-    private Map<String, ChatRoom> chatRoomMap;
+    private Map<String, ChatRoomDto> chatRoomMap;
 
     @PostConstruct
     private void init() {
@@ -26,7 +26,7 @@ public class ChatRepository {
     FileService fileService;
 
     // 전체 채팅방 조회
-    public List<ChatRoom> findAllRoom(){
+    public List<ChatRoomDto> findAllRoom(){
         // 채팅방 생성 순서를 최근순으로 반환
         List chatRooms = new ArrayList<>(chatRoomMap.values());
         Collections.reverse(chatRooms);
@@ -35,15 +35,15 @@ public class ChatRepository {
     }
 
     // roomID 기준으로 채팅방 찾기
-    public ChatRoom findRoomById(String roomId){
+    public ChatRoomDto findRoomById(String roomId){
         return chatRoomMap.get(roomId);
     }
 
     // roomName 로 채팅방 만들기
-    public ChatRoom createChatRoom(String roomName, String roomPwd, boolean secretChk, int maxUserCnt){
+    public ChatRoomDto createChatRoom(String roomName, String roomPwd, boolean secretChk, int maxUserCnt){
         // roomName 와 roomPwd 로 chatRoom 빌드 후 return
 
-        ChatRoom chatRoom = ChatRoom.builder()
+        ChatRoomDto chatRoomDto = ChatRoomDto.builder()
                 .roomId(UUID.randomUUID().toString())
                 .roomName(roomName)
                 .roomPwd(roomPwd) // 채팅방 패스워드
@@ -54,26 +54,26 @@ public class ChatRepository {
                 .build();
 
         // map 에 채팅룸 아이디와 만들어진 채팅룸을 저장장
-       chatRoomMap.put(chatRoom.getRoomId(), chatRoom);
+       chatRoomMap.put(chatRoomDto.getRoomId(), chatRoomDto);
 
-        return chatRoom;
+        return chatRoomDto;
     }
 
     // 채팅방 인원+1
     public void plusUserCnt(String roomId){
-        ChatRoom room = chatRoomMap.get(roomId);
+        ChatRoomDto room = chatRoomMap.get(roomId);
         room.setUserCount(room.getUserCount()+1);
     }
 
     // 채팅방 인원-1
     public void minusUserCnt(String roomId){
-        ChatRoom room = chatRoomMap.get(roomId);
+        ChatRoomDto room = chatRoomMap.get(roomId);
         room.setUserCount(room.getUserCount()-1);
     }
 
     // maxUserCnt 에 따른 채팅방 입장 여부
     public boolean chkRoomUserCnt(String roomId){
-        ChatRoom room = chatRoomMap.get(roomId);
+        ChatRoomDto room = chatRoomMap.get(roomId);
 
         log.info("참여인원 확인 [{}, {}]", room.getUserCount(), room.getMaxUserCnt());
 
@@ -86,7 +86,7 @@ public class ChatRepository {
 
     // 채팅방 유저 리스트에 유저 추가
     public String addUser(String roomId, String userName){
-        ChatRoom room = chatRoomMap.get(roomId);
+        ChatRoomDto room = chatRoomMap.get(roomId);
         String userUUID = UUID.randomUUID().toString();
 
         // 아이디 중복 확인 후 userList 에 추가
@@ -97,7 +97,7 @@ public class ChatRepository {
 
     // 채팅방 유저 이름 중복 확인
     public String isDuplicateName(String roomId, String username){
-        ChatRoom room = chatRoomMap.get(roomId);
+        ChatRoomDto room = chatRoomMap.get(roomId);
         String tmp = username;
 
         // 만약 userName 이 중복이라면 랜덤한 숫자를 붙임
@@ -113,13 +113,13 @@ public class ChatRepository {
 
     // 채팅방 유저 리스트 삭제
     public void delUser(String roomId, String userUUID){
-        ChatRoom room = chatRoomMap.get(roomId);
+        ChatRoomDto room = chatRoomMap.get(roomId);
         room.getUserlist().remove(userUUID);
     }
 
     // 채팅방 userName 조회
     public String getUserName(String roomId, String userUUID){
-        ChatRoom room = chatRoomMap.get(roomId);
+        ChatRoomDto room = chatRoomMap.get(roomId);
         return room.getUserlist().get(userUUID);
     }
 
@@ -127,7 +127,7 @@ public class ChatRepository {
     public ArrayList<String> getUserList(String roomId){
         ArrayList<String> list = new ArrayList<>();
 
-        ChatRoom room = chatRoomMap.get(roomId);
+        ChatRoomDto room = chatRoomMap.get(roomId);
 
         // hashmap 을 for 문을 돌린 후
         // value 값만 뽑아내서 list 에 저장 후 reutrn

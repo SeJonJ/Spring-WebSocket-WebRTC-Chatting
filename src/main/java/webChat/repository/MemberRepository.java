@@ -1,8 +1,8 @@
 package webChat.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import webChat.Entity.ChatUserEntity;
+import webChat.Entity.ChatUser;
 
-public interface MemberRepository extends JpaRepository<ChatUserEntity, Long> {
+public interface MemberRepository extends JpaRepository<ChatUser, Long> {
 
 }

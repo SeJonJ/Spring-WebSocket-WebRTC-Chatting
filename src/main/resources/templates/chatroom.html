@@ -33,6 +33,10 @@
             cursor: pointer;
             font-size: 20px;
         }
+
+        .input-group{width:80.5%}
+        .chat-container{position: relative;}
+        .chat-container .btn-group{position:absolute; bottom:-12px; right:-50px; transform: translate(-50%,-50%);}
     </style>
 </head>
 <body>
@@ -69,17 +73,6 @@
 
         </div>
     </div>
-    <div class="btn-group dropend">
-        <button class="btn btn-secondary dropdown-toggle" type="button" id="showMenu" data-toggle="dropdown"
-                aria-haspopup="true" aria-expanded="false">
-            파일 업로드
-        </button>
-        <div id="menu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <input type="file" id="file">
-            <button type="button" class="btn btn-primary" id="uploadFile" onclick="uploadFile()">저장</button>
-
-        </div>
-    </div>
     <div class="chat-container">
         <div class="chat-header">
             <h2>[[${room.roomName}]]</h2>
@@ -99,6 +92,18 @@
                 </div>
             </div>
         </form>
+
+        <div class="btn-group dropend">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="showMenu" data-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">
+                파일 업로드
+            </button>
+            <div id="menu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <input type="file" id="file">
+                <button type="button" class="btn btn-primary" id="uploadFile" onclick="uploadFile()">저장</button>
+
+            </div>
+        </div>
     </div>
 
 </div>

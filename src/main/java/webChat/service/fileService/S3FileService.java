@@ -32,6 +32,7 @@ public class S3FileService implements FileService{
     // AmazonS3 주입받기
     private final AmazonS3 amazonS3;
 
+    // application.properties 에 설정한 변수들을 가져와서 사용할 수 있게 함
     // S3 bucket 이름
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -103,7 +104,7 @@ public class S3FileService implements FileService{
         S3ObjectInputStream objectInputStream = object.getObjectContent();
 
         // 이후 다시 byte 배열 형태로 변환한다.
-        // 아마도 파일 다운로드를 위해서는 byte 형태로 변환할 필요가 있어서 그런듯하다
+        // 아마도 파일 전송을 위해서는 다시 byte[] 즉, binary 로 변환해서 전달해야햐기 때문
         byte[] bytes = IOUtils.toByteArray(objectInputStream);
 
         // 여기는 httpHeader 에 파일 다운로드 요청을 하기 위한내용

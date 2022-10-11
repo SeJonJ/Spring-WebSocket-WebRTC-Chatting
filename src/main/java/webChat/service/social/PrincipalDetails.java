@@ -4,7 +4,7 @@ import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import webChat.dto.ChatUser;
+import webChat.dto.ChatUserDto;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,7 +16,7 @@ import java.util.Map;
 public class PrincipalDetails implements UserDetails, OAuth2User {
 
     // ChatUserDTO
-    private ChatUser user;
+    private ChatUserDto user;
 
     // 소셜 로그인 유저의 정보 확인을 위한 attributes
     private Map<String, Object> attributes;
@@ -25,13 +25,13 @@ public class PrincipalDetails implements UserDetails, OAuth2User {
     private String provider;
 
     // 일반 유저
-    public PrincipalDetails(ChatUser user, String provider) {
+    public PrincipalDetails(ChatUserDto user, String provider) {
         this.user = user;
         this.provider = provider;
     }
 
     // OAuth2User 유저 -> 소셜 로그인 유저
-    public PrincipalDetails(ChatUser user, Map<String, Object> attributes, String provider){
+    public PrincipalDetails(ChatUserDto user, Map<String, Object> attributes, String provider){
         this.user = user;
         this.attributes = attributes;
         this.provider = provider;
