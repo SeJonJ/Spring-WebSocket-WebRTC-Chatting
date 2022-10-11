@@ -23,5 +23,7 @@ public class ChatUser {
 
     private String email;
 
+    private String passwd; // 유저 패스워드
+
     private String provider;
 }

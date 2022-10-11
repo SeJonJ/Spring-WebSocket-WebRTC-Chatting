@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import webChat.dao.ChatRepository;
+import webChat.service.ChatService;
 import webChat.dto.ChatDTO;
 
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class ChatController {
     private final SimpMessageSendingOperations template;
 
     @Autowired
-    ChatRepository repository;
+    ChatService chatService;
 
     // MessageMapping 을 통해 webSocket 로 들어오는 메시지를 발신 처리한다.
     // 이때 클라이언트에서는 /pub/chat/message 로 요청하게 되고 이것을 controller 가 받아서 처리한다.
@@ -39,10 +39,10 @@ public class ChatController {
     public void enterUser(@Payload ChatDTO chat, SimpMessageHeaderAccessor headerAccessor) {
 
         // 채팅방 유저+1
-        repository.plusUserCnt(chat.getRoomId());
+        chatService.plusUserCnt(chat.getRoomId());
 
         // 채팅방에 유저 추가 및 UserUUID 반환
-        String userUUID = repository.addUser(chat.getRoomId(), chat.getSender());
+        String userUUID = chatService.addUser(chat.getRoomId(), chat.getSender());
 
         // 반환 결과를 socket session 에 userUUID 로 저장
         headerAccessor.getSessionAttributes().put("userUUID", userUUID);
@@ -76,11 +76,11 @@ public class ChatController {
         log.info("headAccessor {}", headerAccessor);
 
         // 채팅방 유저 -1
-        repository.minusUserCnt(roomId);
+        chatService.minusUserCnt(roomId);
 
         // 채팅방 유저 리스트에서 UUID 유저 닉네임 조회 및 리스트에서 유저 삭제
-        String username = repository.getUserName(roomId, userUUID);
-        repository.delUser(roomId, userUUID);
+        String username = chatService.getUserName(roomId, userUUID);
+        chatService.delUser(roomId, userUUID);
 
         if (username != null) {
             log.info("User Disconnected : " + username);
@@ -101,7 +101,7 @@ public class ChatController {
     @ResponseBody
     public ArrayList<String> userList(String roomId) {
 
-        return repository.getUserList(roomId);
+        return chatService.getUserList(roomId);
     }
 
     // 채팅에 참여한 유저 닉네임 중복 확인
@@ -110,7 +110,7 @@ public class ChatController {
     public String isDuplicateName(@RequestParam("roomId") String roomId, @RequestParam("username") String username) {
 
         // 유저 이름 확인
-        String userName = repository.isDuplicateName(roomId, username);
+        String userName = chatService.isDuplicateName(roomId, username);
         log.info("동작확인 {}", userName);
 
         return userName;

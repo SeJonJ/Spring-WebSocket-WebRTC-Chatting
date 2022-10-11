@@ -1,8 +1,8 @@
-package webChat.dao;
+package webChat.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 import webChat.dto.ChatRoomDto;
 import webChat.service.fileService.FileService;
 
@@ -10,9 +10,9 @@ import javax.annotation.PostConstruct;
 import java.util.*;
 
 // 추후 DB 와 연결 시 Service 와 Repository(DAO) 로 분리 예정
-@Repository
+@Service
 @Slf4j
-public class ChatRepository {
+public class ChatService {
 
     private Map<String, ChatRoomDto> chatRoomMap;
 
@@ -28,7 +28,7 @@ public class ChatRepository {
     // 전체 채팅방 조회
     public List<ChatRoomDto> findAllRoom(){
         // 채팅방 생성 순서를 최근순으로 반환
-        List chatRooms = new ArrayList<>(chatRoomMap.values());
+        List<ChatRoomDto> chatRooms = new ArrayList<>(chatRoomMap.values());
         Collections.reverse(chatRooms);
 
         return chatRooms;

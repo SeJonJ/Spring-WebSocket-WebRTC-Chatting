@@ -59,8 +59,18 @@ dependencies {
 	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:2.7.2'
 
+	// mapstruct
 	// https://mvnrepository.com/artifact/org.mapstruct/mapstruct
 	implementation group: 'org.mapstruct', name: 'mapstruct', version: '1.4.2.Final'
+
+	// https://mvnrepository.com/artifact/org.mapstruct/mapstruct-processor
+	annotationProcessor group: 'org.mapstruct', name: 'mapstruct-processor', version: '1.4.2.Final'
+
+	// mapstruct - lombok
+	implementation 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+	// https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
 
 }
 

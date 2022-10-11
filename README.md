@@ -1,5 +1,4 @@
 # SpringBoot WebSocket Chatting Project
-
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FSeJonJ%2FSpring-WebSocket-Chatting&count_bg=%233310C8&title_bg=%2316C86B&icon=&icon_color=%23E7E7E7&title=HITS&edge_flat=true)](https://hits.seeyoufarm.com)
 
 ## 0. Spring Boot 와 WebSocket 을 활용한 채팅 만들기 프로젝트
@@ -7,7 +6,10 @@
 - 사실 이전에 팀프로젝트로 만들었던 채팅이 있긴한데...정말 말도 안될정도로 조잡해서 아쉬웠는데
 - 이번에야말로 드디어 제대로된? 실시간 채팅을 구현했습니다!
 
-- 다음 목표는 DB 와 연결, 로그인 후 채팅 기능입니다
+
+### 브랜치별 설명
+- master : DB 연결 없는 브랜치
+- master-jpa : jpa 를 사용한 DB 연결 브랜치
 
 ## 1. 사용기술
 - Java 8
