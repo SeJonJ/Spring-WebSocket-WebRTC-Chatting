@@ -1,6 +1,7 @@
 package webChat.service;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import webChat.mapper.ChatUserMapper;
 
 @SpringBootTest
 @Transactional
+@Slf4j
 class ChatServiceTest {
 
     @Autowired
@@ -65,8 +67,12 @@ class ChatServiceTest {
     @Test
     @DisplayName("객체 Mapping")
     void entityToDtoMapping(){
-        ChatUserDto dto = ChatUserMapper.INSTANCE.toDto(createUser());
+        ChatUser user = createUser();
+        log.info("Entity 출력 : {}", user.getClass());
 
-        System.out.println("출력 : "+ dto.getId() + " " + dto.getNickName() + " " + dto.getEmail());
+        ChatUserDto dto = ChatUserMapper.INSTANCE.toDto(user);
+
+        log.info("DTO 출력 : {}", dto.getClass());
+        log.info("내용 출력 : [{} {}]", dto.getId(), dto.getNickName());
     }
 }

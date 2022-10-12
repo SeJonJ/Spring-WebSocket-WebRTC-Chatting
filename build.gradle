@@ -28,6 +28,9 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+
 	// MySQL DB
 	implementation 'mysql:mysql-connector-java'
 
@@ -69,8 +72,6 @@ dependencies {
 	// mapstruct - lombok
 	implementation 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
-	// https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
 
 }
 
