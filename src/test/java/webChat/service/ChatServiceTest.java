@@ -11,6 +11,7 @@ import webChat.Entity.ChatUser;
 import webChat.dto.ChatRoomDto;
 import webChat.dto.ChatUserDto;
 import webChat.mapper.ChatUserMapper;
+import webChat.service.ChatService.ChatService;
 
 
 @SpringBootTest

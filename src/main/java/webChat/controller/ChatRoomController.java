@@ -2,13 +2,12 @@ package webChat.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import webChat.service.ChatService;
+import webChat.service.ChatService.ChatService;
 import webChat.dto.ChatRoomDto;
 import webChat.service.social.PrincipalDetails;
 
