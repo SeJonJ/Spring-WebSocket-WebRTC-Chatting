@@ -1,5 +1,6 @@
 package webChat.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,40 +13,18 @@ import webChat.dto.ChatRoomDto;
 import webChat.service.social.PrincipalDetails;
 
 @Controller
+@RequiredArgsConstructor
 @Slf4j
 public class ChatRoomController {
 
     // ChatRepository Bean 가져오기
-    @Autowired
-    private ChatService chatService;
-
-    // 채팅 리스트 화면
-    // / 로 요청이 들어오면 전체 채팅룸 리스트를 담아서 return
-
-    // 스프링 시큐리티의 로그인 유저 정보는 Security 세션의 PrincipalDetails 안에 담긴다
-    // 정확히는 PrincipalDetails 안에 ChatUser 객체가 담기고, 이것을 가져오면 된다.
-    @GetMapping("/")
-    public String goChatRoom(Model model, @AuthenticationPrincipal PrincipalDetails principalDetails){
-
-        model.addAttribute("list", chatService.findAllRoom());
-
-        // principalDetails 가 null 이 아니라면 로그인 된 상태!!
-        if (principalDetails != null) {
-            // 세션에서 로그인 유저 정보를 가져옴
-            model.addAttribute("user", principalDetails.getUser());
-            log.info("user [{}] ",principalDetails);
-        }
-
-//        model.addAttribute("user", "hey");
-        log.info("SHOW ALL ChatList {}", chatService.findAllRoom());
-        return "roomlist";
-    }
+    private final ChatService chatService;
 
     // 채팅방 생성
     // 채팅방 생성 후 다시 / 로 return
     @PostMapping("/chat/createroom")
-    public String createRoom(@RequestParam("roomName") String name, @RequestParam("roomPwd")String roomPwd, @RequestParam("secretChk")String secretChk,
-                             @RequestParam(value = "maxUserCnt", defaultValue = "100")String maxUserCnt,  RedirectAttributes rttr) {
+    public String createRoom(@RequestParam("roomName") String name, @RequestParam("roomPwd") String roomPwd, @RequestParam("secretChk") String secretChk,
+                             @RequestParam(value = "maxUserCnt", defaultValue = "100") String maxUserCnt, RedirectAttributes rttr) {
 
 //        log.info("chk {}", secretChk);
         // 매개변수 : 방 이름, 패스워드, 방 잠금 여부, 방 인원수
