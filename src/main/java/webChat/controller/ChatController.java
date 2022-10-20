@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import webChat.service.ChatService.ChatService;
 import webChat.dto.ChatDTO;
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 
 @Slf4j
 @RequiredArgsConstructor
-@Controller
+@RestController
 public class ChatController {
 
     // 아래에서 사용되는 convertAndSend 를 사용하기 위해서 서언

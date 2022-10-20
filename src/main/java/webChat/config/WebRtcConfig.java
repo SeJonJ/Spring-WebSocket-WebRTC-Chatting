@@ -7,6 +7,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
+import webChat.util.SignalHandler;
 
 @Configuration
 @EnableWebSocket // 웹 소켓에 대해 자동 설정
