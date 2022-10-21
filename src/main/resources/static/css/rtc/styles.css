@@ -1,0 +1,30 @@
+body {
+    background: #525b63;
+}
+
+#selectedVideosContainer, #remoteVideosContainer {
+    text-align: center;
+    background: #525b63;
+    margin: 20px;
+}
+
+#remoteView, #selfView {
+    background: #000000;
+    display: inline;
+    height: 360px;
+    width: 480px;
+    margin: 20px;
+}
+
+.videoElement {
+    background: #525b63;
+    border: 12px solid #303e4a;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+}
+
+.videoElement.active {
+    border: 12px solid #FFFFFF;
+}
+

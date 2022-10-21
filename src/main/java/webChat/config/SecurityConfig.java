@@ -1,10 +1,12 @@
 package webChat.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.SecurityFilterChain;
 import webChat.service.social.PrincipalOauth2UserService;
 
 // springSecurity Config
@@ -38,5 +40,8 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
                     .userInfoEndpoint()
                     // SNS 로그인이 완료된 뒤 후처리가 필요함. 엑세스토큰+사용자프로필 정보
                     .userService(principalOauth2UserService);
+        http.requiresChannel(channel ->
+                channel.anyRequest().requiresSecure());
     }
+
 }

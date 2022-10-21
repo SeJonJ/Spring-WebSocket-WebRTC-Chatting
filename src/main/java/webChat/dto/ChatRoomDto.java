@@ -31,5 +31,4 @@ public class ChatRoomDto {
     // 화상 채팅을 위한 WebSocket 와 String 연결
     private final Map<String, WebSocketSession> clients = new HashMap<>();
 
-
 }

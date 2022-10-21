@@ -1,17 +1,17 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
-    <title>WebRtc tutorial</title>
+    <title>Spring Boot WebRTC Demo</title>
+    <link href="/css/rtc/styles.css" rel="stylesheet" type="text/css">
 </head>
-
-<body>
-<h1>WebRTC Chatting</h1>
-<div>
-    <video id="localVideo" autoplay width="480px"></video>
-    <video id="remoteVideo" width="480px" autoplay></video>
+<body onbeforeunload="disconnect();">
+<div id="selectedVideosContainer">
+    <video id="remoteView"></video>
+    <video id="selfView"></video>
 </div>
+<div id="remoteVideosContainer"></div>
 
-<script src="/js/rtc/rtc.js"/>
+<script src='/js/rtc/adapter-latest.js'></script>
+<script src='/js/rtc/main.js'></script>
 </body>
-
 </html>
