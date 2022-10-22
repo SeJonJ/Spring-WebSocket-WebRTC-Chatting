@@ -1,4 +1,4 @@
-const PORT = 8080;
+const PORT = 8443;
 const MAPPING = "/signal";
 const peerConnectionConfig = {
     'iceServers': [
@@ -20,7 +20,7 @@ var container = document.getElementById("remoteVideosContainer");
 function init() {
 
     // get a local stream, show it in a self-view and add it to be sent
-    navigator.mediaDevices.getUserMedia({video: true, audio: false}).then(function (stream) {
+    navigator.mediaDevices.getUserMedia({video: true, audio: true}).then(function (stream) {
         console.log("Stream OK");
         localStream = stream;
         selfView.srcObject = localStream;

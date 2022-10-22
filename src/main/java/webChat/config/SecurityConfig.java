@@ -1,6 +1,12 @@
 package webChat.config;
 
+import org.apache.catalina.Context;
+import org.apache.catalina.connector.Connector;
+import org.apache.tomcat.util.descriptor.web.SecurityCollection;
+import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -40,8 +46,8 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
                     .userInfoEndpoint()
                     // SNS 로그인이 완료된 뒤 후처리가 필요함. 엑세스토큰+사용자프로필 정보
                     .userService(principalOauth2UserService);
-        http.requiresChannel(channel ->
-                channel.anyRequest().requiresSecure());
+//        http.requiresChannel(channel ->
+//                channel.anyRequest().requiresSecure());
     }
 
 }
