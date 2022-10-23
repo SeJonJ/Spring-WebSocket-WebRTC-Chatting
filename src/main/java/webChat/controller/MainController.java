@@ -38,8 +38,4 @@ public class MainController {
         return "roomlist";
     }
 
-    @GetMapping("/rtc")
-    public String webRTC() {
-        return "rtc";
-    }
 }

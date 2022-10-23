@@ -28,16 +28,15 @@ public class SslConfig {
             }
         };
 
-        // Add HTTP to HTTPS redirect
+        // Add HTTP to HTTPS redirect : http 로 요청이 들어오면 https 로 리다이렉트
         tomcat.addAdditionalTomcatConnectors(httpToHttpsRedirectConnector());
 
         return tomcat;
     }
 
     /*
-        We need to redirect from HTTP to HTTPS. Without SSL, this application used
-        port 8080. With SSL it will use port 8443. So, any request for 8080 needs to be
-        redirected to HTTPS on 8443.
+        http 를 https 로 리다이렉트한다.
+        즉 http://8080 으로 요청이 들어온 경우 리다이렉트를 통해서 https://8443 으로 변경해준다
      */
     private Connector httpToHttpsRedirectConnector() {
         Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);
