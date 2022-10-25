@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import webChat.repository.ChatUserRepository;
-import webChat.service.ChatService.ChatService;
+import webChat.service.ChatService.MsgChatService;
 
 @SpringBootTest
 @Transactional
@@ -17,7 +17,7 @@ class ChatUserTest {
     ChatUserRepository chatUserRepository;
 
     @Autowired
-    ChatService chatService;
+    MsgChatService msgChatService;
 
 
     public ChatUser createUser(){

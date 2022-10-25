@@ -7,8 +7,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import webChat.service.ChatService.ChatService;
+import webChat.service.ChatService.ChatServiceMain;
+import webChat.service.ChatService.MsgChatService;
 import webChat.dto.ChatRoomDto;
+import webChat.service.ChatService.RtcChatService;
 import webChat.service.social.PrincipalDetails;
 
 @Controller
@@ -16,8 +18,8 @@ import webChat.service.social.PrincipalDetails;
 @Slf4j
 public class ChatRoomController {
 
-    // ChatRepository Bean 가져오기
-    private final ChatService chatService;
+    // ChatService Bean 가져오기
+    private final ChatServiceMain chatServiceMain;
 
     // 채팅방 생성
     // 채팅방 생성 후 다시 / 로 return
@@ -27,7 +29,12 @@ public class ChatRoomController {
 
 //        log.info("chk {}", secretChk);
         // 매개변수 : 방 이름, 패스워드, 방 잠금 여부, 방 인원수
-        ChatRoomDto room = chatService.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt), chatType);
+        ChatRoomDto room;
+        if(chatType.equals("msgChat")){
+            room = chatServiceMain.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt), chatType);
+        }else{
+            room = chatServiceMain.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt), chatType);
+        }
 
         log.info("CREATE Chat Room [{}]", room);
 
@@ -49,8 +56,16 @@ public class ChatRoomController {
             model.addAttribute("user", principalDetails.getUser());
         }
 
-        model.addAttribute("room", chatService.findRoomById(roomId));
-        return "chatroom";
+        ChatRoomDto room = chatServiceMain.getChatRoomMap().get(roomId);
+
+        model.addAttribute("room", room);
+
+
+        if (ChatRoomDto.ChatType.MSG.equals(room.getChatType())) {
+            return "chatroom";
+        }else{
+            return "rtcroom";
+        }
     }
 
     // 채팅방 비밀번호 확인
@@ -60,7 +75,7 @@ public class ChatRoomController {
 
         // 넘어온 roomId 와 roomPwd 를 이용해서 비밀번호 찾기
         // 찾아서 입력받은 roomPwd 와 room pwd 와 비교해서 맞으면 true, 아니면  false
-        return chatService.confirmPwd(roomId, roomPwd);
+        return chatServiceMain.confirmPwd(roomId, roomPwd);
     }
 
     // 채팅방 삭제
@@ -68,7 +83,7 @@ public class ChatRoomController {
     public String delChatRoom(@PathVariable String roomId){
 
         // roomId 기준으로 chatRoomMap 에서 삭제, 해당 채팅룸 안에 있는 사진 삭제
-        chatService.delChatRoom(roomId);
+        chatServiceMain.delChatRoom(roomId);
 
         return "redirect:/";
     }
@@ -78,7 +93,7 @@ public class ChatRoomController {
     @ResponseBody
     public boolean chUserCnt(@PathVariable String roomId){
 
-        return chatService.chkRoomUserCnt(roomId);
+        return chatServiceMain.chkRoomUserCnt(roomId);
     }
 
 }

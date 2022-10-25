@@ -32,9 +32,10 @@ public class ChatRoomDto {
 
     // TODO 여기를 어떻게 고칠 건지 생각해볼것!!
     // 클래스를 따로 나눌지 아니면 하나로 하면서 할지 고민해야함
-    private Map<String, String> userList;
+    private Map<String, ?> userList;
 
 //    // 화상 채팅을 위한 WebSocket 와 String 연결
 //    private Map<String, WebSocketSession> clients = new HashMap<>();
+
 
 }

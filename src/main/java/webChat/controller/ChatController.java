@@ -8,13 +8,13 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import webChat.service.ChatService.ChatService;
+import webChat.service.ChatService.ChatServiceMain;
+import webChat.service.ChatService.MsgChatService;
 import webChat.dto.ChatDTO;
 
 import java.util.ArrayList;
@@ -29,7 +29,8 @@ public class ChatController {
     // convertAndSend 는 객체를 인자로 넘겨주면 자동으로 Message 객체로 변환 후 도착지로 전송한다.
     private final SimpMessageSendingOperations template;
 
-    private final ChatService chatService;
+    private final MsgChatService msgChatService;
+    private final ChatServiceMain chatServiceMain;
 
     // MessageMapping 을 통해 webSocket 로 들어오는 메시지를 발신 처리한다.
     // 이때 클라이언트에서는 /pub/chat/message 로 요청하게 되고 이것을 controller 가 받아서 처리한다.
@@ -38,10 +39,10 @@ public class ChatController {
     public void enterUser(@Payload ChatDTO chat, SimpMessageHeaderAccessor headerAccessor) {
 
         // 채팅방 유저+1
-        chatService.plusUserCnt(chat.getRoomId());
+        chatServiceMain.plusUserCnt(chat.getRoomId());
 
         // 채팅방에 유저 추가 및 UserUUID 반환
-        String userUUID = chatService.addUser(chat.getRoomId(), chat.getSender());
+        String userUUID = msgChatService.addUser(chatServiceMain.getChatRoomMap(), chat.getRoomId(), chat.getSender());
 
         // 반환 결과를 socket session 에 userUUID 로 저장
         headerAccessor.getSessionAttributes().put("userUUID", userUUID);
@@ -75,11 +76,11 @@ public class ChatController {
         log.info("headAccessor {}", headerAccessor);
 
         // 채팅방 유저 -1
-        chatService.minusUserCnt(roomId);
+        chatServiceMain.minusUserCnt(roomId);
 
         // 채팅방 유저 리스트에서 UUID 유저 닉네임 조회 및 리스트에서 유저 삭제
-        String username = chatService.getUserName(roomId, userUUID);
-        chatService.delUser(roomId, userUUID);
+        String username = msgChatService.findUserNameByRoomIdAndUserUUID(chatServiceMain.getChatRoomMap(), roomId, userUUID);
+        msgChatService.delUser(chatServiceMain.getChatRoomMap(), roomId, userUUID);
 
         if (username != null) {
             log.info("User Disconnected : " + username);
@@ -100,7 +101,7 @@ public class ChatController {
     @ResponseBody
     public ArrayList<String> userList(String roomId) {
 
-        return chatService.getUserList(roomId);
+        return msgChatService.getUserList(chatServiceMain.getChatRoomMap(), roomId);
     }
 
     // 채팅에 참여한 유저 닉네임 중복 확인
@@ -109,7 +110,7 @@ public class ChatController {
     public String isDuplicateName(@RequestParam("roomId") String roomId, @RequestParam("username") String username) {
 
         // 유저 이름 확인
-        String userName = chatService.isDuplicateName(roomId, username);
+        String userName = msgChatService.isDuplicateName(chatServiceMain.getChatRoomMap(), roomId, username);
         log.info("동작확인 {}", userName);
 
         return userName;

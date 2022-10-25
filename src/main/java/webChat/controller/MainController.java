@@ -6,7 +6,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import webChat.service.ChatService.ChatService;
+import webChat.service.ChatService.ChatServiceMain;
+import webChat.service.ChatService.MsgChatService;
 import webChat.service.social.PrincipalDetails;
 
 @Controller
@@ -14,7 +15,7 @@ import webChat.service.social.PrincipalDetails;
 @Slf4j
 public class MainController {
 
-    private final ChatService chatService;
+    private final ChatServiceMain chatServiceMain;
 
     // 채팅 리스트 화면
     // / 로 요청이 들어오면 전체 채팅룸 리스트를 담아서 return
@@ -24,7 +25,7 @@ public class MainController {
     @GetMapping("/")
     public String goChatRoom(Model model, @AuthenticationPrincipal PrincipalDetails principalDetails){
 
-        model.addAttribute("list", chatService.findAllRoom());
+        model.addAttribute("list", chatServiceMain.findAllRoom());
 
         // principalDetails 가 null 이 아니라면 로그인 된 상태!!
         if (principalDetails != null) {
@@ -34,7 +35,7 @@ public class MainController {
         }
 
 //        model.addAttribute("user", "hey");
-        log.info("SHOW ALL ChatList {}", chatService.findAllRoom());
+        log.info("SHOW ALL ChatList {}", chatServiceMain.findAllRoom());
         return "roomlist";
     }
 
