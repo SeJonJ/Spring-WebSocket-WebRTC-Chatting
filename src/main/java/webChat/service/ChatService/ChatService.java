@@ -1,5 +1,6 @@
 package webChat.service.ChatService;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import java.util.*;
 // 추후 DB 와 연결 시 Service 와 Repository(DAO) 로 분리 예정
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class ChatService {
 
     private Map<String, ChatRoomDto> chatRoomMap;
@@ -22,8 +24,7 @@ public class ChatService {
     }
 
     // 채팅방 삭제에 따른 채팅방의 사진 삭제를 위한 fileService 선언
-    @Autowired
-    FileService fileService;
+    private final FileService fileService;
 
     // 전체 채팅방 조회
     public List<ChatRoomDto> findAllRoom(){
@@ -40,9 +41,9 @@ public class ChatService {
     }
 
     // roomName 로 채팅방 만들기
-    public ChatRoomDto createChatRoom(String roomName, String roomPwd, boolean secretChk, int maxUserCnt){
-        // roomName 와 roomPwd 로 chatRoom 빌드 후 return
+    public ChatRoomDto createChatRoom(String roomName, String roomPwd, boolean secretChk, int maxUserCnt, String chatType){
 
+        // roomName 와 roomPwd 로 chatRoom 빌드 후 return
         ChatRoomDto chatRoomDto = ChatRoomDto.builder()
                 .roomId(UUID.randomUUID().toString())
                 .roomName(roomName)
@@ -52,6 +53,13 @@ public class ChatService {
                 .userCount(0) // 채팅방 참여 인원수
                 .maxUserCnt(maxUserCnt) // 최대 인원수 제한
                 .build();
+
+        // msg 타입이면 ChatType.MSG
+        if(chatType.equals("msgChat")){
+            chatRoomDto.setChatType(ChatRoomDto.ChatType.MSG);
+        }else{ // rtc 타입이면 ChatType.RTC
+            chatRoomDto.setChatType(ChatRoomDto.ChatType.RTC);
+        }
 
         // map 에 채팅룸 아이디와 만들어진 채팅룸을 저장장
        chatRoomMap.put(chatRoomDto.getRoomId(), chatRoomDto);

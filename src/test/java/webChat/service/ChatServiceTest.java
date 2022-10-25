@@ -25,7 +25,7 @@ class ChatServiceTest {
     ChatRoomDto room;
 
     void createRoom(){
-        room = repository.createChatRoom("newTEST", "newPwd", true, 120);
+        room = repository.createChatRoom("newTEST", "newPwd", true, 120, "rtc");
     }
 
     ChatUser createUser(){

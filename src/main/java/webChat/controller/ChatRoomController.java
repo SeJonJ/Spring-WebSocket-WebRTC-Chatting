@@ -23,11 +23,11 @@ public class ChatRoomController {
     // 채팅방 생성 후 다시 / 로 return
     @PostMapping("/chat/createroom")
     public String createRoom(@RequestParam("roomName") String name, @RequestParam("roomPwd") String roomPwd, @RequestParam("secretChk") String secretChk,
-                             @RequestParam(value = "maxUserCnt", defaultValue = "100") String maxUserCnt, RedirectAttributes rttr) {
+                             @RequestParam(value = "maxUserCnt") String maxUserCnt, @RequestParam("chatType") String chatType, RedirectAttributes rttr) {
 
 //        log.info("chk {}", secretChk);
         // 매개변수 : 방 이름, 패스워드, 방 잠금 여부, 방 인원수
-        ChatRoomDto room = chatService.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt));
+        ChatRoomDto room = chatService.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt), chatType);
 
         log.info("CREATE Chat Room [{}]", room);
 
@@ -73,6 +73,7 @@ public class ChatRoomController {
         return "redirect:/";
     }
 
+    // 유저 카운트
     @GetMapping("/chat/chkUserCnt/{roomId}")
     @ResponseBody
     public boolean chUserCnt(@PathVariable String roomId){

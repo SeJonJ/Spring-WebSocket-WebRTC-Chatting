@@ -37,7 +37,26 @@
 
             });
 
-            // 채팅방 설정 시 비밀번호 확인 - keyup 펑션 활용
+            // 채팅방 설정 시 비밀번호 확인
+            confirmPWD();
+
+            // // 기본은 유저 설정 칸 미활성화
+            // $maxUserCnt.hide();
+
+            // // 체크박스 체크에 따라 인원 설정칸 활성화 여부
+            // $maxChk.change(function(){
+            //     if($maxChk.is(':checked')){
+            //         $maxUserCnt.val('');
+            //         $maxUserCnt.show();
+            //     }else{
+            //         $maxUserCnt.hide();
+            //     }
+            // })
+
+        })
+
+        // 채팅방 설정 시 비밀번호 확인 - keyup 펑션 활용
+        function confirmPWD(){
             $("#confirmPwd").on("keyup", function(){
                 let $confirmPwd = $("#confirmPwd").val();
                 const $configRoomBtn = $("#configRoomBtn");
@@ -79,21 +98,7 @@
                     }
                 })
             })
-
-            // 기본은 유저 설정 칸 미활성화
-            $maxUserCnt.hide();
-
-            // 체크박스 체크에 따라 인원 설정칸 활성화 여부
-            $maxChk.change(function(){
-                if($maxChk.is(':checked')){
-                    $maxUserCnt.val('');
-                    $maxUserCnt.show();
-                }else{
-                    $maxUserCnt.hide();
-                }
-            })
-
-        })
+        }
 
 
         // 채팅방 생성
@@ -121,9 +126,19 @@
                 return false;
             }
 
-            // 최소 방 인원 수는 2
+            // 최소 방 인원 수는 2, 최대 100명
             if($maxUserCnt.val() <= 1){
-                alert("혼자서는 채팅이 불가능해요ㅠ.ㅠ");
+                alert("채팅은 최소 2명 이상!!");
+                return false;
+            }
+            if ($maxUserCnt.val() > 100) {
+                alert("100명 이상은 서버가 못 버텨요ㅠ.ㅠ");
+                return false;
+            }
+
+            // 채팅 타입 필수
+            if ($('input[name=chatType]:checked').val() == null) {
+                alert("채팅 타입은 필수입니다")
                 return false;
             }
 
@@ -241,6 +256,7 @@
                 <th scope="col">채팅방명</th>
                 <th scope="col">잠금 여부</th>
                 <th scope="col">참여 인원</th>
+                <th scope="col">채팅 종류</th>
                 <th scope="col">채팅방 설정</th>
             </tr>
             <th:block th:fragment="content">
@@ -261,6 +277,11 @@
                     </td>
                     <td>
                         <span class="badge bg-primary rounded-pill">[[${room.userCount}]]/[[${room.maxUserCnt}]]</span>
+                    </td>
+                    <td>
+                        <span th:if="${#strings.equals(room.chatType, 'MSG')}">일반 채팅</span>
+                        <span th:unless="${#strings.equals(room.chatType, 'MSG')}">화상 채팅</span>
+
                     </td>
                     <td>
                         <button class="btn btn-primary btn-sm" id="configRoom" data-bs-toggle="modal" data-bs-target="#confirmPwdModal" th:data-id="${room.roomId}">채팅방 설정</button>
@@ -297,9 +318,23 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="maxUserCnt" class="col-form-label">채팅방 인원 설정(미체크 시 기본 100명)
-                            <input class="form-check-input" type="checkbox" id="maxChk"></label>
-                        <input type="text" class="form-control" id="maxUserCnt" name="maxUserCnt" value="100">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="chatType" id="msgType" value="msgChat">
+                            <label class="form-check-label" for="msgType">
+                                문자 채팅
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="chatType" id="rtcType" value="rtcChat">
+                            <label class="form-check-label" for="rtcType">
+                                화상 채팅
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="maxUserCnt" class="col-form-label">채팅방 : 일반채팅 최대 100명, 화상채팅 최대 5명
+                            <!--<input class="form-check-input" type="checkbox" id="maxChk">--></label>
+                        <input type="text" class="form-control" id="maxUserCnt" name="maxUserCnt">
                     </div>
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="secret">
