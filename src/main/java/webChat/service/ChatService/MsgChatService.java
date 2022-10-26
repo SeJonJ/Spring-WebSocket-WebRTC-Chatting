@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import webChat.dto.ChatRoomDto;
+import webChat.dto.ChatRoomMap;
 import webChat.service.fileService.FileService;
 
 import java.util.*;
@@ -11,16 +12,15 @@ import java.util.*;
 // 추후 DB 와 연결 시 Service 와 Repository(DAO) 로 분리 예정
 
 @Slf4j
-@Service
 @RequiredArgsConstructor
+@Service
 public class MsgChatService {
 
 
     // 채팅방 삭제에 따른 채팅방의 사진 삭제를 위한 fileService 선언
     private final FileService fileService;
 
-
-    public ChatRoomDto createChatRoom(Map<String, ChatRoomDto> chatRoomMap, String roomName, String roomPwd, boolean secretChk, int maxUserCnt) {
+    public ChatRoomDto createChatRoom(String roomName, String roomPwd, boolean secretChk, int maxUserCnt) {
         // roomName 와 roomPwd 로 chatRoom 빌드 후 return
         ChatRoomDto room = ChatRoomDto.builder()
                 .roomId(UUID.randomUUID().toString())
@@ -37,7 +37,7 @@ public class MsgChatService {
         room.setChatType(ChatRoomDto.ChatType.MSG);
 
         // map 에 채팅룸 아이디와 만들어진 채팅룸을 저장
-        chatRoomMap.put(room.getRoomId(), room);
+        ChatRoomMap.getInstance().getChatRooms().put(room.getRoomId(), room);
 
         return room;
     }
@@ -98,22 +98,7 @@ public class MsgChatService {
         room.getUserList().remove(userUUID);
     }
 
-    // 채팅방 삭제
-    public void delChatRoom(Map<String, ChatRoomDto> chatRoomMap, String roomId) {
-        try {
-            // 채팅방 삭제
-            chatRoomMap.remove(roomId);
 
-
-            // 채팅방 안에 있는 파일 삭제
-            fileService.deleteFileDir(roomId);
-
-            log.info("삭제 완료 roomId : {}", roomId);
-
-        } catch (Exception e) { // 만약에 예외 발생시 확인하기 위해서 try catch
-            System.out.println(e.getMessage());
-        }
-    }
 
 
 }

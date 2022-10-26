@@ -3,8 +3,11 @@ package webChat.service.ChatService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import webChat.dto.ChatRoomDto;
+import webChat.dto.ChatRoomMap;
+import webChat.service.fileService.FileService;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
@@ -14,22 +17,20 @@ import java.util.*;
 @Getter
 @Setter
 @RequiredArgsConstructor
+@Slf4j
 public class ChatServiceMain {
 
     private final MsgChatService msgChatService;
     private final RtcChatService rtcChatService;
 
-    private Map<String, ChatRoomDto> chatRoomMap;
+    // 채팅방 삭제에 따른 채팅방의 사진 삭제를 위한 fileService 선언
+    private final FileService fileService;
 
-    @PostConstruct
-    private void init() {
-        chatRoomMap = new LinkedHashMap<>();
-    }
 
     // 전체 채팅방 조회
     public List<ChatRoomDto> findAllRoom(){
         // 채팅방 생성 순서를 최근순으로 반환
-        List<ChatRoomDto> chatRooms = new ArrayList<>(chatRoomMap.values());
+        List<ChatRoomDto> chatRooms = new ArrayList<>(ChatRoomMap.getInstance().getChatRooms().values());
         Collections.reverse(chatRooms);
 
         return chatRooms;
@@ -37,7 +38,7 @@ public class ChatServiceMain {
 
     // roomID 기준으로 채팅방 찾기
     public ChatRoomDto findRoomById(String roomId){
-        return chatRoomMap.get(roomId);
+        return ChatRoomMap.getInstance().getChatRooms().get(roomId);
     }
 
     // roomName 로 채팅방 만들기
@@ -46,9 +47,9 @@ public class ChatServiceMain {
         ChatRoomDto room;
 
         if(chatType.equals("msgChat")){
-            room = msgChatService.createChatRoom(chatRoomMap, roomName, roomPwd, secretChk, maxUserCnt);
+            room = msgChatService.createChatRoom(roomName, roomPwd, secretChk, maxUserCnt);
         }else{
-            room = rtcChatService.createChatRoom(chatRoomMap, roomName, roomPwd, secretChk, maxUserCnt);
+            room = rtcChatService.createChatRoom(roomName, roomPwd, secretChk, maxUserCnt);
         }
 
         return room;
@@ -57,24 +58,26 @@ public class ChatServiceMain {
     // 채팅방 비밀번호 조회
     public boolean confirmPwd(String roomId, String roomPwd) {
 //        String pwd = chatRoomMap.get(roomId).getRoomPwd();
-        return roomPwd.equals(chatRoomMap.get(roomId).getRoomPwd());
+
+        return roomPwd.equals(ChatRoomMap.getInstance().getChatRooms().get(roomId).getRoomPwd());
+
     }
 
     // 채팅방 인원+1
     public void plusUserCnt(String roomId){
-        ChatRoomDto room = chatRoomMap.get(roomId);
+        ChatRoomDto room = ChatRoomMap.getInstance().getChatRooms().get(roomId);
         room.setUserCount(room.getUserCount()+1);
     }
 
     // 채팅방 인원-1
     public void minusUserCnt(String roomId){
-        ChatRoomDto room = chatRoomMap.get(roomId);
+        ChatRoomDto room = ChatRoomMap.getInstance().getChatRooms().get(roomId);
         room.setUserCount(room.getUserCount()-1);
     }
 
     // maxUserCnt 에 따른 채팅방 입장 여부
     public boolean chkRoomUserCnt(String roomId){
-        ChatRoomDto room = chatRoomMap.get(roomId);
+        ChatRoomDto room = ChatRoomMap.getInstance().getChatRooms().get(roomId);
 
 
         if (room.getUserCount() + 1 > room.getMaxUserCnt()) {
@@ -84,12 +87,25 @@ public class ChatServiceMain {
         return true;
     }
 
+    // 채팅방 삭제
     public void delChatRoom(String roomId){
-        if (chatRoomMap.get(roomId).getChatType().equals(ChatRoomDto.ChatType.MSG)) {
-            msgChatService.delChatRoom(chatRoomMap, roomId);
-        }else{
 
+        try {
+            // 채팅방 삭제
+            ChatRoomMap.getInstance().getChatRooms().remove(roomId);
+
+            if (ChatRoomMap.getInstance().getChatRooms().get(roomId).getChatType().equals(ChatRoomDto.ChatType.MSG)) { // MSG 채팅방은 사진도 추가 삭제
+                // 채팅방 안에 있는 파일 삭제
+                fileService.deleteFileDir(roomId);
+            }
+
+            log.info("삭제 완료 roomId : {}", roomId);
+
+        } catch (Exception e) { // 만약에 예외 발생시 확인하기 위해서 try catch
+            System.out.println(e.getMessage());
         }
+
+
     }
 
 }

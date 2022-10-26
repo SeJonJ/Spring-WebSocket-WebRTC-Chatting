@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import webChat.dto.ChatRoomMap;
 import webChat.service.ChatService.ChatServiceMain;
 import webChat.service.ChatService.MsgChatService;
 import webChat.dto.ChatRoomDto;
@@ -56,7 +57,7 @@ public class ChatRoomController {
             model.addAttribute("user", principalDetails.getUser());
         }
 
-        ChatRoomDto room = chatServiceMain.getChatRoomMap().get(roomId);
+        ChatRoomDto room = ChatRoomMap.getInstance().getChatRooms().get(roomId);
 
         model.addAttribute("room", room);
 

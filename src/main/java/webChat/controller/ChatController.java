@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+import webChat.dto.ChatRoomMap;
 import webChat.service.ChatService.ChatServiceMain;
 import webChat.service.ChatService.MsgChatService;
 import webChat.dto.ChatDTO;
@@ -42,7 +43,7 @@ public class ChatController {
         chatServiceMain.plusUserCnt(chat.getRoomId());
 
         // 채팅방에 유저 추가 및 UserUUID 반환
-        String userUUID = msgChatService.addUser(chatServiceMain.getChatRoomMap(), chat.getRoomId(), chat.getSender());
+        String userUUID = msgChatService.addUser(ChatRoomMap.getInstance().getChatRooms(), chat.getRoomId(), chat.getSender());
 
         // 반환 결과를 socket session 에 userUUID 로 저장
         headerAccessor.getSessionAttributes().put("userUUID", userUUID);
@@ -79,8 +80,8 @@ public class ChatController {
         chatServiceMain.minusUserCnt(roomId);
 
         // 채팅방 유저 리스트에서 UUID 유저 닉네임 조회 및 리스트에서 유저 삭제
-        String username = msgChatService.findUserNameByRoomIdAndUserUUID(chatServiceMain.getChatRoomMap(), roomId, userUUID);
-        msgChatService.delUser(chatServiceMain.getChatRoomMap(), roomId, userUUID);
+        String username = msgChatService.findUserNameByRoomIdAndUserUUID(ChatRoomMap.getInstance().getChatRooms(), roomId, userUUID);
+        msgChatService.delUser(ChatRoomMap.getInstance().getChatRooms(), roomId, userUUID);
 
         if (username != null) {
             log.info("User Disconnected : " + username);
@@ -101,7 +102,7 @@ public class ChatController {
     @ResponseBody
     public ArrayList<String> userList(String roomId) {
 
-        return msgChatService.getUserList(chatServiceMain.getChatRoomMap(), roomId);
+        return msgChatService.getUserList(ChatRoomMap.getInstance().getChatRooms(), roomId);
     }
 
     // 채팅에 참여한 유저 닉네임 중복 확인
@@ -110,7 +111,7 @@ public class ChatController {
     public String isDuplicateName(@RequestParam("roomId") String roomId, @RequestParam("username") String username) {
 
         // 유저 이름 확인
-        String userName = msgChatService.isDuplicateName(chatServiceMain.getChatRoomMap(), roomId, username);
+        String userName = msgChatService.isDuplicateName(ChatRoomMap.getInstance().getChatRooms(), roomId, username);
         log.info("동작확인 {}", userName);
 
         return userName;
