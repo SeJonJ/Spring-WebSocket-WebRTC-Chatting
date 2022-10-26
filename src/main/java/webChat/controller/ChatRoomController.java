@@ -14,6 +14,8 @@ import webChat.dto.ChatRoomDto;
 import webChat.service.ChatService.RtcChatService;
 import webChat.service.social.PrincipalDetails;
 
+import java.util.UUID;
+
 @Controller
 @RequiredArgsConstructor
 @Slf4j
@@ -65,6 +67,8 @@ public class ChatRoomController {
         if (ChatRoomDto.ChatType.MSG.equals(room.getChatType())) {
             return "chatroom";
         }else{
+            model.addAttribute("uuid", UUID.randomUUID().toString());
+
             return "rtcroom";
         }
     }

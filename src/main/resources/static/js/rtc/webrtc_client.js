@@ -2,7 +2,7 @@
 const addr = "localhost:8443"
 
 // create and run Web Socket connection
-const socket = new WebSocket("wss://" + window.location.host + "/signal");
+const socket = new WebSocket("wss://" + addr + "/signal");
 
 // UI elements
 const videoButtonOff = document.querySelector('#video_off');
@@ -13,7 +13,8 @@ const exitButton = document.querySelector('#exit');
 const localRoom = document.querySelector('input#id').value;
 const localVideo = document.getElementById('local_video');
 const remoteVideo = document.getElementById('remote_video');
-const localUserName = localStorage.getItem("uuid");
+// const localUserName = localStorage.getItem("uuid");
+const localUserName = document.querySelector("#uuid").value
 
 // WebRTC STUN servers
 const peerConnectionConfig = {

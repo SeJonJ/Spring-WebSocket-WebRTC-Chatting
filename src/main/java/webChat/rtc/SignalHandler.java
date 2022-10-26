@@ -2,7 +2,6 @@ package webChat.rtc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -30,7 +29,7 @@ public class SignalHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // session id to room mapping
-    private Map<String, ChatRoomDto> sessionIdToRoomMap = ChatRoomMap.getInstance().getChatRooms();
+    private Map<String, ChatRoomDto> rooms = ChatRoomMap.getInstance().getChatRooms();
 
     // message types, used in signalling:
     // text message
@@ -49,7 +48,7 @@ public class SignalHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         logger.debug("[ws] Session has been closed with status {}", status);
-        sessionIdToRoomMap.remove(session.getId());
+        rooms.remove(session.getId());
     }
 
     @Override
@@ -57,7 +56,7 @@ public class SignalHandler extends TextWebSocketHandler {
         // webSocket has been opened, send a message to the client
         // when data field contains 'true' value, the client starts negotiating
         // to establish peer-to-peer connection, otherwise they wait for a counterpart
-        sendMessage(session, new WebSocketMessage("Server", MSG_TYPE_JOIN, Boolean.toString(!sessionIdToRoomMap.isEmpty()), null, null));
+        sendMessage(session, new WebSocketMessage("Server", MSG_TYPE_JOIN, Boolean.toString(!rooms.isEmpty()), null, null));
     }
 
     @Override
@@ -67,7 +66,7 @@ public class SignalHandler extends TextWebSocketHandler {
             WebSocketMessage message = objectMapper.readValue(textMessage.getPayload(), WebSocketMessage.class);
             logger.debug("[ws] Message of {} type from {} received", message.getType(), message.getFrom());
             String userSession = message.getFrom(); // 유저 세션
-            String roomId = message.getRoomId(); // roomId
+            String roomId = message.getData(); // roomId
 
             logger.info("Message {}", message.toString());
 
@@ -75,7 +74,7 @@ public class SignalHandler extends TextWebSocketHandler {
             switch (message.getType()) {
                 // text message from client has been received
                 case MSG_TYPE_TEXT:
-                    logger.debug("[ws] Text message: {}", message.getRoomId());
+                    logger.debug("[ws] Text message: {}", message.getData());
                     // message.data is the text sent by client
                     // process text message if needed
                     break;
@@ -91,7 +90,8 @@ public class SignalHandler extends TextWebSocketHandler {
                                     ? candidate.toString().substring(0, 64)
                                     : sdp.toString().substring(0, 64));
 
-                    ChatRoomDto roomDto = sessionIdToRoomMap.get(session.getId());
+                    /* 여기도 마찬가지 */
+                    ChatRoomDto roomDto = rooms.get(session.getId());
                     if (roomDto != null) {
                         Map<String, WebSocketSession> clients = rtcChatService.getClients(roomDto);
                         for(Map.Entry<String, WebSocketSession> client : clients.entrySet())  {
@@ -113,22 +113,23 @@ public class SignalHandler extends TextWebSocketHandler {
                 // identify user and their opponent
                 case MSG_TYPE_JOIN:
                     // message.data contains connected room id
-                    logger.debug("[ws] {} has joined Room: #{}", userSession, message.getRoomId());
+                    logger.debug("[ws] {} has joined Room: #{}", userSession, message.getData());
 
                     room = rtcChatService.findRoomByRoomId(roomId)
                             .orElseThrow(() -> new IOException("Invalid room number received!"));
 
                     // add client to the Room clients list
                     rtcChatService.addClient(room, userSession, session);
-                    sessionIdToRoomMap.put(session.getId(), room);
+                    /* 이 부분에서 session.getID 대신 roomID 를 사용하면 문제 생김*/
+                    rooms.put(session.getId(), room);
                     break;
 
                 case MSG_TYPE_LEAVE:
                     // message data contains connected room id
-                    logger.debug("[ws] {} is going to leave Room: #{}", userSession, message.getRoomId());
+                    logger.debug("[ws] {} is going to leave Room: #{}", userSession, message.getData());
 
                     // room id taken by session id
-                    room = sessionIdToRoomMap.get(session.getId());
+                    room = rooms.get(session.getId());
 
                     // remove the client which leaves from the Room clients list
                     Optional<String> client = rtcChatService.getClients(room).entrySet().stream()

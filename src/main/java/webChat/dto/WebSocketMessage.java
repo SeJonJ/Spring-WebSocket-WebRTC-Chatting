@@ -9,7 +9,7 @@ import lombok.*;
 public class WebSocketMessage {
     private String from;
     private String type;
-    private String roomId;
+    private String data;
     private Object candidate;
     private Object sdp;
 
