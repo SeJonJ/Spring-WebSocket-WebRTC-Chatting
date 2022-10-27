@@ -2,7 +2,7 @@
 const addr = "localhost:8443"
 
 // create and run Web Socket connection
-const socket = new WebSocket("wss://" + addr + "/signal");
+const socket = new WebSocket("wss://" + window.location.host + "/signal");
 
 // UI elements
 const videoButtonOff = document.querySelector('#video_off');
@@ -66,6 +66,7 @@ function start() {
 
             case "join":
                 log('Client is starting to ' + (message.data === "true)" ? 'negotiate' : 'wait for a peer'));
+                log("messageDATA : "+message.data)
                 handlePeerConnection(message);
                 break;
 
@@ -198,11 +199,19 @@ function getMedia(constraints) {
 
 // create peer connection, get media, start negotiating when second participant appears
 function handlePeerConnection(message) {
+    log("여기서 멈춤1")
     createPeerConnection();
+    log("여기서 멈춤2")
+
     getMedia(mediaConstraints);
+    log("여기서 멈춤3")
+
     if (message.data === "true") {
+        log("여기서 멈춤4")
+
         myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
     }
+    log("여기서 멈춤5")
 }
 
 function createPeerConnection() {
@@ -249,6 +258,7 @@ function handleICECandidateEvent(event) {
     if (event.candidate) {
         sendToServer({
             from: localUserName,
+            data: localRoom,
             type: 'ice',
             candidate: event.candidate
         });
@@ -272,6 +282,7 @@ function handleNegotiationNeededEvent() {
         .then(function() {
             sendToServer({
                 from: localUserName,
+                data:localRoom,
                 type: 'offer',
                 sdp: myPeerConnection.localDescription
             });
@@ -325,6 +336,7 @@ function handleOfferMessage(message) {
                 log("Sending answer packet back to other peer");
                 sendToServer({
                     from: localUserName,
+                    data: localRoom,
                     type: 'answer',
                     sdp: myPeerConnection.localDescription
                 });

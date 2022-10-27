@@ -69,9 +69,9 @@ public class RtcChatService {
     }
 
     public Map<String, WebSocketSession> addClient(ChatRoomDto room, String name, WebSocketSession session) {
-        Map<String, WebSocketSession> rooms = (Map<String, WebSocketSession>) room.getUserList();
-        rooms.put(name, session);
-        return rooms;
+        Map<String, WebSocketSession> userList = (Map<String, WebSocketSession>) room.getUserList();
+        userList.put(name, session);
+        return userList;
     }
 
     public void removeClientByName(ChatRoomDto room, String name) {

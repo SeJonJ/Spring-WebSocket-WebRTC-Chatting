@@ -56,6 +56,10 @@ public class SignalHandler extends TextWebSocketHandler {
         // webSocket has been opened, send a message to the client
         // when data field contains 'true' value, the client starts negotiating
         // to establish peer-to-peer connection, otherwise they wait for a counterpart
+
+        // 여기를 고쳐야한다!!!!!
+        // 결국 여기서 맨 처음에는 false 가 나와야 한번만 앞쪽 script 에서 peer 연결을 멈추는데
+        // 여기가 true 이기 때문에 계속 자기자신한데 peer 요청을 하게되고...
         sendMessage(session, new WebSocketMessage("Server", MSG_TYPE_JOIN, Boolean.toString(!rooms.isEmpty()), null, null));
     }
 
@@ -65,7 +69,7 @@ public class SignalHandler extends TextWebSocketHandler {
         try {
             WebSocketMessage message = objectMapper.readValue(textMessage.getPayload(), WebSocketMessage.class);
             logger.debug("[ws] Message of {} type from {} received", message.getType(), message.getFrom());
-            String userSession = message.getFrom(); // 유저 세션
+            String userUUID = message.getFrom(); // 유저 uuid
             String roomId = message.getData(); // roomId
 
             logger.info("Message {}", message.toString());
@@ -85,22 +89,32 @@ public class SignalHandler extends TextWebSocketHandler {
                 case MSG_TYPE_ICE:
                     Object candidate = message.getCandidate();
                     Object sdp = message.getSdp();
+
                     logger.debug("[ws] Signal: {}",
                             candidate != null
                                     ? candidate.toString().substring(0, 64)
                                     : sdp.toString().substring(0, 64));
 
                     /* 여기도 마찬가지 */
-                    ChatRoomDto roomDto = rooms.get(session.getId());
+                    ChatRoomDto roomDto = rooms.get(roomId);
+
                     if (roomDto != null) {
                         Map<String, WebSocketSession> clients = rtcChatService.getClients(roomDto);
+
+                        /*
+                        *
+                        * Map.Entry 는 Map 인터페이스 내부에서 Key, Value 를 쌍으로 다루기 위해 정의된 내부 인터페이스
+                        * 보통 key 값들을 가져오는 entrySet() 과 함께 사용한다.
+                        * entrySet 을 통해서 key 값들을 불러온 후 Map.Entry 를 사용하면서 Key 에 해당하는 Value 를 쌍으로 가져온다
+                        * */
                         for(Map.Entry<String, WebSocketSession> client : clients.entrySet())  {
+
                             // send messages to all clients except current user
-                            if (!client.getKey().equals(userSession)) {
+                            if (!client.getKey().equals(userUUID)) {
                                 // select the same type to resend signal
                                 sendMessage(client.getValue(),
                                         new WebSocketMessage(
-                                                userSession,
+                                                userUUID,
                                                 message.getType(),
                                                 roomId,
                                                 candidate,
@@ -113,20 +127,22 @@ public class SignalHandler extends TextWebSocketHandler {
                 // identify user and their opponent
                 case MSG_TYPE_JOIN:
                     // message.data contains connected room id
-                    logger.debug("[ws] {} has joined Room: #{}", userSession, message.getData());
+                    logger.debug("[ws] {} has joined Room: #{}", userUUID, message.getData());
 
-                    room = rtcChatService.findRoomByRoomId(roomId)
-                            .orElseThrow(() -> new IOException("Invalid room number received!"));
+//                    room = rtcChatService.findRoomByRoomId(roomId)
+//                            .orElseThrow(() -> new IOException("Invalid room number received!"));
+                    room = ChatRoomMap.getInstance().getChatRooms().get(roomId);
 
                     // add client to the Room clients list
-                    rtcChatService.addClient(room, userSession, session);
+                    rtcChatService.addClient(room, userUUID, session);
+
                     /* 이 부분에서 session.getID 대신 roomID 를 사용하면 문제 생김*/
-                    rooms.put(session.getId(), room);
+                    rooms.put(roomId, room);
                     break;
 
                 case MSG_TYPE_LEAVE:
                     // message data contains connected room id
-                    logger.debug("[ws] {} is going to leave Room: #{}", userSession, message.getData());
+                    logger.debug("[ws] {} is going to leave Room: #{}", userUUID, message.getData());
 
                     // room id taken by session id
                     room = rooms.get(session.getId());
