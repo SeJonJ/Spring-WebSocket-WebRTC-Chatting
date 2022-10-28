@@ -102,7 +102,6 @@ public class SignalHandler extends TextWebSocketHandler {
                         Map<String, WebSocketSession> clients = rtcChatService.getClients(roomDto);
 
                         /*
-                        *
                         * Map.Entry 는 Map 인터페이스 내부에서 Key, Value 를 쌍으로 다루기 위해 정의된 내부 인터페이스
                         * 보통 key 값들을 가져오는 entrySet() 과 함께 사용한다.
                         * entrySet 을 통해서 key 값들을 불러온 후 Map.Entry 를 사용하면서 Key 에 해당하는 Value 를 쌍으로 가져온다

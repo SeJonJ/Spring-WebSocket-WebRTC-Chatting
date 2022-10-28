@@ -2,12 +2,11 @@ package webChat.service.ChatService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 import webChat.dto.ChatRoomDto;
 import webChat.dto.ChatRoomMap;
-import webChat.rtc.Parser;
+import webChat.dto.WebSocketMessage;
 
 import java.util.*;
 
@@ -78,6 +77,10 @@ public class RtcChatService {
         room.getUserList().remove(name);
     }
 
-
+    public boolean findUserCount(WebSocketMessage webSocketMessage){
+        ChatRoomDto room = ChatRoomMap.getInstance().getChatRooms().get(webSocketMessage.getData());
+        log.info("ROOM COUNT : [{} ::: {}]",room.toString(),room.getUserList().size());
+        return room.getUserList().size() > 1;
+    }
 
 }

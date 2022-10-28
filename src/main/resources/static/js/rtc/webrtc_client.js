@@ -65,6 +65,8 @@ function start() {
                 break;
 
             case "join":
+                message.data = chatListCount();
+
                 log('Client is starting to ' + (message.data === "true)" ? 'negotiate' : 'wait for a peer'));
                 log("messageDATA : "+message.data)
                 handlePeerConnection(message);
@@ -74,6 +76,33 @@ function start() {
                 handleErrorMessage('Wrong type message received from server');
         }
     };
+
+    function chatListCount(){
+
+        let data;
+
+        $.ajax({
+            url : "/webrtc/usercount",
+            type : "POST",
+            async : false,
+            data : {
+                "from" : localUserName,
+                "type" : "findCount",
+                "data" : localRoom,
+                "candidate" : null,
+                "sdp" : null
+            },
+            success(result){
+                data = result;
+            },
+            error(result){
+                console.log("error : "+result);
+            }
+        });
+
+        return data;
+    }
+
 
     // add an event listener to get to know when a connection is open
     socket.onopen = function() {
