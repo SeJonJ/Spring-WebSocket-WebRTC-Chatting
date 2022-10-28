@@ -2,14 +2,12 @@
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FSeJonJ%2FSpring-WebSocket-Chatting&count_bg=%233310C8&title_bg=%2316C86B&icon=&icon_color=%23E7E7E7&title=HITS&edge_flat=true)](https://hits.seeyoufarm.com)
 
 ## 0. Spring Boot 와 WebSocket 을 활용한 채팅 만들기 프로젝트
-- 개인적으로 정말정말 해보고 싶었던 실시간 채팅 만들기를 드디어 구현했습니다.
-- 사실 이전에 팀프로젝트로 만들었던 채팅이 있긴한데...정말 말도 안될정도로 조잡해서 아쉬웠는데
-- 이번에야말로 드디어 제대로된? 실시간 채팅을 구현했습니다!
+- SpringBoot 기반 웹 소켓 채팅 및 WebRTC 를 활용한 P2P 화상 채팅
 
 
 ### 브랜치별 설명
-- master : DB 연결 없는 브랜치
-- master-jpa : jpa 를 사용한 DB 연결 브랜치
+- master : 기본 문자 채팅
+- master-Webrtc-jpa : 일반 채팅 + 실시간 화상 채팅(P2P)
 
 ## 1. 사용기술
 - Java 8
@@ -19,7 +17,8 @@
 - jquery
 - WebSocket & SocketJS
 - Stomp
-- 추후 DB 기술 추가 예정
+- WebRTC : 실시간 화상 채팅
+- JPA - 추가 예정
 
 ## 2. 다이어그램
 ![](info/Chat_diagram.png)
@@ -45,12 +44,13 @@
 - 채팅방 삭제 : 채팅방 삭제 시 해당 채팅방 안에 있는 파일들도 S3 에서 함께 삭제
 - 채팅방 유저 인원 설정 -> 인원 제한 시 제한 된 인원만 채팅 참여 가능
 - 소셜 로그인유저 채팅 => 네이버와 카카오 로그인 완료 단 DB 저장 X
+- WebRTC 화상 채팅 : Only P2P
 
 ## 5. 추후 추가 기능(목표 기능)
+- 일반 로그인 유저 회원가입 및 채팅(최우선)
 - 채팅방 리스트 ajax 형식으로 받기
 - 채팅방명, 패스워드 변경
 - 유저 클릭 시 1:1 채팅으로 전환
-- 일반 로그인 유저 회원가입 및 채팅(최우선)
 
 ## 6. 구동방법
 - 프로젝트를 jar 파일로 빌드
@@ -65,3 +65,7 @@
 ![](info/chatting.gif)
 
 ![](info/chattingFileUpload.gif)
+
+
+## Reference
+https://github.com/Benkoff/WebRTC-SS

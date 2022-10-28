@@ -9,6 +9,7 @@ import webChat.dto.ChatRoomMap;
 import webChat.dto.WebSocketMessage;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -73,14 +74,29 @@ public class RtcChatService {
         return userList;
     }
 
-    public void removeClientByName(ChatRoomDto room, String name) {
-        room.getUserList().remove(name);
+    // userList 에서 클라이언트 삭제
+    public void removeClientByName(ChatRoomDto room, String userUUID) {
+        room.getUserList().remove(userUUID);
     }
 
+    // 유저 카운터 return
     public boolean findUserCount(WebSocketMessage webSocketMessage){
         ChatRoomDto room = ChatRoomMap.getInstance().getChatRooms().get(webSocketMessage.getData());
-        log.info("ROOM COUNT : [{} ::: {}]",room.toString(),room.getUserList().size());
+//        log.info("ROOM COUNT : [{} ::: {}]",room.toString(),room.getUserList().size());
         return room.getUserList().size() > 1;
     }
 
+    // 이상하게 웹 소켓 연결이 끊어졌을 때 이벤트 처리
+    public void forceDisConn(WebSocketSession session){
+        for (Map.Entry<String, ChatRoomDto> rooms : ChatRoomMap.getInstance().getChatRooms().entrySet()) {
+            rooms.getValue().getUserList().remove(session.getId());
+        }
+
+        ChatRoomMap.getInstance().getChatRooms().values()
+                        .forEach(room ->{
+                            room.getUserList().remove(session.getId());
+                        });
+
+        log.info("강제 퇴장 삭제 완료 [{}]", session.getId());
+    }
 }

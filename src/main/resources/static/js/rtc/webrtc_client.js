@@ -2,7 +2,7 @@
 const addr = "localhost:8443"
 
 // create and run Web Socket connection
-const socket = new WebSocket("wss://" + window.location.host + "/signal");
+const socket = new WebSocket("wss://" + addr + "/signal");
 
 // UI elements
 const videoButtonOff = document.querySelector('#video_off');
@@ -45,9 +45,6 @@ function start() {
     socket.onmessage = function(msg) {
         let message = JSON.parse(msg.data);
         switch (message.type) {
-            case "text":
-                log('Text message from ' + message.from + ' received: ' + message.data);
-                break;
 
             case "offer":
                 log('Signal OFFER received');
@@ -65,6 +62,7 @@ function start() {
                 break;
 
             case "join":
+                // ajax 요청을 보내서 userList 를 다시 확인함
                 message.data = chatListCount();
 
                 log('Client is starting to ' + (message.data === "true)" ? 'negotiate' : 'wait for a peer'));
@@ -72,11 +70,17 @@ function start() {
                 handlePeerConnection(message);
                 break;
 
+            case "leave":
+                stop();
+                break;
+
             default:
                 handleErrorMessage('Wrong type message received from server');
         }
     };
 
+
+    // ICE 를 위한 chatList 인원 확인
     function chatListCount(){
 
         let data;
@@ -118,6 +122,7 @@ function start() {
     // a listener for the socket being closed event
     socket.onclose = function(message) {
         log('Socket has been closed');
+
     };
 
     // an event listener to handle socket errors
@@ -125,6 +130,10 @@ function start() {
         handleErrorMessage("Error: " + message);
     };
 }
+
+// 브라우저 종료 시 이벤트
+// 그냥...브라우저 종료 시 stop 함수를 부르면 된다ㅠㅠ
+window.addEventListener('unload', stop);
 
 function stop() {
     // send a message to the server to remove this client from the room clients list
@@ -228,19 +237,14 @@ function getMedia(constraints) {
 
 // create peer connection, get media, start negotiating when second participant appears
 function handlePeerConnection(message) {
-    log("여기서 멈춤1")
     createPeerConnection();
-    log("여기서 멈춤2")
 
     getMedia(mediaConstraints);
-    log("여기서 멈춤3")
 
     if (message.data === "true") {
-        log("여기서 멈춤4")
 
         myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
     }
-    log("여기서 멈춤5")
 }
 
 function createPeerConnection() {
