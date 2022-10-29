@@ -30,7 +30,7 @@ public class SignalHandler extends TextWebSocketHandler {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // session id to room mapping
+    // roomID to room Mapping
     private Map<String, ChatRoomDto> rooms = ChatRoomMap.getInstance().getChatRooms();
 
     // message types, used in signalling:
@@ -49,7 +49,6 @@ public class SignalHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         logger.info("[ws] Session has been closed with status [{} {}]", status, session);
-        rtcChatService.forceDisConn(session);
     }
 
     // 소켓 연결되었을 때 이벤트 처리
@@ -110,6 +109,8 @@ public class SignalHandler extends TextWebSocketHandler {
                          * Map.Entry 는 Map 인터페이스 내부에서 Key, Value 를 쌍으로 다루기 위해 정의된 내부 인터페이스
                          * 보통 key 값들을 가져오는 entrySet() 과 함께 사용한다.
                          * entrySet 을 통해서 key 값들을 불러온 후 Map.Entry 를 사용하면서 Key 에 해당하는 Value 를 쌍으로 가져온다
+                         *
+                         * 여기를 고치면 1:1 대신 1:N 으로 바꿀 수 있지 않을까..?
                          */
                         for(Map.Entry<String, WebSocketSession> client : clients.entrySet())  {
 
@@ -143,7 +144,6 @@ public class SignalHandler extends TextWebSocketHandler {
                     // 채팅방 입장 후 유저 카운트+1
                     chatServiceMain.plusUserCnt(roomId);
 
-                    /* 이 부분에서 session.getID 대신 roomID 를 사용하면 문제 생김*/
                     rooms.put(roomId, room);
                     break;
 

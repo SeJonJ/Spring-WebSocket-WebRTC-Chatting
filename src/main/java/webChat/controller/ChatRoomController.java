@@ -101,5 +101,4 @@ public class ChatRoomController {
 
         return chatServiceMain.chkRoomUserCnt(roomId);
     }
-
 }

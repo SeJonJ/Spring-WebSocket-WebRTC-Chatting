@@ -55,6 +55,7 @@
             //     }
             // })
 
+            // 화상 채팅 시 1:1 임으로 2명 고정
             $rtcType.change(function() {
                 if($rtcType.is(':checked')){
                     let number = 2;
@@ -65,6 +66,7 @@
                 }
             })
 
+            // 문자 채팅 누를 시 disabled 풀림
             $msgType.change(function(){
                 if($msgType.is(':checked')){
                     $maxUserCnt.attr('disabled', false);

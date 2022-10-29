@@ -46,6 +46,7 @@ public class ChatServiceMain {
 
         ChatRoomDto room;
 
+        // 채팅방 타입에 따라서 사용되는 Service 구분
         if(chatType.equals("msgChat")){
             room = msgChatService.createChatRoom(roomName, roomPwd, secretChk, maxUserCnt);
         }else{
@@ -92,7 +93,7 @@ public class ChatServiceMain {
     public void delChatRoom(String roomId){
 
         try {
-            // 채팅방 삭제
+            // 채팅방 타입에 따라서 단순히 채팅방만 삭제할지 업로드된 파일도 삭제할지 결정
             ChatRoomMap.getInstance().getChatRooms().remove(roomId);
 
             if (ChatRoomMap.getInstance().getChatRooms().get(roomId).getChatType().equals(ChatRoomDto.ChatType.MSG)) { // MSG 채팅방은 사진도 추가 삭제
@@ -105,7 +106,6 @@ public class ChatServiceMain {
         } catch (Exception e) { // 만약에 예외 발생시 확인하기 위해서 try catch
             System.out.println(e.getMessage());
         }
-
 
     }
 

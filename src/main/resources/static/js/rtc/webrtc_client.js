@@ -2,6 +2,7 @@
 const addr = "localhost:8443"
 
 // create and run Web Socket connection
+// 웹 소켓 연결 정보
 const socket = new WebSocket("wss://" + window.location.host + "/signal");
 
 // UI elements
@@ -17,6 +18,7 @@ const remoteVideo = document.getElementById('remote_video');
 const localUserName = document.querySelector("#uuid").value
 
 // WebRTC STUN servers
+// WebRTC STUN 서버 정보
 const peerConnectionConfig = {
     'iceServers': [
         {'urls': 'stun:stun.stunprotocol.org:3478'},
@@ -41,7 +43,7 @@ $(function(){
 });
 
 function start() {
-    // add an event listener for a message being received
+    // 페이지 시작시 실행되는 메서드 -> socket 을 통해 server 와 통신한다
     socket.onmessage = function(msg) {
         let message = JSON.parse(msg.data);
         switch (message.type) {
@@ -109,6 +111,7 @@ function start() {
 
 
     // add an event listener to get to know when a connection is open
+    // 웹 소켓 연결 되었을 때 - open - 상태일때 이벤트 처리
     socket.onopen = function() {
         log('WebSocket connection opened to Room: #' + localRoom);
         // send a message to the server to join selected room with Web Socket
@@ -120,12 +123,14 @@ function start() {
     };
 
     // a listener for the socket being closed event
+    // 소켓이 끊겼을 때 이벤트처리
     socket.onclose = function(message) {
         log('Socket has been closed');
 
     };
 
     // an event listener to handle socket errors
+    // 에러 발생 시 이벤트 처리
     socket.onerror = function(message) {
         handleErrorMessage("Error: " + message);
     };
@@ -163,6 +168,7 @@ function stop() {
         myPeerConnection.onremovetrack = null;
 
         // Stop the videos
+        // 비디오 정지
         if (remoteVideo.srcObject) {
             remoteVideo.srcObject.getTracks().forEach(track => track.stop());
         }
@@ -174,6 +180,7 @@ function stop() {
         localVideo.src = null;
 
         // close the peer connection
+        // myPeerConnection 초기화
         myPeerConnection.close();
         myPeerConnection = null;
 
@@ -241,6 +248,7 @@ function getMedia(constraints) {
 }
 
 // create peer connection, get media, start negotiating when second participant appears
+// 두번째 클라이언트가 들어오면 피어 연결을 생성 + 미디어 생성
 function handlePeerConnection(message) {
     createPeerConnection();
 
@@ -310,9 +318,10 @@ function handleTrackEvent(event) {
 }
 
 // WebRTC called handler to begin ICE negotiation
-// 1. create a WebRTC offer
-// 2. set local media description
-// 3. send the description as an offer on media format, resolution, etc
+// WebRTC 의 ICE 통신 순서
+// 1. WebRTC offer 생성
+// 2. local media description 생성?
+// 3. 미디어 형식, 해상도 등에 대한 내용을 서버에 전달
 function handleNegotiationNeededEvent() {
     myPeerConnection.createOffer().then(function(offer) {
         return myPeerConnection.setLocalDescription(offer);

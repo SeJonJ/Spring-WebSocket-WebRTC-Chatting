@@ -51,11 +51,12 @@
 - 채팅방 리스트 ajax 형식으로 받기
 - 채팅방명, 패스워드 변경
 - 유저 클릭 시 1:1 채팅으로 전환
+- 화상 채팅에서 유저퇴장 시 remote video 제거
 
 ## 6. 구동방법
 - 프로젝트를 jar 파일로 빌드
 - cmd 에서 java -jar "파일명" 타이핑
-- localhost:8080 으로 접속!
+- https://localhost:8443 으로 접속!
 
 ## 구동 화면
 ![](info/chatimg1.png)
