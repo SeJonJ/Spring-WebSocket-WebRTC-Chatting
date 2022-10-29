@@ -38,7 +38,7 @@
     <input type="hidden" id="id" name="id" th:value="${room.roomId}"/>
     <input type="hidden" id="uuid" name="uuid" th:value="${uuid}">
     <div class="col-lg-12 mb-3">
-        <div class="mb-3" th:text="'User: ' + ${uuid} + ' @ Room #' + ${room.roomId}">
+        <div class="mb-3" th:text="'User: ' + ${uuid} + ' @ Room #' + ${room.roomName}">
             Local User Id
         </div>
         <div class="col-lg-12 mb-3">

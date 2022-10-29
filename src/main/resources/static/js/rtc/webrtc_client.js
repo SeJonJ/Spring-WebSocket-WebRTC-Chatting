@@ -2,7 +2,7 @@
 const addr = "localhost:8443"
 
 // create and run Web Socket connection
-const socket = new WebSocket("wss://" + addr + "/signal");
+const socket = new WebSocket("wss://" + window.location.host + "/signal");
 
 // UI elements
 const videoButtonOff = document.querySelector('#video_off');
@@ -135,6 +135,11 @@ function start() {
 // 그냥...브라우저 종료 시 stop 함수를 부르면 된다ㅠㅠ
 window.addEventListener('unload', stop);
 
+// 브라우저 뒤로가기 시 이벤트
+window.onhashchange = function(){
+    stop();
+}
+
 function stop() {
     // send a message to the server to remove this client from the room clients list
     log("Send 'leave' message to server");
@@ -211,7 +216,7 @@ exitButton.onclick = () => {
 };
 
 function log(message) {
-    console.log(message);
+    // console.log(message);
 }
 
 function handleErrorMessage(message) {

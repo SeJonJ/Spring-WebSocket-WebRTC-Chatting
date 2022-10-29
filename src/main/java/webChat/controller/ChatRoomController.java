@@ -9,9 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import webChat.dto.ChatRoomMap;
 import webChat.service.ChatService.ChatServiceMain;
-import webChat.service.ChatService.MsgChatService;
 import webChat.dto.ChatRoomDto;
-import webChat.service.ChatService.RtcChatService;
 import webChat.service.social.PrincipalDetails;
 
 import java.util.UUID;
@@ -27,17 +25,20 @@ public class ChatRoomController {
     // 채팅방 생성
     // 채팅방 생성 후 다시 / 로 return
     @PostMapping("/chat/createroom")
-    public String createRoom(@RequestParam("roomName") String name, @RequestParam("roomPwd") String roomPwd, @RequestParam("secretChk") String secretChk,
-                             @RequestParam(value = "maxUserCnt") String maxUserCnt, @RequestParam("chatType") String chatType, RedirectAttributes rttr) {
+    public String createRoom(@RequestParam("roomName") String name,
+                             @RequestParam("roomPwd") String roomPwd,
+                             @RequestParam("secretChk") String secretChk,
+                             @RequestParam(value = "maxUserCnt", defaultValue = "2") String maxUserCnt,
+                             @RequestParam("chatType") String chatType,
+                             RedirectAttributes rttr) {
 
-//        log.info("chk {}", secretChk);
+        // log.info("chk {}", secretChk);
+
         // 매개변수 : 방 이름, 패스워드, 방 잠금 여부, 방 인원수
         ChatRoomDto room;
-        if(chatType.equals("msgChat")){
-            room = chatServiceMain.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt), chatType);
-        }else{
-            room = chatServiceMain.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt), chatType);
-        }
+
+        room = chatServiceMain.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt), chatType);
+
 
         log.info("CREATE Chat Room [{}]", room);
 

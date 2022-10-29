@@ -17,7 +17,7 @@
 - jquery
 - WebSocket & SocketJS
 - Stomp
-- WebRTC : 실시간 화상 채팅
+- WebRTC : P2P 실시간 화상 채팅
 - JPA - 추가 예정
 
 ## 2. 다이어그램
@@ -62,10 +62,9 @@
 
 ![](info/chatimg2.png)
 
-![](info/chatting.gif)
-
 ![](info/chattingFileUpload.gif)
 
+![](info/WebRTC.gif)
 
 ## Reference
 https://github.com/Benkoff/WebRTC-SS

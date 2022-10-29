@@ -31,11 +31,11 @@ public class MainController {
         if (principalDetails != null) {
             // 세션에서 로그인 유저 정보를 가져옴
             model.addAttribute("user", principalDetails.getUser());
-            log.info("user [{}] ",principalDetails);
+            log.debug("user [{}] ",principalDetails);
         }
 
 //        model.addAttribute("user", "hey");
-        log.info("SHOW ALL ChatList {}", chatServiceMain.findAllRoom());
+        log.debug("SHOW ALL ChatList {}", chatServiceMain.findAllRoom());
         return "roomlist";
     }
 

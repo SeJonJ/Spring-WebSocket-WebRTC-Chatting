@@ -65,6 +65,7 @@ public class ChatServiceMain {
 
     // 채팅방 인원+1
     public void plusUserCnt(String roomId){
+        log.info("cnt {}",ChatRoomMap.getInstance().getChatRooms().get(roomId).getUserCount());
         ChatRoomDto room = ChatRoomMap.getInstance().getChatRooms().get(roomId);
         room.setUserCount(room.getUserCount()+1);
     }

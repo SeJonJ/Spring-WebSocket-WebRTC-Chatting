@@ -88,15 +88,16 @@ public class RtcChatService {
 
     // 이상하게 웹 소켓 연결이 끊어졌을 때 이벤트 처리
     public void forceDisConn(WebSocketSession session){
-        for (Map.Entry<String, ChatRoomDto> rooms : ChatRoomMap.getInstance().getChatRooms().entrySet()) {
-            rooms.getValue().getUserList().remove(session.getId());
-        }
+//        for (Map.Entry<String, ChatRoomDto> rooms : ChatRoomMap.getInstance().getChatRooms().entrySet()) {
+//            rooms.getValue().getUserList().remove(session.getId());
+//        }
 
+        // ChatRooms 전체를 돌면서 각 방마다 userList 를 가져온 후 session 을 삭제함
         ChatRoomMap.getInstance().getChatRooms().values()
                         .forEach(room ->{
                             room.getUserList().remove(session.getId());
                         });
 
-        log.info("강제 퇴장 삭제 완료 [{}]", session.getId());
+        log.debug("강제 퇴장 삭제 완료 [{}]", session.getId());
     }
 }
