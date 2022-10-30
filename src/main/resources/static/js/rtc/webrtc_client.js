@@ -17,6 +17,9 @@ const remoteVideo = document.getElementById('remote_video');
 // const localUserName = localStorage.getItem("uuid");
 const localUserName = document.querySelector("#uuid").value
 
+const viewOnBtn = document.querySelector('#view_on');
+const viewOffBtn = document.querySelector('#view_off');
+
 // WebRTC STUN servers
 // WebRTC STUN 서버 정보
 const peerConnectionConfig = {
@@ -222,8 +225,22 @@ exitButton.onclick = () => {
     stop();
 };
 
+// 화면 공유
+viewOnBtn.onclick = () => {
+    navigator.mediaDevices.getDisplayMedia({
+        audio: true,
+        video: true
+    }).then(function(stream){
+        //success
+    }).catch(function(e){
+        //error;
+    });
+}
+
+
+
 function log(message) {
-    // console.log(message);
+     console.log(message);
 }
 
 function handleErrorMessage(message) {
