@@ -3,7 +3,7 @@
 
 ## 0. Spring Boot 와 WebSocket 을 활용한 채팅 만들기 프로젝트
 - SpringBoot 기반 웹 소켓 채팅 및 WebRTC 를 활용한 P2P 화상 채팅
-
+- 상세한 코드 설명은 https://terianp.tistory.com/178 에서 확인 가능합니다.
 
 ### 브랜치별 설명
 - master : 기본 문자 채팅
@@ -29,6 +29,7 @@
 - SocketJS 를 활용한 JS 공부
 - Spring Boot 활용 및 다양한 어노테이션 사용
 - AJAX , jquery, css 공부
+- WebRTC 기반 SignalingServer 이해 및 구현
 
 ## 4. 구현 기능
 - 채팅방 생성
@@ -44,7 +45,8 @@
 - 채팅방 삭제 : 채팅방 삭제 시 해당 채팅방 안에 있는 파일들도 S3 에서 함께 삭제
 - 채팅방 유저 인원 설정 -> 인원 제한 시 제한 된 인원만 채팅 참여 가능
 - 소셜 로그인유저 채팅 => 네이버와 카카오 로그인 완료 단 DB 저장 X
-- WebRTC 화상 채팅 : Only P2P
+- WebRTC 화상 채팅 : P2P 기반 음성, 화면 공유
+- WebRTC 화면 공유 : 실시간 화면 공유 기능 구현
 
 ## 5. 추후 추가 기능(목표 기능)
 - 일반 로그인 유저 회원가입 및 채팅(최우선)
@@ -59,13 +61,14 @@
 - https://localhost:8443 으로 접속!
 
 ## 구동 화면
-![](info/chatimg1.png)
-
-![](info/chatimg2.png)
 
 ![](info/chattingFileUpload.gif)
 
 ![](info/WebRTC.gif)
 
+![](info/view_share.gif)
+
 ## Reference
 https://github.com/Benkoff/WebRTC-SS
+
+https://github.com/codejs-kr/webrtc-lab
