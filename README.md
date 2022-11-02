@@ -66,8 +66,6 @@
 
 ![](info/WebRTC.gif)
 
-![](info/view_share.gif)
-
 ## Reference
 https://github.com/Benkoff/WebRTC-SS
 
