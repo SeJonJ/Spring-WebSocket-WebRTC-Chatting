@@ -33,8 +33,12 @@ const peerConnectionConfig = {
 
 // WebRTC media
 const mediaConstraints = {
-    audio: true,
-    video: true
+    video: true,
+    audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        sampleRate: 44100
+    }
 };
 
 // WebRTC variables
@@ -491,12 +495,12 @@ function ScreenHandler() {
  * 로컬 스트림 핸들링
  * @param stream
  */
-function onLocalStream(stream) {
-    log('onLocalStream', stream);
-
-    const $video = document.querySelector('#share-video');
-    $video.srcObject = stream;
-}
+// function onLocalStream(stream) {
+//     log('onLocalStream', stream);
+//
+//     const $video = document.querySelector('#share-video');
+//     $video.srcObject = stream;
+// }
 
 /**
  * screenHandler를 통해 스크린 API를 호출합니다 - 시작
@@ -507,18 +511,25 @@ async function startScreenShare() {
     // 전송 시작 시 share-video 부분 show
     $("#share-video").show();
 
-    onLocalStream(stream);
+    // onLocalStream(stream);
 
-    /**
-     * 화면 공유 중지 눌렀을 때 이벤트
-     * share-video 가 사라지는 것 뿐만 아니라 추가로 video-off 에서 video-on 으로 변경되도록 만들어야함
-     */
-    shareView.getVideoTracks()[0].addEventListener('ended', () =>{
-        log('screensharing has ended')
-
-        $("#share-video").hide();
-
+    await myPeerConnection.forEach((pc) =>{
+        const sender = pc.getSenders().find((s) =>
+        s.track.kind == shareView.getTracks().kind);
+        sender.replaceTrack(shareView.getTracks());
     });
+
+
+    // /**
+    //  * 화면 공유 중지 눌렀을 때 이벤트
+    //  * share-video 가 사라지는 것 뿐만 아니라 추가로 video-off 에서 video-on 으로 변경되도록 만들어야함
+    //  */
+    // shareView.getVideoTracks()[0].addEventListener('ended', () =>{
+    //     log('screensharing has ended')
+    //
+    //     $("#share-video").hide();
+    //
+    // });
 
 }
 
