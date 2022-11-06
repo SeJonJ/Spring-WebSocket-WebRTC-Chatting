@@ -232,7 +232,7 @@ exitButton.onclick = () => {
 };
 
 function log(message) {
-     console.log(message);
+     // console.log(message);
 }
 
 function handleErrorMessage(message) {
@@ -278,10 +278,28 @@ function createPeerConnection() {
 
     // the following events are optional and could be realized later if needed
     // myPeerConnection.onremovetrack = handleRemoveTrackEvent;
-    // myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
+
+    myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
     // myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
     // myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
 }
+
+/** peerConnection 과 관련된 이벤트 처리
+ * 다른 peer 와 연결되었을 때 remote_video show 상태로로, 끊졌을때는 remote_video 를 hide 상태로 변경
+ * **/
+function handleICEConnectionStateChangeEvent(){
+    let status = myPeerConnection.iceConnectionState;
+
+    if(status === "connected"){
+        log("status : "+status)
+        $("#remote_video").show();
+    }else if(status === "disconnected"){
+        log("status : "+status)
+
+        $("#remote_video").hide();
+    }
+}
+
 // add MediaStream to local video element and to the Peer
 function getLocalMediaStream(mediaStream) {
     localStream = mediaStream;
@@ -322,6 +340,7 @@ function handleICECandidateEvent(event) {
 }
 
 function handleTrackEvent(event) {
+
     log('Track Event: set stream to remote video element');
     remoteVideo.srcObject = event.streams[0];
 }
@@ -390,6 +409,7 @@ function handleOfferMessage(message) {
             })
             .then(function () {
                 log("Sending answer packet back to other peer");
+
                 sendToServer({
                     from: localUserName,
                     data: localRoom,
@@ -423,15 +443,15 @@ function handleNewICECandidateMessage(message) {
  * Track 이란 현재 MediaStream 을 구성하는 각 요소를 의미한다.
  *    - Track 는 오디오, 비디오, 자막 총 3개의 stream 으로 구성된다.
  *    - 때문에 Track 객체는 track[0] = 오디오, track[1] = 비디오 의 배열 구조로 되어있다
- * MediaStream 이란 video stream 과 audio steam 등의 미디어 스트림을 다루는 객체를 이야기한다 - 쉽게 생각하자면 비디오와 오디오 데이터 -
+ * MediaStream 이란 video stream 과 audio steam 등의 미디어 스트림을 다루는 객체를 이야기한다
+ * - stream(스트림)이란 쉽게 생각하자면 비디오와 오디오 데이터라고 이해하면 될 듯 하다 -
  *
  * 즉 상대방에게 보내는 track 에서 나의 웹캠 videoStream 대신 공유 화면에 해당하는 videoStream 으로 변경하는 것이다.
  *
  * 이렇듯 Track 에서 steam 을 교체 - replace - 하기 위해서는 아래와 같은 과정을 거친다.
  * 1. myPeerConnection 에서 sender 를 가져온다. sender 란 나와 연결된 다른 peer 로 생각하면 된다.
  * 2. sender 객체에서 replaceTrack 함수를 활용해서 stream 을 교체한다.
- * 3. 이때 shareView 의 경우 VideoStream 의 경우 audio 까지 포함해서 화면 공유를 시작한 것이 아니라면
- *      Track[0] 에 videoStream 이 들어있다. 때문에 replaceTrack 의 파라미터에 shareView.getTrack[0] 을 넣는다.
+ * 3. shareView 의 Track[0] 에는 videoStream 이 들어있다. 따라서 replaceTrack 의 파라미터에 shareView.getTrack[0] 을 넣는다.
  * 4. 화면 공유 취소 시 원래 화상 화면으로 되돌리기 위해서는 다시 Track 를 localstream 으로 교체해주면 된다!
  *      이때 localStream 에는 audio 와 video 모두 들어가 있음으로 video 에 해당하는 Track[1] 만 꺼내서 교체해준다.
  * **/
@@ -518,24 +538,26 @@ async function startScreenShare() {
     // 스크린 API 호출 & 시작
     await screenHandler.start();
 
-    // myPeerConnection 에 연결된 다른 sender 쪽으로 - 즉 다른 Peer 쪽으로 -
-    // shareView 의 Track 에서 0번째 인덱스에 들어있는 값 - 즉 videoStream 로 - 교체한다.
+    // 1. myPeerConnection 에 연결된 다른 sender 쪽으로 - 즉 다른 Peer 쪽으로 -
+    // 2. shareView 의 Track 에서 0번째 인덱스에 들어있는 값 - 즉 videoStream 로 - 교체한다.
     await myPeerConnection.getSenders().forEach((sender)=>{ // 연결된 sender 로 보내기위한 반복문
 
-        // track 를 shareView 트랙으로 교체
+        // 3. track 를 shareView 트랙으로 교체
         sender.replaceTrack(shareView.getTracks()[0])
 
     })
 
+    // // Track 가 진짜 배열인지 확인하기
+    // console.dir(shareView.getTracks());
+    // console.dir(localStream.getTracks());
 
     /**
      * 화면 공유 중지 눌렀을 때 이벤트
-     * TODO share-video 가 사라지는 것 뿐만 아니라 추가로 video-off 에서 video-on 으로 변경되도록 만들어야함
      */
     shareView.getVideoTracks()[0].addEventListener('ended', () =>{
         // log('screensharing has ended')
 
-        // Track 를 localstream 의 videoStram 로 교체함
+        // 4. 화면 공유 중지 시 Track 를 localstream 의 videoStram 로 교체함
         myPeerConnection.getSenders().forEach((sender) =>{
             sender.replaceTrack(localStream.getTracks()[1]);
         })
@@ -543,9 +565,6 @@ async function startScreenShare() {
         // $("#share-video").hide();
 
     });
-
-    // console.dir(shareView.getTracks());
-    // console.dir(localStream.getTracks());
 
 }
 
@@ -558,7 +577,8 @@ async function stopScreenShare(){
     await screenHandler.end();
     // myPeerConnection
     await myPeerConnection.getSenders().forEach((sender) =>{
+
+        // 4. 화면 공유 중지 시 Track 를 localstream 의 videoStram 로 교체함
         sender.replaceTrack(localStream.getTracks()[1]);
     })
-
 }
