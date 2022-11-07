@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'Terian'
-version = '7.7-SNAPSHOT'
+version = '8.0-SNAPSHOT'
 sourceCompatibility = '1.8'
 
 configurations {
