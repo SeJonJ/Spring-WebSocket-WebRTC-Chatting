@@ -8,6 +8,7 @@
 ### 브랜치별 설명
 - master : 기본 문자 채팅
 - master-Webrtc-jpa : 일반 채팅 + 실시간 화상 채팅, 화면 공유(P2P)
+- master-webrtc-kurento-jpa : kurento 미디어 서버를 활용한 webrtc 화상 채팅
 
 ## 1. 사용기술
 - Java 8
