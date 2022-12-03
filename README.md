@@ -71,6 +71,7 @@
 - 프로젝트를 jar 파일로 빌드
 - cmd 에서 java -jar "파일명" 타이핑
 - https://localhost:8443 으로 접속!
+- Kurento Media Server 사용시 환경변수 설정 필요 : -Dkms.url=ws://<KMS IP>:<PORT>/kurento
 
 ## 구동 화면
 
