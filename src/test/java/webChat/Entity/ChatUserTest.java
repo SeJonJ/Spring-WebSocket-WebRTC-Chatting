@@ -31,13 +31,13 @@ class ChatUserTest {
         return user;
     }
 
-    @Test
-    @DisplayName("유저 테스트")
-    public void userTest(){
-        chatUserRepository.saveAndFlush(createUser());
-
-        ChatUser user = chatUserRepository.findByEmail("test@test.com");
-        log.info("user : [{} {} {}] ", user.getId(), user.getNickName(), user.getProvider());
-
-    }
+//    @Test
+//    @DisplayName("유저 테스트")
+//    public void userTest(){
+//        chatUserRepository.saveAndFlush(createUser());
+//
+//        ChatUser user = chatUserRepository.findByEmail("test@test.com");
+//        log.info("user : [{} {} {}] ", user.getId(), user.getNickName(), user.getProvider());
+//
+//    }
 }
