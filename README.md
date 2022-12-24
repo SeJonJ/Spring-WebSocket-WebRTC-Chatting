@@ -19,6 +19,7 @@
 - WebSocket & SocketJS
 - Stomp
 - WebRTC : P2P 실시간 화상 채팅, 화면 공유
+- Speech Recognition API(예정)
 - JPA - 추가 예정
 
 ## 2. 다이어그램
