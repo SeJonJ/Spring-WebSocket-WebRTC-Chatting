@@ -79,6 +79,9 @@
 - https://localhost:8443 으로 접속!
 - Kurento Media Server 사용시 환경변수 설정 필요 : -Dkms.url=ws://<KMS IP>:<PORT>/kurento
 
+## 7. 배포 주소
+
+
 ## 구동 화면
 
 ![](info/chattingFileUpload.gif)
