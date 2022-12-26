@@ -80,7 +80,7 @@
 - Kurento Media Server 사용시 환경변수 설정 필요 : -Dkms.url=ws://<KMS IP>:<PORT>/kurento
 
 ## 7. 배포 주소
-
+https://chat-for-you.onrender.com/
 
 ## 구동 화면
 
