@@ -80,6 +80,9 @@
 - Kurento Media Server 사용시 환경변수 설정 필요 : -Dkms.url=ws://<KMS IP>:<PORT>/kurento
 
 ## 7. 배포 주소
+- 모든 방의 생성 비밀번호는 123 으로 해주세요
+- 일반 채팅의 경우 제한없이 생성하셔도 됩니다
+- 화상 채팅의 경우 사용 후 삭제해주시면 감사하겠습니다
 https://chat-for-you.onrender.com/
 
 ## 구동 화면
