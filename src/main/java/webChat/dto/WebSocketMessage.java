@@ -2,7 +2,7 @@ package webChat.dto;
 
 import lombok.*;
 
-
+/** @desc 삭제 예정  **/
 // WebRTC 연결 시 사용되는 클래스
 @Data
 @AllArgsConstructor

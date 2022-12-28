@@ -3,6 +3,9 @@ package webChat.dto;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * @description 변경 예정
+ */
 @Data
 @Builder
 @AllArgsConstructor
