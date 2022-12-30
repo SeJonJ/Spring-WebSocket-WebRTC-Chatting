@@ -86,6 +86,9 @@
   
 https://chat-for-you.onrender.com/
 
+## 확인된 버그
+1. 채팅방 하나도 없을때 비밀방 생성 시 제대로 비밀방 생성 안됨
+
 ## 구동 화면
 
 ![](info/chattingFileUpload.gif)
