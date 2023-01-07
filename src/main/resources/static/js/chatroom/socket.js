@@ -223,6 +223,19 @@ function uploadFile(){
     formData.append("file",file);
     formData.append("roomId", roomId);
 
+    // 확장자 추출
+    var fileDot = file.name.lastIndexOf(".");
+
+    // 확장자 검사
+    var fileType = file.name.substring(fileDot + 1, file.name.length);
+    // console.log("type : " + fileType);
+
+    if (!(fileType == "png" || fileType == "jpg" || fileType == "jpeg" || fileType == "gif"))
+    {
+        alert("파일 업로드는 png, jpg, gif, jpeg 만 가능합니다");
+        return;
+    }
+
     // ajax 로 multipart/form-data 를 넘겨줄 때는
     //         processData: false,
     //         contentType: false
