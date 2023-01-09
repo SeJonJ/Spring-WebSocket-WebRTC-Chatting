@@ -18,10 +18,12 @@ public class WebRtcConfig implements WebSocketConfigurer {
     private final SignalHandler signalHandler;
 
     // Kurento Media Server 를 사용하기 위한 Bean 설정
-//    @Bean
-//    public KurentoClient kurentoClient() {
-//        return KurentoClient.create();
-//    }
+    // Bean 으로 등록 후 반드시!! VM 옵션에서 kurento 관련 설정을 해주어야한다.
+    // 아니면 에러남
+    @Bean
+    public KurentoClient kurentoClient() {
+        return KurentoClient.create();
+    }
 
     // signal 로 요청이 왔을 때 아래의 WebSockerHandler 가 동작하도록 registry 에 설정
     // 요청은 클라이언트 접속, close, 메시지 발송 등에 대해 특정 메서드를 호출한다
