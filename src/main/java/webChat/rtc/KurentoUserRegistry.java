@@ -32,23 +32,23 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 4.3.1
  */
 @Component
-public class UserRegistry_Kurento {
+public class KurentoUserRegistry {
 
   /**
    * @Desc 유저명 - userSession 객체 저장 map
    * */
-  private final ConcurrentHashMap<String, UserSession_Kurento> usersByName = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, KurentoUserSession> usersByName = new ConcurrentHashMap<>();
 
   /**
    * @Desc 세션아이디 - userSession 객체 저장 map
    * */
-  private final ConcurrentHashMap<String, UserSession_Kurento> usersBySessionId = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, KurentoUserSession> usersBySessionId = new ConcurrentHashMap<>();
 
   /**
    * @Desc userSession 을 파라미터로 받은 후 해당 객체에서 userName 과 sessionId 를 key 로해서 userSession 저장
    * @Param userSession
    * */
-  public void register(UserSession_Kurento user) {
+  public void register(KurentoUserSession user) {
     usersByName.put(user.getName(), user);
     usersBySessionId.put(user.getSession().getId(), user);
   }
@@ -58,7 +58,7 @@ public class UserRegistry_Kurento {
    * @Param userName
    * @Return userSession
    * */
-  public UserSession_Kurento getByName(String name) {
+  public KurentoUserSession getByName(String name) {
     return usersByName.get(name);
   }
 
@@ -67,7 +67,7 @@ public class UserRegistry_Kurento {
    * @Param WebSocketSession
    * @Return userSession
    * */
-  public UserSession_Kurento getBySession(WebSocketSession session) {
+  public KurentoUserSession getBySession(WebSocketSession session) {
     return usersBySessionId.get(session.getId());
   }
 
@@ -86,8 +86,8 @@ public class UserRegistry_Kurento {
    * @Param WebSocketSession session
    * @return userSession 객체
    * */
-  public UserSession_Kurento removeBySession(WebSocketSession session) {
-    final UserSession_Kurento user = getBySession(session);
+  public KurentoUserSession removeBySession(WebSocketSession session) {
+    final KurentoUserSession user = getBySession(session);
     usersByName.remove(user.getName());
     usersBySessionId.remove(session.getId());
     return user;

@@ -7,13 +7,13 @@ import lombok.RequiredArgsConstructor;
 import org.kurento.client.IceCandidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import webChat.dto.Room_Kurento;
+import webChat.dto.KurentoRoom;
+import webChat.service.ChatService.KurentoManager;
 
 import java.io.IOException;
 
@@ -30,17 +30,20 @@ public class ServerCallHandler extends TextWebSocketHandler {
     private static final Gson gson = new GsonBuilder().create();
 
     // 채팅룸 관련 객체 생성
-    private final Room_Kurento roomKurento;
+    private final KurentoRoom roomKurento;
 
     // 유저 등록? 을 위한 객체 생성
-   private final UserRegistry_Kurento userRegistryKurento;
+   private final KurentoUserRegistry registry;
+
+   // room 매니저
+    private final KurentoManager roomManager;
 
     // 이전에 사용하던 그 메서드
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         final JsonObject jsonMessage = gson.fromJson(message.getPayload(), JsonObject.class);
 
-        final UserSession_Kurento user = registry.getBySession(session);
+        final KurentoUserSession user = registry.getBySession(session);
 
         if (user != null) {
             log.debug("Incoming message from user '{}': {}", user.getName(), jsonMessage);
@@ -61,7 +64,7 @@ public class ServerCallHandler extends TextWebSocketHandler {
                 // sender 명 - 사용자명 - 과
                 final String senderName = jsonMessage.get("sender").getAsString();
                 // 유저명을 통해 session 값을 가져온다
-                final UserSession_Kurento sender = registry.getByName(senderName);
+                final KurentoUserSession sender = registry.getByName(senderName);
                 // jsonMessage 에서 sdpOffer 값을 가져온다
                 final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
                 // 이후 receiveVideoFrom 실행 => 아마도 특정 유저로부터 받은 비디오를 다른 유저에게 넘겨주는게 아닌가...?
@@ -89,7 +92,7 @@ public class ServerCallHandler extends TextWebSocketHandler {
     // 유저의 연결이 끊어진 경우
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        UserSession_Kurento user = registry.removeBySession(session);
+        KurentoUserSession user = registry.removeBySession(session);
         roomManager.getRoom(user.getRoomName()).leave(user);
     }
 
@@ -101,19 +104,19 @@ public class ServerCallHandler extends TextWebSocketHandler {
         log.info("PARTICIPANT {}: trying to join room {}", name, roomName);
 
         // roomName 를 기준으로 room 으 ㄹ가져온다
-        Room room = roomManager.getRoom(roomName);
+        KurentoRoom room = roomManager.getRoom(roomName);
 
         // 유저명과 session 을 room 에 넘겨서 room 에 유저 저장
-        final UserSession_Kurento user = room.join(name, session);
+        final KurentoUserSession user = room.join(name, session);
 
         // 단순히 room 에 저장하는 것 외에도 user 를 저장하기 위한 메서드?
         registry.register(user);
     }
 
     // 유저가 room 에서 떠났을 때
-    private void leaveRoom(UserSession_Kurento user) throws IOException {
+    private void leaveRoom(KurentoUserSession user) throws IOException {
         // 유저명을 기준으로 room 을 가져온다
-        final Room room = roomManager.getRoom(user.getRoomName());
+        final KurentoRoom room = roomManager.getRoom(user.getRoomName());
         // room 에서 유저를 제거하고
         room.leave(user);
 

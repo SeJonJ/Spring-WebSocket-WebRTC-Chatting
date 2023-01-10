@@ -26,7 +26,7 @@ import org.kurento.client.MediaPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
-import webChat.rtc.UserSession_Kurento;
+import webChat.rtc.KurentoUserSession;
 
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
@@ -41,14 +41,14 @@ import java.util.concurrent.ConcurrentMap;
  * @author Ivan Gracia (izanmail@gmail.com)
  * @since 4.3.1
  */
-public class Room_Kurento implements Closeable {
+public class KurentoRoom implements Closeable {
   // 로깅 객체 생성
-  private final Logger log = LoggerFactory.getLogger(Room_Kurento.class);
+  private final Logger log = LoggerFactory.getLogger(KurentoRoom.class);
 
   /**
    * @desc 참여자를 저장하기 위한 Map
    * */
-  private final ConcurrentMap<String, UserSession_Kurento> participants = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, KurentoUserSession> participants = new ConcurrentHashMap<>();
 
   // 미디어 파이프라인
   private final MediaPipeline pipeline;
@@ -65,7 +65,7 @@ public class Room_Kurento implements Closeable {
    * @Param roomName, pipline
    * @desc roomName 과 pipline 을 이용한 생성자
    * */
-  public Room_Kurento(String roomName, MediaPipeline pipeline) {
+  public KurentoRoom(String roomName, MediaPipeline pipeline) {
     this.name = roomName;
     this.pipeline = pipeline;
     log.info("ROOM {} has been created", roomName);
@@ -82,11 +82,11 @@ public class Room_Kurento implements Closeable {
   /**
    * @Desc participants 의 value 만 return
    * */
-  public Collection<UserSession_Kurento> getParticipants() {
+  public Collection<KurentoUserSession> getParticipants() {
     return participants.values();
   }
 
-  public UserSession_Kurento getParticipant(String name) {
+  public KurentoUserSession getParticipant(String name) {
     return participants.get(name);
   }
 
@@ -95,12 +95,12 @@ public class Room_Kurento implements Closeable {
    * @Param String userName, WebSocketSession session
    * @return UserSession 객체
    * */
-  public UserSession_Kurento join(String userName, WebSocketSession session) throws IOException {
+  public KurentoUserSession join(String userName, WebSocketSession session) throws IOException {
 
     log.info("ROOM {}: adding participant {}", this.name, userName);
 
     // UserSession 은 유저명, room명, 유저 세션정보, pipline 파라미터로 받음
-    final UserSession_Kurento participant = new UserSession_Kurento(userName, this.name, session, this.pipeline);
+    final KurentoUserSession participant = new KurentoUserSession(userName, this.name, session, this.pipeline);
 
     //
     joinRoom(participant);
@@ -115,7 +115,7 @@ public class Room_Kurento implements Closeable {
     return participant;
   }
 
-  public void leave(UserSession_Kurento user) throws IOException {
+  public void leave(KurentoUserSession user) throws IOException {
     log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.name);
     this.removeParticipant(user.getName());
     user.close();
@@ -126,7 +126,7 @@ public class Room_Kurento implements Closeable {
    * @Param UserSession newParticipant => 새로운 유저
    * @Return List<String 유저명>
    * */
-  private Collection<String> joinRoom(UserSession_Kurento newParticipant) throws IOException {
+  private Collection<String> joinRoom(KurentoUserSession newParticipant) throws IOException {
     // JsonObject 를 생성
     final JsonObject newParticipantMsg = new JsonObject();
 
@@ -144,7 +144,7 @@ public class Room_Kurento implements Closeable {
             newParticipant.getName());
 
     // participants 의 value 로 for 문 돌림
-    for (final UserSession_Kurento participant : participants.values()) {
+    for (final KurentoUserSession participant : participants.values()) {
       try {
         // 현재 방의 모든 참여자들에게 새로운 참여자가 입장해서 만들어지는 json 객체
         // 즉, newParticipantMsg 를 send함
@@ -185,7 +185,7 @@ public class Room_Kurento implements Closeable {
     participantLeftJson.addProperty("name", name);
 
     // participants 의 value 로 for 문 돌림
-    for (final UserSession_Kurento participant : participants.values()) {
+    for (final KurentoUserSession participant : participants.values()) {
       try {
         // 나간 유저의 video 를 cancel 하기 위한 메서드
         participant.cancelVideoFrom(name);
@@ -211,12 +211,12 @@ public class Room_Kurento implements Closeable {
    * @Param UserSession 유저
    * @Return none
    * */
-  public void sendParticipantNames(UserSession_Kurento user) throws IOException {
+  public void sendParticipantNames(KurentoUserSession user) throws IOException {
     // jsonArray 객체 생성
     final JsonArray participantsArray = new JsonArray();
 
     // participants 의 value 만 return 받아서 => this.getParticipants() for 문 돌림
-    for (final UserSession_Kurento participant : this.getParticipants()) {
+    for (final KurentoUserSession participant : this.getParticipants()) {
       // 만약 참여자의 정보가 파라미터로 넘어온 user 와 같지 않다면
       if (!participant.equals(user)) {
         // TODO 여기는 추가 정리
@@ -245,7 +245,7 @@ public class Room_Kurento implements Closeable {
   @Override
   public void close() {
     // participants 의 value 값으로 for 문 시작
-    for (final UserSession_Kurento user : participants.values()) {
+    for (final KurentoUserSession user : participants.values()) {
       try {
         // 유저 close
         user.close();
@@ -263,12 +263,12 @@ public class Room_Kurento implements Closeable {
 
       @Override
       public void onSuccess(Void result) throws Exception {
-        log.trace("ROOM {}: Released Pipeline", Room_Kurento.this.name);
+        log.trace("ROOM {}: Released Pipeline", KurentoRoom.this.name);
       }
 
       @Override
       public void onError(Throwable cause) throws Exception {
-        log.warn("PARTICIPANT {}: Could not release Pipeline", Room_Kurento.this.name);
+        log.warn("PARTICIPANT {}: Could not release Pipeline", KurentoRoom.this.name);
       }
     });
 

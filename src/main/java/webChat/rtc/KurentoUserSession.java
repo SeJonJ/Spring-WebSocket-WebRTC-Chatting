@@ -18,6 +18,7 @@
 package webChat.rtc;
 
 import com.google.gson.JsonObject;
+import lombok.RequiredArgsConstructor;
 import org.kurento.client.*;
 import org.kurento.jsonrpc.JsonUtils;
 import org.slf4j.Logger;
@@ -39,10 +40,10 @@ import java.util.concurrent.ConcurrentMap;
  * 새로운 유저가 들어왔을 때 이를 나의 map 에 저장하고, 다른 사람들과 이를 동기화 해서 일치 시키는 것?
  */
 @Component
-public class UserSession_Kurento implements Closeable {
+@RequiredArgsConstructor
+public class KurentoUserSession implements Closeable {
 
-
-  private static final Logger log = LoggerFactory.getLogger(UserSession_Kurento.class);
+  private static final Logger log = LoggerFactory.getLogger(KurentoUserSession.class);
 
   private final String name;
   private final WebSocketSession session;
@@ -66,8 +67,8 @@ public class UserSession_Kurento implements Closeable {
   /**
    * @Param String 유저명, String 방이름, WebSocketSession 세션객체, MediaPipline (kurento)mediaPipeline 객체
    */
-  public UserSession_Kurento(final String name, String roomName, final WebSocketSession session,
-                             MediaPipeline pipeline) {
+  public KurentoUserSession(String name, String roomName, WebSocketSession session,
+                            MediaPipeline pipeline) {
 
     this.pipeline = pipeline;
     this.name = name;
@@ -147,7 +148,7 @@ public class UserSession_Kurento implements Closeable {
    * @desc
    * @Param userSession, String
    * */
-  public void receiveVideoFrom(UserSession_Kurento sender, String sdpOffer) throws IOException {
+  public void receiveVideoFrom(KurentoUserSession sender, String sdpOffer) throws IOException {
     // 유저가 room 에 들어왓음을 알림
     log.info("USER {}: connecting with {} in room {}", this.name, sender.getName(), this.roomName);
 
@@ -177,7 +178,7 @@ public class UserSession_Kurento implements Closeable {
    * @Param UserSession : 보내는 유저의 userSession 객체
    * @return WebRtcEndPoint
    * */
-  private WebRtcEndpoint getEndpointForUser(final UserSession_Kurento sender) {
+  private WebRtcEndpoint getEndpointForUser(final KurentoUserSession sender) {
     /** 여기도 몰겠다ㅠㅠ */
     // 만약 sender 명이 현재 user명과 일치한다면, 즉 sdpOffer 제안을 보내는 쪽과 받는 쪽이 동일하다면?
     // loopback 임을 찍고, 그대로 outgoinMedia 를 return
@@ -241,7 +242,7 @@ public class UserSession_Kurento implements Closeable {
     return incoming;
   }
 
-  public void cancelVideoFrom(final UserSession_Kurento sender) {
+  public void cancelVideoFrom(final KurentoUserSession sender) {
     this.cancelVideoFrom(sender.getName());
   }
 
@@ -254,12 +255,12 @@ public class UserSession_Kurento implements Closeable {
       @Override
       public void onSuccess(Void result) throws Exception {
         log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
-                UserSession_Kurento.this.name, senderName);
+                KurentoUserSession.this.name, senderName);
       }
 
       @Override
       public void onError(Throwable cause) throws Exception {
-        log.warn("PARTICIPANT {}: Could not release incoming EP for {}", UserSession_Kurento.this.name,
+        log.warn("PARTICIPANT {}: Could not release incoming EP for {}", KurentoUserSession.this.name,
                 senderName);
       }
     });
@@ -279,12 +280,12 @@ public class UserSession_Kurento implements Closeable {
         @Override
         public void onSuccess(Void result) throws Exception {
           log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
-                  UserSession_Kurento.this.name, remoteParticipantName);
+                  KurentoUserSession.this.name, remoteParticipantName);
         }
 
         @Override
         public void onError(Throwable cause) throws Exception {
-          log.warn("PARTICIPANT {}: Could not release incoming EP for {}", UserSession_Kurento.this.name,
+          log.warn("PARTICIPANT {}: Could not release incoming EP for {}", KurentoUserSession.this.name,
                   remoteParticipantName);
         }
       });
@@ -294,12 +295,12 @@ public class UserSession_Kurento implements Closeable {
 
       @Override
       public void onSuccess(Void result) throws Exception {
-        log.trace("PARTICIPANT {}: Released outgoing EP", UserSession_Kurento.this.name);
+        log.trace("PARTICIPANT {}: Released outgoing EP", KurentoUserSession.this.name);
       }
 
       @Override
       public void onError(Throwable cause) throws Exception {
-        log.warn("USER {}: Could not release outgoing EP", UserSession_Kurento.this.name);
+        log.warn("USER {}: Could not release outgoing EP", KurentoUserSession.this.name);
       }
     });
   }
@@ -333,10 +334,10 @@ public class UserSession_Kurento implements Closeable {
     if (this == obj) {
       return true;
     }
-    if (obj == null || !(obj instanceof UserSession_Kurento)) {
+    if (obj == null || !(obj instanceof KurentoUserSession)) {
       return false;
     }
-    UserSession_Kurento other = (UserSession_Kurento) obj;
+    KurentoUserSession other = (KurentoUserSession) obj;
     boolean eq = name.equals(other.name);
     eq &= roomName.equals(other.roomName);
     return eq;

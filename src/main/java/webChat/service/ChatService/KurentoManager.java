@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import webChat.dto.KurentoRoom;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -31,10 +32,10 @@ import java.util.concurrent.ConcurrentMap;
  * @since 4.3.1
  */
 @Service
-public class RoomManager_Kurento {
+public class KurentoManager {
 
   // 로깅을 위한 객체 생성
-  private final Logger log = LoggerFactory.getLogger(RoomManager_Kurento.class);
+  private final Logger log = LoggerFactory.getLogger(KurentoManager.class);
 
   // kurento 미디어 서버 연결을 위한 객체 생성?
   @Autowired
@@ -43,7 +44,7 @@ public class RoomManager_Kurento {
   /**
    * @Desc room 정보를 담은 map
    * */
-  private final ConcurrentMap<String, Room> rooms = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, KurentoRoom> rooms = new ConcurrentHashMap<>();
 
   /**
    *
@@ -51,18 +52,18 @@ public class RoomManager_Kurento {
    * @param roomName room 이름
    * @return 만약에 room 이 있다면 해당 room 객체 return 아니라면 새로운 room 생성 후 return
    */
-  public Room getRoom(String roomName) {
+  public KurentoRoom getRoom(String roomName) {
     log.debug("Searching for room {}", roomName);
 
     // roomName 기준으로 room 가져오기
-    Room room = rooms.get(roomName);
+    KurentoRoom room = rooms.get(roomName);
 
     // 만약 room 정보가 null 이라면 == 없다면
     if (room == null) {
       log.debug("Room {} not existent. Will create now!", roomName);
 
       // 해당 roomName 으로 새로운 room 생성 => 이때 => kurento 객체의 createMediaPipline 를 사용함
-      room = new Room(roomName, kurento.createMediaPipeline());
+      room = new KurentoRoom(roomName, kurento.createMediaPipeline());
 
       // rooms 에 roomName 과 만들어진 room 을 저장
       rooms.put(roomName, room);
@@ -78,7 +79,7 @@ public class RoomManager_Kurento {
    * @param room
    * @Desc room 삭제
    */
-  public void removeRoom(Room room) {
+  public void removeRoom(KurentoRoom room) {
     // rooms 에서 room 객체 삭제 => 이때 room 의 Name 을 가져와서 조회 후 삭제
     this.rooms.remove(room.getName());
 
