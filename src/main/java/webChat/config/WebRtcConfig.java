@@ -8,6 +8,8 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
+import webChat.rtc.KurentoHandler;
+import webChat.rtc.KurentoUserSession;
 import webChat.rtc.SignalHandler;
 
 @Configuration
@@ -15,7 +17,14 @@ import webChat.rtc.SignalHandler;
 @RequiredArgsConstructor
 public class WebRtcConfig implements WebSocketConfigurer {
     /* TODO WebRTC 관련 */
-    private final SignalHandler signalHandler;
+    // signalHandler 대신 KurentoHandler 사용
+//    private final SignalHandler signalHandler;
+
+    // kurento 를 다루기 위한 핸들러
+    @Bean
+    public KurentoHandler kurentoHandler(){
+        return new KurentoHandler();
+    }
 
     // Kurento Media Server 를 사용하기 위한 Bean 설정
     // Bean 으로 등록 후 반드시!! VM 옵션에서 kurento 관련 설정을 해주어야한다.
@@ -29,7 +38,7 @@ public class WebRtcConfig implements WebSocketConfigurer {
     // 요청은 클라이언트 접속, close, 메시지 발송 등에 대해 특정 메서드를 호출한다
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(signalHandler, "/signal")
+        registry.addHandler(kurentoHandler(), "/signal")
                 .setAllowedOrigins("*");
     }
 

@@ -7,36 +7,35 @@ import lombok.RequiredArgsConstructor;
 import org.kurento.client.IceCandidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import webChat.dto.KurentoRoom;
-import webChat.service.ChatService.KurentoManager;
+import webChat.service.chatService.KurentoManager;
+import webChat.service.chatService.KurentoUserRegistry;
 
 import java.io.IOException;
 
-@Component
 @RequiredArgsConstructor
-public class ServerCallHandler extends TextWebSocketHandler {
+public class KurentoHandler extends TextWebSocketHandler {
 
     // 로깅을 위한 객체 생성
-    private static final Logger log = LoggerFactory.getLogger(ServerCallHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(KurentoHandler.class);
 
     // 데이터를 json 으로 넘겨 받고, 넘기기 때문에 관련 라이브러리로 GSON 을 사용함
     // gson은 json구조를 띄는 직렬화된 데이터를 JAVA의 객체로 역직렬화, 직렬화 해주는 자바 라이브러리 입니다.
     // 즉, JSON Object -> JAVA Object 또는 그 반대의 행위를 돕는 라이브러리 입니다.
     private static final Gson gson = new GsonBuilder().create();
 
-    // 채팅룸 관련 객체 생성
-    private final KurentoRoom roomKurento;
-
     // 유저 등록? 을 위한 객체 생성
-   private final KurentoUserRegistry registry;
+    @Autowired
+   private KurentoUserRegistry registry;
 
    // room 매니저
-    private final KurentoManager roomManager;
+    @Autowired
+    private KurentoManager roomManager;
 
     // 이전에 사용하던 그 메서드
     @Override

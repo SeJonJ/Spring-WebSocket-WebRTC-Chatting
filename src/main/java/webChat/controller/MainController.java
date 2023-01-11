@@ -6,8 +6,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import webChat.service.ChatService.ChatServiceMain;
-import webChat.service.ChatService.MsgChatService;
+import webChat.service.chatService.ChatServiceMain;
 import webChat.service.social.PrincipalDetails;
 
 @Controller

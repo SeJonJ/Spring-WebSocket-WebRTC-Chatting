@@ -15,10 +15,13 @@
  *
  */
 
-package webChat.rtc;
+package webChat.service.chatService;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
+import webChat.rtc.KurentoUserSession;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,12 +29,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * Map of users registered in the system. This class has a concurrent hash map to store users, using
  * its name as key in the map.
  *
+ * 유저를 관리하는 클래스로 concurrent hash map 을 쓰는데 유저명을 key 로 사용함
+ *
  * @author Boni Garcia (bgarcia@gsyc.es)
  * @author Micael Gallego (micael.gallego@gmail.com)
  * @authos Ivan Gracia (izanmail@gmail.com)
  * @since 4.3.1
  */
-@Component
+@Service
+@RequiredArgsConstructor
 public class KurentoUserRegistry {
 
   /**

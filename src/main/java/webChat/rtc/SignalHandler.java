@@ -13,8 +13,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import webChat.dto.ChatRoomDto;
 import webChat.dto.ChatRoomMap;
 import webChat.dto.WebSocketMessage;
-import webChat.service.ChatService.ChatServiceMain;
-import webChat.service.ChatService.RtcChatService;
+import webChat.service.chatService.ChatServiceMain;
+import webChat.service.chatService.RtcChatService;
 
 import java.io.IOException;
 import java.util.Map;

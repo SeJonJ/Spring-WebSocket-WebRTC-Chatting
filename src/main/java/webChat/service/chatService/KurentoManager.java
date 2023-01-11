@@ -15,8 +15,9 @@
  *
  */
 
-package webChat.service.ChatService;
+package webChat.service.chatService;
 
+import lombok.RequiredArgsConstructor;
 import org.kurento.client.KurentoClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,14 +33,14 @@ import java.util.concurrent.ConcurrentMap;
  * @since 4.3.1
  */
 @Service
+@RequiredArgsConstructor
 public class KurentoManager {
 
   // 로깅을 위한 객체 생성
   private final Logger log = LoggerFactory.getLogger(KurentoManager.class);
 
   // kurento 미디어 서버 연결을 위한 객체 생성?
-  @Autowired
-  private KurentoClient kurento;
+  private final KurentoClient kurento;
 
   /**
    * @Desc room 정보를 담은 map

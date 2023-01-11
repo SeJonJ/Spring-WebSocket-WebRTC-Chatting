@@ -1,4 +1,4 @@
-package webChat.service.ChatService;
+package webChat.service.chatService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +9,8 @@ import webChat.dto.ChatRoomMap;
 import webChat.dto.WebSocketMessage;
 
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class RtcChatService {
                 .maxUserCnt(maxUserCnt) // 최대 인원수 제한
                 .build();
 
-        room.setUserList(new HashMap<String, WebSocketSession>());
+        room.setUserList(new ConcurrentHashMap<String, WebSocketSession>());
 
         // msg 타입이면 ChatType.MSG
         room.setChatType(ChatRoomDto.ChatType.RTC);

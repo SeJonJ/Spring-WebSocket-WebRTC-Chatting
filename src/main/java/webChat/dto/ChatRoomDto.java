@@ -6,6 +6,8 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @description 변경 예정
@@ -18,6 +20,8 @@ import java.util.Map;
 @EqualsAndHashCode
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class ChatRoomDto {
     @NotNull
     private String roomId; // 채팅방 아이디
@@ -33,6 +37,6 @@ public class ChatRoomDto {
     private ChatType chatType; //  채팅 타입 여부
 
     // ChatRoomDto 클래스는 하나로 가되 서비스를 나누었음
-    private Map<String, ?> userList;
+    public ConcurrentMap<String, ?> userList = new ConcurrentHashMap<>();
 
 }

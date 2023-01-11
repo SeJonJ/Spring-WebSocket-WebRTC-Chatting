@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import webChat.dto.WebSocketMessage;
-import webChat.service.ChatService.RtcChatService;
+import webChat.service.chatService.RtcChatService;
 
 @RestController
 @RequiredArgsConstructor

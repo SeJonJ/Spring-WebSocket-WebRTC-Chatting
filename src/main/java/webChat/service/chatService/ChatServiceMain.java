@@ -1,4 +1,4 @@
-package webChat.service.ChatService;
+package webChat.service.chatService;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +9,6 @@ import webChat.dto.ChatRoomDto;
 import webChat.dto.ChatRoomMap;
 import webChat.service.fileService.FileService;
 
-import javax.annotation.PostConstruct;
 import java.util.*;
 
 

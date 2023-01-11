@@ -21,6 +21,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.checkerframework.checker.initialization.qual.Initialized;
 import org.kurento.client.Continuation;
 import org.kurento.client.MediaPipeline;
 import org.slf4j.Logger;
@@ -28,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
 import webChat.rtc.KurentoUserSession;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.Closeable;
 import java.io.IOException;
@@ -41,14 +45,20 @@ import java.util.concurrent.ConcurrentMap;
  * @author Ivan Gracia (izanmail@gmail.com)
  * @since 4.3.1
  */
-public class KurentoRoom implements Closeable {
+public class KurentoRoom extends ChatRoomDto implements Closeable {
   // 로깅 객체 생성
   private final Logger log = LoggerFactory.getLogger(KurentoRoom.class);
 
   /**
    * @desc 참여자를 저장하기 위한 Map
+   * TODO ConcurrentHashMap 에 대해서도 공부해둘 것!
    * */
-  private final ConcurrentMap<String, KurentoUserSession> participants = new ConcurrentHashMap<>();
+  private ConcurrentMap<String, KurentoUserSession> participants;
+
+  @PostConstruct
+  public void init() {
+    participants = (ConcurrentMap<String, KurentoUserSession>) this.userList;
+  }
 
   // 미디어 파이프라인
   private final MediaPipeline pipeline;

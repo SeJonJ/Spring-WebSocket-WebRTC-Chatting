@@ -39,7 +39,6 @@ import java.util.concurrent.ConcurrentMap;
  * @desc 결국엔 여기서 중요한 것은 현재의 '나' 의 webRtcEndPoint 객체와 다른 사람들의 webRtcEndPoint 객체를 저장한 map 을 확인하고
  * 새로운 유저가 들어왔을 때 이를 나의 map 에 저장하고, 다른 사람들과 이를 동기화 해서 일치 시키는 것?
  */
-@Component
 @RequiredArgsConstructor
 public class KurentoUserSession implements Closeable {
 

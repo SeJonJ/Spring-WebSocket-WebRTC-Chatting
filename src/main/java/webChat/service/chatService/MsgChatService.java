@@ -1,4 +1,4 @@
-package webChat.service.ChatService;
+package webChat.service.chatService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +8,7 @@ import webChat.dto.ChatRoomMap;
 import webChat.service.fileService.FileService;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Slf4j
@@ -30,7 +31,7 @@ public class MsgChatService {
                 .maxUserCnt(maxUserCnt) // 최대 인원수 제한
                 .build();
 
-        room.setUserList(new HashMap<String, String>());
+        room.setUserList(new ConcurrentHashMap<String, String>());
 
         // msg 타입이면 ChatType.MSG
         room.setChatType(ChatRoomDto.ChatType.MSG);
