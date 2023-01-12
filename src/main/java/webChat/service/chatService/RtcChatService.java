@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 import webChat.dto.ChatRoomDto;
 import webChat.dto.ChatRoomMap;
+import webChat.dto.KurentoRoom;
 import webChat.dto.WebSocketMessage;
 
 import java.util.*;
@@ -19,9 +20,9 @@ public class RtcChatService {
 
     // repository substitution since this is a very simple realization
 
-    public ChatRoomDto createChatRoom(String roomName, String roomPwd, boolean secretChk, int maxUserCnt) {
+    public KurentoRoom createChatRoom(String roomName, String roomPwd, boolean secretChk, int maxUserCnt) {
         // roomName 와 roomPwd 로 chatRoom 빌드 후 return
-        ChatRoomDto room = ChatRoomDto.builder()
+        KurentoRoom room = KurentoRoom.builder()
                 .roomId(UUID.randomUUID().toString())
                 .roomName(roomName)
                 .roomPwd(roomPwd) // 채팅방 패스워드
@@ -29,6 +30,9 @@ public class RtcChatService {
                 .userCount(0) // 채팅방 참여 인원수
                 .maxUserCnt(maxUserCnt) // 최대 인원수 제한
                 .build();
+
+        // 파이프라인 생성
+        room.createPipline();
 
         room.setUserList(new ConcurrentHashMap<String, WebSocketSession>());
 

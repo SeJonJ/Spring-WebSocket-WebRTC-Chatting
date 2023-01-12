@@ -6,6 +6,8 @@ import lombok.Setter;
 import javax.annotation.PostConstruct;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @description 변경 예정
@@ -16,7 +18,7 @@ import java.util.Map;
 @Setter
 public class ChatRoomMap {
     private static ChatRoomMap chatRoomMap = new ChatRoomMap();
-    private Map<String, ChatRoomDto> chatRooms = new LinkedHashMap<>();
+    private ConcurrentMap<String, ChatRoomDto> chatRooms = new ConcurrentHashMap<>();
 
 //    @PostConstruct
 //    private void init() {

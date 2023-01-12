@@ -21,13 +21,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import org.checkerframework.checker.initialization.qual.Initialized;
+import com.sun.istack.NotNull;
+import lombok.*;
 import org.kurento.client.Continuation;
+import org.kurento.client.KurentoClient;
 import org.kurento.client.MediaPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.WebSocketSession;
 import webChat.rtc.KurentoUserSession;
 
@@ -38,16 +39,37 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Ivan Gracia (izanmail@gmail.com)
  * @since 4.3.1
  */
+@Data
+@Builder
+@RequiredArgsConstructor
 public class KurentoRoom extends ChatRoomDto implements Closeable {
+
   // 로깅 객체 생성
   private final Logger log = LoggerFactory.getLogger(KurentoRoom.class);
+
+  // 미디어 파이프라인
+  private MediaPipeline pipeline;
+
+  private final KurentoClient kurento;
+
+  @NotNull
+  private String roomId; // 채팅방 아이디
+  private String roomName; // 채팅방 이름
+  private int userCount; // 채팅방 인원수
+  private int maxUserCnt; // 채팅방 최대 인원 제한
+
+  private String roomPwd; // 채팅방 삭제시 필요한 pwd
+  private boolean secretChk; // 채팅방 잠금 여부
+  public enum ChatType{  // 화상 채팅, 문자 채팅
+    MSG, RTC
+  }
+  private ChatRoomDto.ChatType chatType; //  채팅 타입 여부
 
   /**
    * @desc 참여자를 저장하기 위한 Map
@@ -60,25 +82,28 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
     participants = (ConcurrentMap<String, KurentoUserSession>) this.userList;
   }
 
-  // 미디어 파이프라인
-  private final MediaPipeline pipeline;
 
-  // 유저명?
-  private final String name;
+//  // 채팅룸 이름?
+//  private final String roomId;
 
   // 유저명 가져오기
-  public String getName() {
-    return name;
+  public String getRoomId() {
+    return roomId;
   }
 
   /**
    * @Param roomName, pipline
    * @desc roomName 과 pipline 을 이용한 생성자
    * */
-  public KurentoRoom(String roomName, MediaPipeline pipeline) {
-    this.name = roomName;
-    this.pipeline = pipeline;
-    log.info("ROOM {} has been created", roomName);
+//  public KurentoRoom(String roomId, MediaPipeline pipeline) {
+//    this.roomId = roomId;
+//    this.pipeline = pipeline;
+//    log.info("ROOM {} has been created", roomId);
+//  }
+
+  // 생성자 대신 아래 메서드로 pipline 초기화
+  public void createPipline(){
+    this.pipeline = kurento.createMediaPipeline();
   }
 
   /**
@@ -107,10 +132,10 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
    * */
   public KurentoUserSession join(String userName, WebSocketSession session) throws IOException {
 
-    log.info("ROOM {}: adding participant {}", this.name, userName);
+    log.info("ROOM {}: adding participant {}", this.roomId, userName);
 
     // UserSession 은 유저명, room명, 유저 세션정보, pipline 파라미터로 받음
-    final KurentoUserSession participant = new KurentoUserSession(userName, this.name, session, this.pipeline);
+    final KurentoUserSession participant = new KurentoUserSession(userName, this.roomId, session, this.pipeline);
 
     //
     joinRoom(participant);
@@ -126,7 +151,7 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
   }
 
   public void leave(KurentoUserSession user) throws IOException {
-    log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.name);
+    log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.roomId);
     this.removeParticipant(user.getName());
     user.close();
   }
@@ -150,7 +175,7 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
     final List<String> participantsList = new ArrayList<>(participants.values().size());
 //    log.debug("ROOM {}: notifying other participants of new participant {}", name,
 //        newParticipant.getName());
-    log.debug("ROOM {}: 다른 참여자들에게 새로운 참여자가 들어왔음을 알림 {}", name,
+    log.debug("ROOM {}: 다른 참여자들에게 새로운 참여자가 들어왔음을 알림 {}", roomId,
             newParticipant.getName());
 
     // participants 의 value 로 for 문 돌림
@@ -160,7 +185,7 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
         // 즉, newParticipantMsg 를 send함
         participant.sendMessage(newParticipantMsg);
       } catch (final IOException e) {
-        log.debug("ROOM {}: participant {} could not be notified", name, participant.getName(), e);
+        log.debug("ROOM {}: participant {} could not be notified", roomId, participant.getName(), e);
       }
 
       // list 에 유저명 추가
@@ -181,7 +206,7 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
     // participants map 에서 제거된 유저 - 방에서 나간 유저 - 를 제거함
     participants.remove(name);
 
-    log.debug("ROOM {}: notifying all users that {} is leaving the room", this.name, name);
+    log.debug("ROOM {}: notifying all users that {} is leaving the room", this.roomId, name);
 
     // String list 생성
     final List<String> unNotifiedParticipants = new ArrayList<>();
@@ -210,7 +235,7 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
 
     // 만약 unNotifiedParticipants 가 비어있지 않다면
     if (!unNotifiedParticipants.isEmpty()) {
-      log.debug("ROOM {}: The users {} could not be notified that {} left the room", this.name,
+      log.debug("ROOM {}: The users {} could not be notified that {} left the room", this.roomId,
           unNotifiedParticipants, name);
     }
 
@@ -260,7 +285,7 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
         // 유저 close
         user.close();
       } catch (IOException e) {
-        log.debug("ROOM {}: Could not invoke close on participant {}", this.name, user.getName(),
+        log.debug("ROOM {}: Could not invoke close on participant {}", this.roomId, user.getName(),
                 e);
       }
     } // for 문 끝
@@ -273,16 +298,16 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
 
       @Override
       public void onSuccess(Void result) throws Exception {
-        log.trace("ROOM {}: Released Pipeline", KurentoRoom.this.name);
+        log.trace("ROOM {}: Released Pipeline", KurentoRoom.this.roomId);
       }
 
       @Override
       public void onError(Throwable cause) throws Exception {
-        log.warn("PARTICIPANT {}: Could not release Pipeline", KurentoRoom.this.name);
+        log.warn("PARTICIPANT {}: Could not release Pipeline", KurentoRoom.this.roomId);
       }
     });
 
-    log.debug("Room {} closed", this.name);
+    log.debug("Room {} closed", this.roomId);
   }
 
 }

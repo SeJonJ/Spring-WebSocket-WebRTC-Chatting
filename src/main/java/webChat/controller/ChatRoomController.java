@@ -68,9 +68,12 @@ public class ChatRoomController {
         if (ChatRoomDto.ChatType.MSG.equals(room.getChatType())) {
             return "chatroom";
         }else{
-            model.addAttribute("uuid", UUID.randomUUID().toString());
+            String uuid = UUID.randomUUID().toString().split("-")[0];
+            model.addAttribute("uuid", uuid);
+            model.addAttribute("roomId", room.getRoomId());
+//            return "rtcroom";
 
-            return "rtcroom";
+            return "kurentoroom";
         }
     }
 

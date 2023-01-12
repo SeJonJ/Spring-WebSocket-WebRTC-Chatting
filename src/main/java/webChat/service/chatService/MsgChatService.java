@@ -51,7 +51,8 @@ public class MsgChatService {
         // 아이디 중복 확인 후 userList 에 추가
         //room.getUserList().put(userUUID, userName);
 
-        HashMap<String, String> userList = (HashMap<String, String>)room.getUserList();
+        // hashmap 에서 concurrentHashMap 으로 변경
+        ConcurrentHashMap<String, String> userList = (ConcurrentHashMap<String, String>)room.getUserList();
         userList.put(userUUID, userName);
 
 
