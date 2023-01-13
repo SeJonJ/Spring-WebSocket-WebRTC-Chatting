@@ -52,26 +52,29 @@ public class KurentoManager {
   /**
    *
    * @Desc room 정보 가져오기
-   * @param roomName room 이름
+   * @param roomId room 이름
    * @return 만약에 room 이 있다면 해당 room 객체 return 아니라면 새로운 room 생성 후 return
    */
-  public KurentoRoom getRoom(String roomName) {
-    log.debug("Searching for room {}", roomName);
+  public KurentoRoom getRoom(String roomId) {
+    log.debug("Searching for room {}", roomId);
 
     // roomName 기준으로 room 가져오기
-    KurentoRoom room = (KurentoRoom) rooms.get(roomName);
+    KurentoRoom room = (KurentoRoom) rooms.get(roomId);
 
-//    // 만약 room 정보가 null 이라면 == 없다면
-//    if (room == null) {
-//      log.debug("Room {} not existent. Will create now!", roomName);
+    // 만약 room 정보가 null 이라면 == 없다면
+    if (room == null) {
 //
 //      // 해당 roomName 으로 새로운 room 생성 => 이때 => kurento 객체의 createMediaPipline 를 사용함
 //      room = new KurentoRoom(roomName, kurento.createMediaPipeline());
 //
 //      // rooms 에 roomName 과 만들어진 room 을 저장
 //      rooms.put(roomName, room);
-//    }
-    log.debug("Room {} found!", roomName);
+//      log.debug("Room {} is not found!", roomId);
+
+      log.debug("Room {} not existent. Will create now! : {}", room.getRoomName(), roomId);
+
+      return null; // Exception 만들기
+    }
 
     // room return
     return room;
