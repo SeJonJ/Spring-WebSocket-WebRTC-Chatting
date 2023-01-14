@@ -27,6 +27,8 @@ const PARTICIPANT_CLASS = 'participant';
  * @return
  */
 function Participant(name) {
+	console.log("참여자명 : "+name)
+
 	this.name = name;
 	var container = document.createElement('div');
 	container.className = isPresentMainParticipant() ? PARTICIPANT_CLASS : PARTICIPANT_MAIN_CLASS;

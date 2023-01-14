@@ -29,6 +29,7 @@ import org.kurento.client.MediaPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.web.socket.WebSocketSession;
 import webChat.rtc.KurentoUserSession;
 
@@ -39,24 +40,26 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Ivan Gracia (izanmail@gmail.com)
  * @since 4.3.1
  */
-@Data
-@Builder
+@Getter
+@Setter
+@NoArgsConstructor
 @RequiredArgsConstructor
 public class KurentoRoom extends ChatRoomDto implements Closeable {
 
   // 로깅 객체 생성
   private final Logger log = LoggerFactory.getLogger(KurentoRoom.class);
 
+  private KurentoClient kurento;
+
   // 미디어 파이프라인
   private MediaPipeline pipeline;
-
-  private final KurentoClient kurento;
 
   @NotNull
   private String roomId; // 채팅방 아이디
@@ -66,10 +69,7 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
 
   private String roomPwd; // 채팅방 삭제시 필요한 pwd
   private boolean secretChk; // 채팅방 잠금 여부
-  public enum ChatType{  // 화상 채팅, 문자 채팅
-    MSG, RTC
-  }
-  private ChatRoomDto.ChatType chatType; //  채팅 타입 여부
+  private ChatType chatType; //  채팅 타입 여부
 
   /**
    * @desc 참여자를 저장하기 위한 Map
@@ -77,14 +77,22 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
    * */
   private ConcurrentMap<String, KurentoUserSession> participants;
 
-  @PostConstruct
-  public void init() {
-    participants = (ConcurrentMap<String, KurentoUserSession>) this.userList;
-  }
-
 
 //  // 채팅룸 이름?
 //  private final String roomId;
+
+  // 룸 정보 set
+  public void setRoomInfo(String roomId, String roomName, String roomPwd, boolean secure, int userCount, int maxUserCnt, ChatType chatType, KurentoClient kurento){
+    this.roomId = roomId;
+    this.roomName = roomName;
+    this.roomPwd = roomPwd;
+    this.secretChk = secure;
+    this.userCount = userCount;
+    this.maxUserCnt = maxUserCnt;
+    this.chatType = chatType;
+    this.kurento = kurento;
+    this.participants = new ConcurrentHashMap<>();
+  }
 
   // 유저명 가져오기
   public String getRoomId() {
@@ -103,7 +111,8 @@ public class KurentoRoom extends ChatRoomDto implements Closeable {
 
   // 생성자 대신 아래 메서드로 pipline 초기화
   public void createPipline(){
-    this.pipeline = kurento.createMediaPipeline();
+    this.pipeline = this.kurento.createMediaPipeline();
+//    log.info("pipline : {} ",this.pipeline);
   }
 
   /**

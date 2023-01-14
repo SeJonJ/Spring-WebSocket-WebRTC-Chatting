@@ -15,16 +15,16 @@
  *
  */
 
+var script = document.createElement('script');
+script.src = "https://code.jquery.com/jquery-3.6.1.min.js";
+document.head.appendChild(script);
+
 var ws = new WebSocket('wss://' + location.host + '/signal');
 console.log("location.host : "+location.host)
 var participants = {};
-// var name;
-const uuid = [[${uuid}]];
-const roomId = [[${roomId}]];
 
-console.log("uuid : " + uuid);
-console.log("roomId : " + roomId);
-
+let name = null;
+let roomId = null;
 
 window.onbeforeunload = function() {
 	ws.close();
@@ -61,18 +61,18 @@ ws.onmessage = function(message) {
 }
 
 function register() {
-	name = document.getElementById('name').value;
-	var room = document.getElementById('roomName').value;
 
-	document.getElementById('room-header').innerText = 'ROOM ' + room;
+	name = $("#uuid").val();
+	roomId = $("#roomId").val();
+
+	document.getElementById('room-header').innerText = 'ROOM ' + roomId;
 	document.getElementById('join').style.display = 'none';
 	document.getElementById('room').style.display = 'block';
 
 
-
 	var message = {
 		id : 'joinRoom',
-		name : uuid,
+		name : $("#uuid").val(),
 		room : roomId,
 	}
 	sendMessage(message);
@@ -110,7 +110,7 @@ function onExistingParticipants(msg) {
 			}
 		}
 	};
-	console.log(name + " registered in room " + room);
+	console.log(name + " registered in room " + roomId);
 	var participant = new Participant(name);
 	participants[name] = participant;
 	var video = participant.getVideoElement();
@@ -162,7 +162,7 @@ function receiveVideo(sender) {
 				  return console.error(error);
 			  }
 			  this.generateOffer (participant.offerToReceiveVideo.bind(participant));
-	});;
+	});
 }
 
 function onParticipantLeft(request) {

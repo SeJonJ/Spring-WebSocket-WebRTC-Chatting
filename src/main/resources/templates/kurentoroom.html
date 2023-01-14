@@ -3,10 +3,12 @@
 <meta charset="utf-8">
 <link rel="styleSheet" href="/css/rtc/kurentostyle.css" type="text/css" media="screen">
 
+<!--<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>-->
 <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-<script src="/js/rtc/conferenceroom.js"></script>
 <script src="/js/rtc/participant.js"></script>
 <script src="/js/rtc/kurento-utils.js"></script>
+<script src="/js/rtc/conferenceroom.js"></script>
+
 </head>
 <body>
 	<div id="container">
@@ -14,6 +16,8 @@
 			<div id="join" class="animate join">
 				<h1>Join a Room</h1>
 				<form onsubmit="register(); return false;" accept-charset="UTF-8">
+					<input type="hidden" id="roomId" th:value="${roomId}">
+					<input type="hidden" id="uuid" th:value="${uuid}">
 <!--					<p>-->
 <!--						<input type="text" name="name" value="" id="name"-->
 <!--							placeholder="Username" required>-->
