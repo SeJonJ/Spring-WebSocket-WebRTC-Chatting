@@ -12,7 +12,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import webChat.dto.KurentoRoom;
+import webChat.dto.KurentoRoomDto;
 import webChat.service.chatService.KurentoManager;
 import webChat.service.chatService.KurentoUserRegistry;
 
@@ -89,10 +89,11 @@ public class KurentoHandler extends TextWebSocketHandler {
     }
 
     // 유저의 연결이 끊어진 경우
+    // 참여자 목록에서 유저 제거
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         KurentoUserSession user = registry.removeBySession(session);
-        roomManager.getRoom(user.getRoomName()).leave(user);
+//        roomManager.getRoom(user.getRoomName()).leave(user);
     }
 
     // 유저가 Room 에 입장했을 때
@@ -103,7 +104,7 @@ public class KurentoHandler extends TextWebSocketHandler {
         log.info("PARTICIPANT {}: trying to join room {}", name, roomName);
 
         // roomName 를 기준으로 room 으 ㄹ가져온다
-        KurentoRoom room = roomManager.getRoom(roomName);
+        KurentoRoomDto room = roomManager.getRoom(roomName);
 
         // 유저명과 session 을 room 에 넘겨서 room 에 유저 저장
         final KurentoUserSession user = room.join(name, session);
@@ -115,15 +116,18 @@ public class KurentoHandler extends TextWebSocketHandler {
     // 유저가 room 에서 떠났을 때
     private void leaveRoom(KurentoUserSession user) throws IOException {
         // 유저명을 기준으로 room 을 가져온다
-        final KurentoRoom room = roomManager.getRoom(user.getRoomName());
+        final KurentoRoomDto room = roomManager.getRoom(user.getRoomName());
         // room 에서 유저를 제거하고
         room.leave(user);
 
-        // 만약 room 안에 참여자가 아무도 없다면
-        // room 전체를 삭제시킴
-        if (room.getParticipants().isEmpty()) {
-            roomManager.removeRoom(room);
-        }
+        // room 에서 userCount -1
+        room.setUserCount(room.getUserCount()-1);
+
+//        // 만약 room 안에 참여자가 아무도 없다면
+//        // room 전체를 삭제시킴
+//        if (room.getParticipants().isEmpty()) {
+//            roomManager.removeRoom(room);
+//        }
     }
 
 }

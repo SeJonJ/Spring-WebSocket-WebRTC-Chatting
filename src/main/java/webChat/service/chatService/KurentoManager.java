@@ -18,15 +18,13 @@
 package webChat.service.chatService;
 
 import lombok.RequiredArgsConstructor;
-import org.kurento.client.KurentoClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import webChat.dto.ChatRoomDto;
 import webChat.dto.ChatRoomMap;
-import webChat.dto.KurentoRoom;
+import webChat.dto.KurentoRoomDto;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -55,26 +53,26 @@ public class KurentoManager {
    * @param roomId room 이름
    * @return 만약에 room 이 있다면 해당 room 객체 return 아니라면 새로운 room 생성 후 return
    */
-  public KurentoRoom getRoom(String roomId) {
+  public KurentoRoomDto getRoom(String roomId) {
     log.debug("Searching for room {}", roomId);
 
     // roomName 기준으로 room 가져오기
-    KurentoRoom room = (KurentoRoom) rooms.get(roomId);
+    KurentoRoomDto room = (KurentoRoomDto) rooms.get(roomId);
 
     // 만약 room 정보가 null 이라면 == 없다면
-    if (room == null) {
+//    if (room == null) {
+////
+////      // 해당 roomName 으로 새로운 room 생성 => 이때 => kurento 객체의 createMediaPipline 를 사용함
+////      room = new KurentoRoom(roomName, kurento.createMediaPipeline());
+////
+////      // rooms 에 roomName 과 만들어진 room 을 저장
+////      rooms.put(roomName, room);
+////      log.debug("Room {} is not found!", roomId);
 //
-//      // 해당 roomName 으로 새로운 room 생성 => 이때 => kurento 객체의 createMediaPipline 를 사용함
-//      room = new KurentoRoom(roomName, kurento.createMediaPipeline());
+//      log.debug("Room {} not existent. Will create now! : {}", room.getRoomName(), roomId);
 //
-//      // rooms 에 roomName 과 만들어진 room 을 저장
-//      rooms.put(roomName, room);
-//      log.debug("Room {} is not found!", roomId);
-
-      log.debug("Room {} not existent. Will create now! : {}", room.getRoomName(), roomId);
-
-      return null; // Exception 만들기
-    }
+//      return null; // Exception 만들기
+//    }
 
     // room return
     return room;
@@ -85,7 +83,7 @@ public class KurentoManager {
    * @param room
    * @Desc room 삭제
    */
-  public void removeRoom(KurentoRoom room) {
+  public void removeRoom(KurentoRoomDto room) {
     // rooms 에서 room 객체 삭제 => 이때 room 의 Name 을 가져와서 조회 후 삭제
     this.rooms.remove(room.getRoomId());
 
