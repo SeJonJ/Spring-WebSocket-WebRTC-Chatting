@@ -281,39 +281,32 @@ function ScreenHandler() {
  * screenHandler를 통해 스크린 API를 호출합니다
  * 원격 화면을 화면 공유 화면으로 교체
  */
-
-$("#view_on").on('click', async function(){
+function startScreenShare() {
 
     // 스크린 API 호출 & 시작
-    await screenHandler.start();
+    screenHandler.start();
 
-    // 1. myPeerConnection 에 연결된 다른 sender 쪽으로 - 즉 다른 Peer 쪽으로 -
-    // 2. shareView 의 Track 에서 0번째 인덱스에 들어있는 값 - 즉 videoStream 로 - 교체한다.
-    await myPeerConnection.getSenders().forEach((sender) => { // 연결된 sender 로 보내기위한 반복문
+    let participant = participants[name];
+    let localVideo = participant.getVideoElement();
+    let options = shareView;
 
-        // 3. track 를 shareView 트랙으로 교체
-        sender.replaceTrack(shareView.getTracks()[0])
+    participant.rtcPeer = new kurentoUtils.WebRtcPeerSendrecv(options, function(error){
+        if (error) {
+            return console.error(error);
+        }
 
-    })
+        this.generateOffer(participant.offerToReceiveVideo.bind(participant));
 
-    // // Track 가 진짜 배열인지 확인하기
-    // console.dir(shareView.getTracks());
-    // console.dir(localStream.getTracks());
+    });
 
-    /**
-     * 화면 공유 중지 눌렀을 때 이벤트
-     */
-    shareView.getVideoTracks()[0].addEventListener('ended', () => {
-        // log('screensharing has ended')
+    var message = {
+        id: 'screenShare',
+        name: name,
+        room: roomId,
+    }
+    sendMessage(message);
 
-        // 4. 화면 공유 중지 시 Track 를 localstream 의 videoStram 로 교체함
-        myPeerConnection.getSenders().forEach((sender) => {
-            sender.replaceTrack(localStream.getTracks()[1]);
-        })
 
-        // $("#share-video").hide();
-
-    })
-})
+}
 
 
