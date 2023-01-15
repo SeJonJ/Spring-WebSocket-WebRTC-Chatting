@@ -12,6 +12,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import webChat.dto.ChatRoomMap;
 import webChat.dto.KurentoRoomDto;
 import webChat.service.chatService.KurentoManager;
 import webChat.service.chatService.KurentoUserRegistry;
@@ -82,6 +83,19 @@ public class KurentoHandler extends TextWebSocketHandler {
                             candidate.get("sdpMid").getAsString(), candidate.get("sdpMLineIndex").getAsInt());
                     user.addCandidate(cand, jsonMessage.get("name").getAsString());
                 }
+                break;
+
+            case "screenShare":
+                user.getOutgoingWebRtcPeer().release();
+                KurentoRoomDto room = (KurentoRoomDto)ChatRoomMap.getInstance().getChatRooms().get(user.getRoomName());
+
+                for (KurentoUserSession participant : room.getParticipants()) {
+                    if (participant.getName().equals(user.getName())) {
+                        continue;
+                    }
+                    user.getIncomingMedia().get(participant.getName()).release();
+                }
+
                 break;
             default:
                 break;

@@ -281,30 +281,68 @@ function ScreenHandler() {
  * screenHandler를 통해 스크린 API를 호출합니다
  * 원격 화면을 화면 공유 화면으로 교체
  */
-function startScreenShare() {
+async function startScreenShare() {
 
     // 스크린 API 호출 & 시작
-    screenHandler.start();
+    await screenHandler.start();
 
-    let participant = participants[name];
-    let localVideo = participant.getVideoElement();
-    let options = shareView;
+    // let participant = participants[name];
+    // let localVideo = participant.getVideoElement();
+    //
+    // let options = {
+    //     localVideo: localVideo,
+    //     videoStream: shareView,
+    //     mediaConstraints: constraints,
+    //     onicecandidate: participant.onIceCandidate.bind(participant),
+    //     sendSource: 'desktop'
+    // };
+    //
+    // participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
+    //     function (error) {
+    //         if (error) {
+    //             return console.error(error);
+    //         }
+    //
+    //         var message = {
+    //             id: 'screenShare',
+    //             name: name,
+    //             room: roomId,
+    //         }
+    //         sendMessage(message)
+    //
+    //         this.generateOffer(participant.offerToReceiveVideo.bind(participant));
+    //
+    // });
 
-    participant.rtcPeer = new kurentoUtils.WebRtcPeerSendrecv(options, function(error){
-        if (error) {
-            return console.error(error);
-        }
+    let participant = participants[name]
+    let video = participant.getVideoElement();
 
-        this.generateOffer(participant.offerToReceiveVideo.bind(participant));
+    let constraints = {
+        audio: true,
+        video: {
+            maxWidth: 600,
+            maxHeight: 600,
+            frameRate: 50, // 최대 프레임
+        },
+    };
 
-    });
 
-    var message = {
-        id: 'screenShare',
-        name: name,
-        room: roomId,
+    let options = {
+        localVideo: video,
+        mediaConstraints: constraints,
+        videoStream : shareView,
+        onicecandidate: participant.onIceCandidate.bind(participant)
     }
-    sendMessage(message);
+
+
+    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
+        function (error) {
+            if (error) {
+                return console.error(error);
+            }
+            this.generateOffer(participant.offerToReceiveVideo.bind(participant));
+        });
+
 
 
 }

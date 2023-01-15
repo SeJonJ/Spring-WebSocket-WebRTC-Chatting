@@ -121,6 +121,14 @@ public class KurentoUserSession implements Closeable {
   }
 
   /**
+   * @desc IncomingMedia return
+   * @return ConcurrentMap<String, WebRtcEndpoint>
+   */
+  public ConcurrentMap<String, WebRtcEndpoint> getIncomingMedia() {
+    return incomingMedia;
+  }
+
+  /**
    * @desc 이름 return
    * */
   public String getName() {
