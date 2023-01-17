@@ -113,7 +113,8 @@ function onExistingParticipants(msg) {
         },
         video: {
             mandatory: {
-                maxWidth: 320,
+                maxWidth: 600,
+                maxHeight: 600,
                 maxFrameRate: 30,
                 minFrameRate: 30
             }
@@ -326,24 +327,37 @@ async function startScreenShare() {
         },
     };
 
+    // var message = {
+    //     id: 'screenShare',
+    //     name: name,
+    //     room: roomId,
+    // }
+    // sendMessage(message)
 
-    let options = {
-        localVideo: video,
-        mediaConstraints: constraints,
-        videoStream : shareView,
-        onicecandidate: participant.onIceCandidate.bind(participant)
-    }
+    // let options = {
+    //     localVideo: video,
+    //     mediaConstraints: constraints,
+    //     videoStream: shareView,
+    //     onicecandidate: participant.onIceCandidate.bind(participant)
+    // }
+    //
+    //
+    //
+    // participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
+    //     function (error) {
+    //         if (error) {
+    //             return console.error(error);
+    //         }
+    //         this.generateOffer(participant.offerToReceiveVideo.bind(participant));
+    //     });
 
+    // 본인
+    // await video.getTracks().replaceTrack(shareView.getTracks()[0])
 
-    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
-        function (error) {
-            if (error) {
-                return console.error(error);
-            }
-            this.generateOffer(participant.offerToReceiveVideo.bind(participant));
-        });
-
-
+    // 상대
+    await participant.rtcPeer.peerConnection.getSenders().forEach((sender) => {
+        sender.replaceTrack(shareView.getTracks()[0]);
+    })
 
 }
 
