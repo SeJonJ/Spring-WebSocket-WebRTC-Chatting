@@ -36,6 +36,7 @@ function Participant(name) {
 	var span = document.createElement('span');
 	var video = document.createElement('video');
 	var rtcPeer;
+	let localStream = null; // 유저의 로컬 스트림
 
 	container.appendChild(video);
 	container.appendChild(span);
@@ -48,6 +49,15 @@ function Participant(name) {
 	video.autoplay = true;
 	video.controls = false;
 
+	/** set user LocalStream */
+	this.setLocalSteam = function(stream){
+		this.localStream = stream;
+	}
+
+	/** return user localStream */
+	this.getLocalStream = function(){
+		return this.localStream;
+	}
 
 	this.getElement = function() {
 		return container;

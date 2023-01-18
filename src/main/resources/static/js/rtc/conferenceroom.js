@@ -30,6 +30,25 @@ var participants = {};
 
 let name = null;
 let roomId = null;
+const constraints = {
+    // 'volume', 'channelCount', 'echoCancellation', 'autoGainControl', 'noiseSuppression', 'latency', 'sampleSize', 'sampleRate'
+    audio: {
+        autoGainControl: false,
+        channelCount: 2,
+        echoCancellation: false,
+        latency: 0,
+        noiseSuppression: false,
+        sampleRate: 48000,
+        sampleSize: 16,
+        volume: 1.0
+    },
+    video: {
+        maxWidth: 800,
+        maxHeight: 800,
+        maxFrameRate: 50,
+        minFrameRate: 30
+    }
+};
 
 // 웹 종료 시 실행
 window.onbeforeunload = function () {
@@ -105,21 +124,21 @@ function callResponse(message) {
 }
 
 function onExistingParticipants(msg) {
-    var constraints = {
-        audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            sampleRate: 44100
-        },
-        video: {
-            mandatory: {
-                maxWidth: 600,
-                maxHeight: 600,
-                maxFrameRate: 30,
-                minFrameRate: 30
-            }
-        }
-    };
+    // var constraints = {
+    //     audio: {
+    //         echoCancellation: true,
+    //         noiseSuppression: true,
+    //         sampleRate: 44100
+    //     },
+    //     video: {
+    //         mandatory: {
+    //             maxWidth: 600,
+    //             maxHeight: 600,
+    //             maxFrameRate: 30,
+    //             minFrameRate: 30
+    //         }
+    //     }
+    // };
     console.log(name + " registered in room " + roomId);
     var participant = new Participant(name);
     participants[name] = participant;
@@ -219,14 +238,14 @@ function ScreenHandler() {
     console.log('Loaded ScreenHandler', arguments);
 
     // REF https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#Properties_of_shared_screen_tracks
-    const constraints = {
-        audio: true,
-        video: {
-            maxWidth: 600,
-            maxHeight: 600,
-            frameRate: 50, // 최대 프레임
-        },
-    };
+    // const constraints = {
+    //     audio: true,
+    //     video: {
+    //         maxWidth: 600,
+    //         maxHeight: 600,
+    //         frameRate: 50, // 최대 프레임
+    //     },
+    // };
 
     /**
      * 스크린캡쳐 API를 브라우저 호환성 맞게 리턴합니다.
@@ -287,72 +306,12 @@ async function startScreenShare() {
     // 스크린 API 호출 & 시작
     await screenHandler.start();
 
-    // let participant = participants[name];
-    // let localVideo = participant.getVideoElement();
-    //
-    // let options = {
-    //     localVideo: localVideo,
-    //     videoStream: shareView,
-    //     mediaConstraints: constraints,
-    //     onicecandidate: participant.onIceCandidate.bind(participant),
-    //     sendSource: 'desktop'
-    // };
-    //
-    // participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
-    //     function (error) {
-    //         if (error) {
-    //             return console.error(error);
-    //         }
-    //
-    //         var message = {
-    //             id: 'screenShare',
-    //             name: name,
-    //             room: roomId,
-    //         }
-    //         sendMessage(message)
-    //
-    //         this.generateOffer(participant.offerToReceiveVideo.bind(participant));
-    //
-    // });
-
-    let participant = participants[name]
+    let participant = participants[name];
     let video = participant.getVideoElement();
-
-    let constraints = {
-        audio: true,
-        video: {
-            maxWidth: 600,
-            maxHeight: 600,
-            frameRate: 50, // 최대 프레임
-        },
-    };
-
-    // var message = {
-    //     id: 'screenShare',
-    //     name: name,
-    //     room: roomId,
-    // }
-    // sendMessage(message)
-
-    // let options = {
-    //     localVideo: video,
-    //     mediaConstraints: constraints,
-    //     videoStream: shareView,
-    //     onicecandidate: participant.onIceCandidate.bind(participant)
-    // }
-    //
-    //
-    //
-    // participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
-    //     function (error) {
-    //         if (error) {
-    //             return console.error(error);
-    //         }
-    //         this.generateOffer(participant.offerToReceiveVideo.bind(participant));
-    //     });
+    participant.setLocalSteam(video.srcObject);
 
     // 본인
-    // await video.getTracks().replaceTrack(shareView.getTracks()[0])
+    video.srcObject = shareView;
 
     // 상대
     await participant.rtcPeer.peerConnection.getSenders().forEach((sender) => {
