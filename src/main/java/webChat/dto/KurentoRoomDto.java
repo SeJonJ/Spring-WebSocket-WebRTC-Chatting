@@ -37,12 +37,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * @author Ivan Gracia (izanmail@gmail.com)
- * @since 4.3.1
+ * @modifyBy SeJon Jang (wkdtpwhs@gmail.com)
+ * @desc 화상채팅을 위한 클래스 ChatRoomDto 를 상속받음
  */
 @Getter
 @Setter

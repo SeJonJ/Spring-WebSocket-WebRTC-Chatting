@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * Modified By : SeJonJnag <wkdtpwhs@gmail.com>
+ *
  */
 
 // var script = document.createElement('script');
@@ -43,10 +45,10 @@ const constraints = {
         volume: 1.0
     },
     video: {
-        maxWidth: 800,
-        maxHeight: 800,
+        width: 1200,
+        height: 1000,
         maxFrameRate: 50,
-        minFrameRate: 30
+        minFrameRate: 40
     }
 };
 
@@ -124,21 +126,7 @@ function callResponse(message) {
 }
 
 function onExistingParticipants(msg) {
-    // var constraints = {
-    //     audio: {
-    //         echoCancellation: true,
-    //         noiseSuppression: true,
-    //         sampleRate: 44100
-    //     },
-    //     video: {
-    //         mandatory: {
-    //             maxWidth: 600,
-    //             maxHeight: 600,
-    //             maxFrameRate: 30,
-    //             minFrameRate: 30
-    //         }
-    //     }
-    // };
+
     console.log(name + " registered in room " + roomId);
     var participant = new Participant(name);
     participants[name] = participant;
@@ -222,6 +210,7 @@ function sendMessage(message) {
  * 3. shareView 의 Track[0] 에는 videoStream 이 들어있다. 따라서 replaceTrack 의 파라미터에 shareView.getTrack[0] 을 넣는다.
  * 4. 화면 공유 취소 시 원래 화상 화면으로 되돌리기 위해서는 다시 Track 를 localstream 으로 교체해주면 된다!
  *      이때 localStream 에는 audio 와 video 모두 들어가 있음으로 video 에 해당하는 Track[1] 만 꺼내서 교체해준다.
+ *
  * **/
 
 /*  화면 공유를 위한 변수 선언 */
@@ -236,16 +225,6 @@ function ScreenHandler() {
     // let localStream = null;
 
     console.log('Loaded ScreenHandler', arguments);
-
-    // REF https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#Properties_of_shared_screen_tracks
-    // const constraints = {
-    //     audio: true,
-    //     video: {
-    //         maxWidth: 600,
-    //         maxHeight: 600,
-    //         frameRate: 50, // 최대 프레임
-    //     },
-    // };
 
     /**
      * 스크린캡쳐 API를 브라우저 호환성 맞게 리턴합니다.
@@ -310,14 +289,58 @@ async function startScreenShare() {
     let video = participant.getVideoElement();
     participant.setLocalSteam(video.srcObject);
 
-    // 본인
+    // 본인 화면에 본인 화면 공유 시작
     video.srcObject = shareView;
 
-    // 상대
+    // 상대 화면에 본인 공유 시작
     await participant.rtcPeer.peerConnection.getSenders().forEach((sender) => {
-        sender.replaceTrack(shareView.getTracks()[0]);
+        sender.replaceTrack(shareView.getTracks()[0])
+    })
+
+    shareView.getVideoTracks()[0].addEventListener("ended", ()=>{
+        console.log('screensharing has ended')
+
+        stopScreenShare();
+    })
+}
+
+async function stopScreenShare() {
+
+    // 스크린 API 호출 & 중지
+    await screenHandler.end();
+
+    let participant = participants[name];
+    let video = participant.getVideoElement();
+
+    video.srcObject = participant.getLocalStream();
+
+    await participant.rtcPeer.peerConnection.getSenders().forEach((sender)=>{
+        sender.replaceTrack(participant.getLocalStream().getTracks()[1]);
+
+        let screenShareBtn = $("#screenShareBtn");
+
+        screenShareBtn.val("share Off");
+        screenShareBtn.data("flag", false);
     })
 
 }
 
+// 화면공유 on off 기능
+async function screenShare(){
+    // 화면 공유 아닐 때 : flag = false
+    // 화면 공유 상태일 때 : flag = true
+    let screenShareBtn = $("#screenShareBtn");
+    let isScreenShare = screenShareBtn.data("flag");
 
+    if(isScreenShare){
+        await stopScreenShare();
+
+        screenShareBtn.val("share Off");
+        screenShareBtn.data("flag", false);
+    }else{
+         await startScreenShare();
+
+        screenShareBtn.val("share On");
+        screenShareBtn.data("flag", true)
+    }
+}

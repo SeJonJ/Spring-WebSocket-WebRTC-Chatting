@@ -33,8 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Boni Garcia (bgarcia@gsyc.es)
  * @author Micael Gallego (micael.gallego@gmail.com)
- * @authos Ivan Gracia (izanmail@gmail.com)
- * @since 4.3.1
+ * @author Ivan Gracia (izanmail@gmail.com)
+ * @modifyBy SeJon Jang (wkdtpwhs@gmail.com)
  */
 @Service
 @RequiredArgsConstructor

@@ -11,7 +11,6 @@
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="/css/rtc/main.css"/>
     <link rel="styleSheet" href="/css/rtc/kurentostyle.css" type="text/css" media="screen">
 
 
@@ -26,7 +25,10 @@
             <div class="col-lg-12 mb-3">
                 <div class="d-flex justify-content-around mb-3">
                     <div class="mr-2" data-toggle="buttons">
-                        <input type="button" class="btn btn-outline-success" id="view_on" value="share On" onclick="startScreenShare()">
+                        <input type="button" class="btn btn-outline-success" id="screenShareBtn" value="share Off"
+                               data-flag="false" onclick="screenShare()">
+<!--                        <input type="button" class="btn btn-outline-success" id="view_off" value="share Off"-->
+<!--                               onclick="stopScreenShare()">-->
                     </div>
                 </div>
             </div>
