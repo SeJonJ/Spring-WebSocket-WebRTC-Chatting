@@ -70,10 +70,7 @@
 
 ![](info/chattingFileUpload.gif)
 
-![](info/WebRTC.gif)
-
-![](info/screenSharing.gif)
-
+![ChatForYou.gif](info%2FChatForYou.gif)
 
 
 ## Reference
