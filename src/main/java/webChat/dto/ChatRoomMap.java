@@ -6,9 +6,11 @@ import lombok.Setter;
 import javax.annotation.PostConstruct;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
- * @description 변경 예정
+ * @desc Room 을 담기위한 클래스 => 싱글톤
  * */
 // 싱글톤으로 생성
 // 모든 ChatService 에서 ChatRooms가 공통된 필요함으로
@@ -16,7 +18,7 @@ import java.util.Map;
 @Setter
 public class ChatRoomMap {
     private static ChatRoomMap chatRoomMap = new ChatRoomMap();
-    private Map<String, ChatRoomDto> chatRooms = new LinkedHashMap<>();
+    private ConcurrentMap<String, ChatRoomDto> chatRooms = new ConcurrentHashMap<>();
 
 //    @PostConstruct
 //    private void init() {

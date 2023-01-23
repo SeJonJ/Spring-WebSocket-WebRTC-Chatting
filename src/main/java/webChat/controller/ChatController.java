@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import webChat.dto.ChatRoomMap;
-import webChat.service.ChatService.ChatServiceMain;
-import webChat.service.ChatService.MsgChatService;
-import webChat.dto.ChatDTO;
+import webChat.service.chatService.ChatServiceMain;
+import webChat.service.chatService.MsgChatService;
+import webChat.dto.ChatDto;
 
 import java.util.ArrayList;
 
@@ -37,7 +37,7 @@ public class ChatController {
     // 이때 클라이언트에서는 /pub/chat/message 로 요청하게 되고 이것을 controller 가 받아서 처리한다.
     // 처리가 완료되면 /sub/chat/room/roomId 로 메시지가 전송된다.
     @MessageMapping("/chat/enterUser")
-    public void enterUser(@Payload ChatDTO chat, SimpMessageHeaderAccessor headerAccessor) {
+    public void enterUser(@Payload ChatDto chat, SimpMessageHeaderAccessor headerAccessor) {
 
         // 채팅방 유저+1
         chatServiceMain.plusUserCnt(chat.getRoomId());
@@ -56,7 +56,7 @@ public class ChatController {
 
     // 해당 유저
     @MessageMapping("/chat/sendMessage")
-    public void sendMessage(@Payload ChatDTO chat) {
+    public void sendMessage(@Payload ChatDto chat) {
         log.info("CHAT {}", chat);
         chat.setMessage(chat.getMessage());
         template.convertAndSend("/sub/chat/room/" + chat.getRoomId(), chat);
@@ -87,8 +87,8 @@ public class ChatController {
             log.info("User Disconnected : " + username);
 
             // builder 어노테이션 활용
-            ChatDTO chat = ChatDTO.builder()
-                    .type(ChatDTO.MessageType.LEAVE)
+            ChatDto chat = ChatDto.builder()
+                    .type(ChatDto.MessageType.LEAVE)
                     .sender(username)
                     .message(username + " 님 퇴장!!")
                     .build();

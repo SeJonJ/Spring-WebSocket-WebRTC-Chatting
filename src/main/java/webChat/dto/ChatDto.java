@@ -1,7 +1,6 @@
 package webChat.dto;
 
 import lombok.*;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @description 변경 예정
@@ -10,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChatDTO {
+public class ChatDto {
     // 메시지  타입 : 입장, 채팅
     // 메시지 타입에 따라서 동작하는 구조가 달라진다.
     // 입장과 퇴장 ENTER 과 LEAVE 의 경우 입장/퇴장 이벤트 처리가 실행되고,
