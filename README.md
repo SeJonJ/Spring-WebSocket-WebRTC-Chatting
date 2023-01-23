@@ -2,8 +2,8 @@
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FSeJonJ%2FSpring-WebSocket-Chatting&count_bg=%233310C8&title_bg=%2316C86B&icon=&icon_color=%23E7E7E7&title=HITS&edge_flat=true)](https://hits.seeyoufarm.com)
 
 ## 0. Spring Boot 와 WebSocket 을 활용한 채팅 만들기 프로젝트
-- SpringBoot 기반 웹 소켓 채팅 및 WebRTC 를 활용한 P2P 화상 채팅
-- 상세한 코드 설명은  에서 확인 가능합니다.
+- SpringBoot 기반 웹 소켓 채팅 및 Kurento Media Server 를 이용한 N:M 화상채팅
+- 상세한 코드 설명은  https://terianp.tistory.com/ 에서 확인 가능합니다.
 
 ### 브랜치별 설명
 - master : 기본 문자 채팅
