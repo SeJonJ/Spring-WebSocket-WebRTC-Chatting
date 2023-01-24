@@ -11,7 +11,7 @@
 - master-webrtc-kurento-jpa : kurento 미디어 서버를 활용한 webrtc 화상 채팅
 
 ## 1. 사용기술
-- Java 8
+- Java 11
 - Spring Boot MVC
 - Gradle
 - AJAX
@@ -56,17 +56,53 @@
 1) Server Installation
 - Kurento Media Server 설치
 - turn Server 설치 : coturn
-
-2) project Build
-- 프로젝트를 jar 파일로 빌드
-- cmd 에서 java -jar "파일명" 타이핑
-- https://localhost:8443 으로 접속!
 - Kurento Media Server 사용시 환경변수 설정 필요 : -Dkms.url=ws://<KMS IP>:<PORT>/kurento
+
+2) JAR Build
+- java -Dkms.url=ws://<KMS IP>:<PORT>/kurento -jar jar파일명
+
+3) Docker Container
+- DockerFile 생성
+```bash
+
+- ## 베이스 이미지 + 이미지 별칭
+FROM openjdk:8-jdk-alpine AS builder
+# gradlew 복사
+COPY gradlew .
+# gradle 복사
+COPY gradle gradle
+# build.gradle 복사
+COPY build.gradle .
+# settings.gradle 복사
+COPY settings.gradle .
+# 웹 어플리케이션 소스 복사
+COPY src src
+
+# gradlew 실행권한 부여
+RUN chmod +x ./gradlew
+# gradlew를 사용하여 실행 가능한 jar 파일 생성
+RUN ./gradlew bootJar
+
+# 베이스 이미지
+FROM openjdk:8-jdk-alpine
+# builder 이미지에서 build/libs/*.jar 파일을 app.jar로 복사
+COPY --from=builder build/libs/*.jar app.jar
+
+# 컨테이너 Port 노출
+EXPOSE 8443
+
+# JAVA 옵션 설정
+ENV JAVA_OPTS="-Dkms.url=ws://<KMS IP>:<PORT>/kurento"
+
+# jar 파일 실행
+#ENTRYPOINT ["java", "-jar","/app.jar"]
+ENTRYPOINT java ${JAVA_OPTS} -jar /app.jar
+```
 
 ## 6. 배포 주소
 임시 : https://chat-for-you.onrender.com/
 
-## 구동 화면
+## 7. 구동 화면
 
 ![](info/chattingFileUpload.gif)
 

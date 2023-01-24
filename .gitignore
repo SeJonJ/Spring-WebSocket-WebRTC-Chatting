@@ -38,3 +38,4 @@ out/
 
 ## custom ##
 /src/main/resources/application.properties
+Dockerfile
