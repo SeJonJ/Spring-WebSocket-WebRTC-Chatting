@@ -3,7 +3,7 @@
 
 ## 0. Spring Boot 와 WebSocket 을 활용한 채팅 만들기 프로젝트
 - SpringBoot 기반 웹 소켓 채팅 및 Kurento Media Server 를 이용한 N:M 화상채팅
-- 상세한 코드 설명은  https://terianp.tistory.com/ 에서 확인 가능합니다.
+- 상세한 코드 설명은  https://terianp.tistory.com/184 에서 확인 가능합니다.
 
 ### 브랜치별 설명
 - master : 기본 문자 채팅
