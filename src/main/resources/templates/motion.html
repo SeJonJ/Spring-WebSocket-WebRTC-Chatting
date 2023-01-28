@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+</head>
+<body>
+<video id="webcam" width="800" height="600"></video>
+<canvas id="canvas" width="800" height="600"></canvas>
+<script>
+    // Load the handpose model
+    handpose.load().then(model => {
+        // Get the webcam video element
+        const webcam = document.getElementById('webcam');
+
+        // Get the canvas element
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Get the webcam video stream
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                webcam.srcObject = stream;
+                webcam.addEventListener('loadeddata', async () => {
+                    // Run the webcam video through the handpose model
+                    while (true) {
+                        const predictions = await model.estimateHands(webcam);
+                        if (predictions.length > 0) {
+                            const finger = predictions[0].landmarks[8];
+                            ctx.fillRect(finger[0]-5, finger[1]-5, 10, 10);
+                        }
+                        ctx.drawImage(webcam, 0, 0, 800, 600);
+                        await tf.nextFrame();
+                    }
+                });
+            });
+    });
+</script>
+</body>
+</html>
