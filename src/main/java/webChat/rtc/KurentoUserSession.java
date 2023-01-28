@@ -83,7 +83,6 @@ public class KurentoUserSession implements Closeable {
 
       @Override
       public void onEvent(IceCandidateFoundEvent event) {
-        /** 여기서부터는 synchronization 즉 동기화 되지 않는 부분 */
         // JsonObject 생성
         JsonObject response = new JsonObject();
         // id : iceCnadidate, id 는 ice후보자 선정
@@ -163,8 +162,7 @@ public class KurentoUserSession implements Closeable {
 
     /**
      *
-     *  @Desc sdpOffer 에 대한 결과 String : sender 를
-     *
+     *  @Desc sdpOffer 에 대한 결과 String
      */
     final String ipSdpAnswer = this.getEndpointForUser(sender).processOffer(sdpOffer);
 
@@ -185,7 +183,6 @@ public class KurentoUserSession implements Closeable {
    * @return WebRtcEndPoint
    * */
   private WebRtcEndpoint getEndpointForUser(final KurentoUserSession sender) {
-    /** 여기도 몰겠다ㅠㅠ */
     // 만약 sender 명이 현재 user명과 일치한다면, 즉 sdpOffer 제안을 보내는 쪽과 받는 쪽이 동일하다면?
     // loopback 임을 찍고, 그대로 outgoinMedia 를 return
     if (sender.getName().equals(name)) {

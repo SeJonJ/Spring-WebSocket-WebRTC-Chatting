@@ -56,10 +56,10 @@
 1) Server Installation
 - Kurento Media Server 설치
 - turn Server 설치 : coturn
-- Kurento Media Server 사용시 환경변수 설정 필요 : -Dkms.url=ws://<KMS IP>:<PORT>/kurento
+- Kurento Media Server 사용시 환경변수 설정 필요 : -Dkms.url=ws://[KMS IP]:[PORT]/kurento
 
 2) JAR Build
-- java -Dkms.url=ws://<KMS IP>:<PORT>/kurento -jar jar파일명
+- java -Dkms.url=ws://[KMS IP]:[PORT]/kurento -jar jar파일명
 
 3) Docker Container
 - DockerFile 생성

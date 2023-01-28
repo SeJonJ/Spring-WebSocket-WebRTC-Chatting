@@ -20,11 +20,6 @@ public class ChatRoomMap {
     private static ChatRoomMap chatRoomMap = new ChatRoomMap();
     private ConcurrentMap<String, ChatRoomDto> chatRooms = new ConcurrentHashMap<>();
 
-//    @PostConstruct
-//    private void init() {
-//        chatRooms = new LinkedHashMap<>();
-//    }
-
     private ChatRoomMap(){}
 
     public static ChatRoomMap getInstance(){
