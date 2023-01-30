@@ -1,37 +1,41 @@
-const model = await handpose.load();
-const webcam = document.getElementById('webcam');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const startButton = document.getElementById('start-button');
-const stopButton = document.getElementById('stop-button');
+async function startWebcam() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('video-canvas');
+    const context = canvas.getContext('2d');
 
-startButton.addEventListener('click', async () => {
-    // Start webcam
-    webcam.srcObject = await navigator.mediaDevices.getUserMedia({video: true});
-    webcam.onloadedmetadata = () => {
-        webcam.play();
-    };
+    // Load the handtrack model
+    const model = await handTrack.load();
 
-    // Start tracking finger point
-    setInterval(async () => {
-        const predictions = await model.estimateHands(webcam);
-        if (predictions.length > 0) {
-            const fingerPoint = predictions[0].landmarks[0];
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.beginPath();
-            ctx.arc(fingerPoint[0], fingerPoint[1], 10, 0, 2 * Math.PI);
-            ctx.fillStyle = 'red';
-            ctx.fill();
+    // Access the webcam and start prediction
+    const webcam = await handTrack.startVideo(video);
+
+    let isDrawing = false;
+    let x, y;
+
+    while (true) {
+        const predictions = await model.detect(video);
+
+        if (predictions.length > 0 && predictions[0].bbox[2] > 50) {
+            // If hand is detected and its width is larger than 50
+            const handBox = predictions[0].bbox;
+            x = handBox[0] + handBox[2] / 2;
+            y = handBox[1] + handBox[3] / 2;
+
+            // Start drawing if hand is detected for the first time
+            if (!isDrawing) {
+                context.beginPath();
+                context.moveTo(x, y);
+                isDrawing = true;
+            } else {
+                context.lineTo(x, y);
+                context.stroke();
+            }
+        } else if (isDrawing) {
+            // Stop drawing if hand is not detected
+            isDrawing = false;
         }
-    }, 100);
-});
 
-stopButton.addEventListener('click', () => {
-    // Stop webcam
-    webcam.srcObject.getVideoTracks().forEach((track) => {
-        track.stop();
-    });
+    }
+}
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-});
+startWebcam();
