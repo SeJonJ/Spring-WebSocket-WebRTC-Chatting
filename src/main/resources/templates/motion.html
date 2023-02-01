@@ -1,17 +1,42 @@
 <html>
 <head>
-    <title>Hand Drawing</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.4.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handtrackjs/dist/handtrack.min.js"></script>
     <style>
-        #video-canvas {
-            border: 1px solid black;
+        #video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
 </head>
 <body>
-<video id="video" width="600" height="400"></video>
-<canvas id="video-canvas" width="600" height="400"></canvas>
-</body>
-<script src="https://cdn.jsdelivr.net/npm/handtrackjs/dist/handtrack.min.js"></script>
+<video id="video" width="500" height="500" autoplay></video>
+<script>
+    const video = document.getElementById("video");
+    const modelPromise = handTrack.load();
 
-<script src="/js/motion/motion.js"></script>
+    Promise.all([modelPromise, faceapi.nets.tinyFaceDetector.loadFromUri('/models')])
+        .then(startVideo)
+        .catch(error => console.error(error));
+
+    function startVideo() {
+        handTrack.startVideo(video).then(status => {
+            if (status) {
+                setInterval(async () => {
+                    const predictions = await modelPromise.estimateHands(video);
+
+                    if (predictions.length > 0) {
+                        console.log("Hand detected at x: ", predictions[0].bbox[0]);
+                        console.log("Hand detected at y: ", predictions[0].bbox[1]);
+                        console.log("Hand width: ", predictions[0].bbox[2]);
+                        console.log("Hand height: ", predictions[0].bbox[3]);
+                    }
+                }, 1000);
+            }
+        });
+    }
+</script>
+</body>
 </html>
