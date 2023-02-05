@@ -71,6 +71,7 @@ public class ChatRoomController {
             String uuid = UUID.randomUUID().toString().split("-")[0];
             model.addAttribute("uuid", uuid);
             model.addAttribute("roomId", room.getRoomId());
+            model.addAttribute("roomName", room.getRoomName());
 //            return "rtcroom";
 
             return "kurentoroom";

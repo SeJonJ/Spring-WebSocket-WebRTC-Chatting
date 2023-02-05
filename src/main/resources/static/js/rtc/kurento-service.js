@@ -32,6 +32,8 @@ var participants = {};
 
 let name = null;
 let roomId = null;
+let roomName = null;
+
 const constraints = {
     // 'volume', 'channelCount', 'echoCancellation', 'autoGainControl', 'noiseSuppression', 'latency', 'sampleSize', 'sampleRate'
     audio: {
@@ -91,8 +93,9 @@ function register() {
 
     name = $("#uuid").val();
     roomId = $("#roomId").val();
+    roomName = $("#roomName").val();
 
-    document.getElementById('room-header').innerText = 'ROOM ' + roomId;
+    document.getElementById('room-header').innerText = 'ROOM ' + roomName;
     document.getElementById('room').style.display = 'block';
 
 
