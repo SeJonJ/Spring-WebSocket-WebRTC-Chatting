@@ -1,8 +1,3 @@
-// Pointer finger to draw or pick color; flat "stop" hand to move pointer.  If it's having trouble tracking your finger, either change your background or try including your middle finger with your pointer finger.
-//Handpose code by the ml5.js team.  Visit https://ml5js.org/
-// Drawing code by Steve's Makerspace
-// Video: https://youtu.be/96sWFP9CCkQ
-
 let handpose;
 let video;
 let predictions = [];
@@ -15,12 +10,12 @@ let leftAvg, topAvg;
 let colr = 0;
 let colb = 255;
 let colg = 0;
-let pointerX, pointerY, knuckle, ring;
+let pointerX, pointerY, thumb, pinky;
 
 function setup() {
     createCanvas(640, 480);
     canvas2 = createGraphics(width, height);
-    makesquares();
+    // makesquares();
     video = createCapture(VIDEO);
     video.size(width, height);
 
@@ -41,8 +36,6 @@ function modelReady() {
 }
 
 function draw() {
-    translate(width, 0);
-    scale(-1, 1);
     //  background(0);
 
     image(video, 0, 0, width, height);
@@ -62,105 +55,47 @@ function drawKeypoints() {
             fill(0, 255, 0);
             noStroke();
             //   ellipse(keypoint[0], keypoint[1], 10, 10);
-            if (j == 8) {
-                pointerX = keypoint[0];
+            if (j == 0) {
+                thumb = keypoint[1];
+            } else if (j == 4) {
+                pinky = keypoint[1];
+            } else if (j == 9) {
+                pointerX = width - keypoint[0]; // flip the x-coordinate
                 pointerY = keypoint[1];
-                //print(keypoint);
-            } else
-            if (j == 14) {
-                knuckle = keypoint[1];
-            } else
-            if (j == 16) {
-                ring = keypoint[1];
             }
         }
-        //If the ring finger is not extended then draw a line or pick a color
-        if (knuckle < ring) {
+        //If the hand is closed, then draw a line or pick a color
+        if (thumb > pinky) {
             fill(0);
-            ellipse(pointerX, pointerY, 10, 10);
-            if (pointerX < width - 70) {
-                getaverages();
-
+            ellipse(pointerX, pointerY, 20, 20);
+            if (prevtop != null) {
+                leftArr.push(pointerX);
+                topArr.push(pointerY);
+                if (leftArr.length > 10) {
+                    leftArr.shift();
+                    topArr.shift();
+                }
+                leftAvg = 0;
+                topAvg = 0;
+                for (let k = 0; k < leftArr.length; k += 1) {
+                    leftAvg += leftArr[k];
+                    topAvg += topArr[k];
+                }
+                leftAvg /= leftArr.length;
+                topAvg /= topArr.length;
                 canvas2.stroke(colr, colg, colb);
-                if (leftArr.length > 2 && prevleft>0) {
-                    canvas2.line(prevleft, prevtop, leftAvg, topAvg);
-                    if (prevleft > 0) {
-                        prevleft = leftAvg;
-                        prevtop = topAvg;}
-                    else{
-                        prevleft = pointerX;
-                        prevtop = pointerY;
-                    }
-                }
+                canvas2.line(prevleft, prevtop, leftAvg, topAvg);
+                prevleft = leftAvg;
+                prevtop = topAvg;
             } else {
-                if (pointerY < 70) {
-                    colr = 255;
-                    colg = 0;
-                    colb = 0;
-                }
-
-                if (pointerY > 70 && pointerY < 140) {
-                    colr = 0;
-                    colg = 255;
-                    colb = 0;
-                }
-                if (pointerY > 140 && pointerY < 210) {
-                    colr = 0;
-                    colg = 0;
-                    colb = 255;
-                }
-                if (pointerY > 210 && pointerY < 280) {
-                    makesquares();
-                }
+                prevleft = pointerX;
+                prevtop = pointerY;
+                colr = random(255);
+                colg = random(255);
+                colb = random(255);
             }
         } else {
-            //If the hand is extended, then just mark where it is and clear the arrays
-            fill(255);
-            ellipse(pointerX, pointerY, 10, 10);
-            leftArr.length = 0;
-            topArr.length = 0;
-            leftAvg = 0;
-            topAvg = 0;
-            prevleft = pointerX;
-            prevtop = pointerY;
+            prevtop = null;
         }
     }
-}
-
-function getaverages() {
-    if (leftArr.length > 5) {
-        leftArr.splice(0, 1);
-        topArr.splice(0, 1);
-    }
-    if (pointerX > 0 ) {
-        leftArr.push(pointerX);
-        topArr.push(pointerY);
-    }
-    let leftSum = 0;
-    let topSum = 0;
-    for (i = 0; i < leftArr.length; i++) {
-        leftSum = leftSum + leftArr[i];
-        topSum = topSum + topArr[i];
-    }
-    leftAvg = leftSum / leftArr.length;
-    topAvg = topSum / topArr.length;
-
-}
-
-function makesquares() {
-    canvas2.background(255);
-    canvas2.clear();
-    //background(255);
-    //clear();
-    canvas2.fill(255, 0, 0);
-    canvas2.rect(width, 0, -70, 70);
-    canvas2.fill(0, 255, 0);
-    canvas2.rect(width, 70, -70, 70);
-    canvas2.fill(0, 0, 255);
-    canvas2.rect(width, 140, -70, 70);
-    canvas2.fill(0, 0, 0);
-    canvas2.rect(width, 210, -70, 70);
-    canvas2.stroke(255, 0, 0);
-    canvas2.strokeWeight(10);
-    canvas2.line(width - 5, 215, width - 65, 275);
 }

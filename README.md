@@ -100,7 +100,9 @@ ENTRYPOINT java ${JAVA_OPTS} -jar /app.jar
 ```
 
 ## 6. 배포 주소
-임시 : https://chat-for-you.onrender.com/
+- 버그 발견 시 이슈나 블로그 댓글로 남겨주시면 감사하겠습니다.
+- contribution 은 언제나 환영합니다!!
+https://chat-for-you.onrender.com/
 
 ## 7. 구동 화면
 
