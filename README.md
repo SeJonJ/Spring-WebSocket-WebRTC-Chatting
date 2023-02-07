@@ -100,8 +100,10 @@ ENTRYPOINT java ${JAVA_OPTS} -jar /app.jar
 ## 6. 배포 주소
 현재 배포에서는 1:1 만 가능합니다.
 S3 파일 업로드는 계정 무료 기간이 지나면 차단할 예정입니다.
+
     - 버그 확인 시 이슈 만들어주세요!
     - contribution 은 언제나 환영입니다!!
+
 https://chat-for-you.onrender.com/
 
 
