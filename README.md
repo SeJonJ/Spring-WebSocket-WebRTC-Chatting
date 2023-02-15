@@ -97,11 +97,16 @@ ENV JAVA_OPTS="-Dkms.url=ws://<KMS IP>:<PORT>/kurento"
 ENTRYPOINT java ${JAVA_OPTS} -jar /app.jar
 ```
 
-## 6. 배포 주소
-현재 배포에서는 1:1 만 가능합니다.
-S3 파일 업로드는 계정 무료 기간이 지나면 차단할 예정입니다.
+## 6. ChatForYou
+현재 데모 사이트에서는 문자채팅 및 1:1 화상채팅만 가능합니다.
+
+N:M 화상채팅의 경우 트래픽과 배포문제로 인한 것이니 이 점 확인부탁드립니다.
+
+- S3 파일 업로드는 계정 무료 기간이 지나 중단합니다 -> 추후 다른 방식으로 구현 할 예정입니다.
+
     - 버그 확인 시 이슈 만들어주세요!
     - contribution 은 언제나 환영입니다!!
+
 https://chat-for-you.onrender.com/
 
 
