@@ -207,143 +207,137 @@ function sendMessage(message) {
  *
  * 즉 상대방에게 보내는 track 에서 나의 웹캠 videoStream 대신 공유 화면에 해당하는 videoStream 으로 변경하는 것이다.
  *
- * 이렇듯 Track 에서 steam 을 교체 - replace - 하기 위해서는 아래와 같은 과정을 거친다.
- * 1. myPeerConnection 에서 sender 를 가져온다. sender 란 나와 연결된 다른 peer 로 생각하면 된다.
- * 2. sender 객체에서 replaceTrack 함수를 활용해서 stream 을 교체한다.
- * 3. shareView 의 Track[0] 에는 videoStream 이 들어있다. 따라서 replaceTrack 의 파라미터에 shareView.getTrack[0] 을 넣는다.
- * 4. 화면 공유 취소 시 원래 화상 화면으로 되돌리기 위해서는 다시 Track 를 localstream 으로 교체해주면 된다!
- *      이때 localStream 에는 audio 와 video 모두 들어가 있음으로 video 에 해당하는 Track[1] 만 꺼내서 교체해준다.
+ * 더 구체적으로는 아래 순서를 따른다.
  *
+ * 1. startScreenShare() 함수를 호출합니다.
+ * 2. ScreenHandler.start() 함수를 호출하여 shareView 변수에 화면 공유에 사용될 MediaStream 객체를 할당합니다.
+ * 3. 화면 공유 화면을 로컬 화면에 표시합니다.
+ * 4. 연결된 다른 peer에게 화면 공유 화면을 전송하기 위해 RTCRtpSender.replaceTrack() 함수를 사용하여 연결된 다른 peer에게 전송되는 비디오 Track을 shareView.getVideoTracks()[0]으로 교체합니다.
+ * 5. shareView 객체의 비디오 Track이 종료되는 경우, stopScreenShare() 함수를 호출하여 화면 공유를 중지합니다.
+ * 5. stopScreenShare() 함수에서는 ScreenHandler.end() 함수를 호출하여 shareView 객체에서 발생하는 모든 Track에 대해 stop() 함수를 호출하여 스트림 전송을 중지합니다.
+ * 6. 원래 화면으로 되돌리기 위해 연결된 다른 peer에게 전송하는 Track을 로컬 비디오 Track으로 교체합니다.
+ * 즉, 해당 코드는 WebRTC 기술을 사용하여 MediaStream 객체를 사용해 로컬에서 받은 Track을 다른 peer로 전송하고, replaceTrack() 함수를 사용하여 비디오 Track을 교체하여 화면 공유를 구현하는 코드입니다.
  * **/
 
-/*  화면 공유를 위한 변수 선언 */
+// 화면 공유를 위한 변수 선언
 const screenHandler = new ScreenHandler();
 let shareView = null;
 
 /**
- * ScreenHandler
- * @constructor
+ * ScreenHandler 클래스 정의
  */
 function ScreenHandler() {
-    // let localStream = null;
-
-    console.log('Loaded ScreenHandler', arguments);
-
     /**
-     * 스크린캡쳐 API를 브라우저 호환성 맞게 리턴합니다.
-     * navigator.mediaDevices.getDisplayMedia 호출 (크롬 72 이상 지원)
-     * navigator.getDisplayMedia 호출 (크롬 70 ~ 71 실험실기능 활성화 or Edge)
+     * Cross Browser Screen Capture API를 호출합니다.
+     * Chrome 72 이상에서는 navigator.mediaDevices.getDisplayMedia API 호출
+     * Chrome 70~71에서는 navigator.getDisplayMedia API 호출 (experimental feature 활성화 필요)
+     * 다른 브라우저에서는 screen sharing not supported in this browser 에러 반환
+     * @returns {Promise<MediaStream>} 미디어 스트림을 반환합니다.
      */
     function getCrossBrowserScreenCapture() {
-        if (navigator.getDisplayMedia) {
-            return navigator.getDisplayMedia(constraints);
-        } else if (navigator.mediaDevices.getDisplayMedia) {
-            return navigator.mediaDevices.getDisplayMedia(constraints);
+        if (navigator.mediaDevices.getDisplayMedia) {
+            return navigator.mediaDevices.getDisplayMedia({video: true});
+        } else if (navigator.getDisplayMedia) {
+            return navigator.getDisplayMedia({video: true});
+        } else {
+            throw new Error('Screen sharing not supported in this browser');
         }
     }
 
     /**
-     * 스크린캡쳐 API를 호출합니다.
-     * @returns shareView
+     * 화면 공유를 시작합니다.
+     * @returns {Promise<MediaStream>} 화면 공유에 사용되는 미디어 스트림을 반환합니다.
      */
     async function start() {
-
         try {
             shareView = await getCrossBrowserScreenCapture();
         } catch (err) {
             console.log('Error getDisplayMedia', err);
         }
-
         return shareView;
     }
 
     /**
-     * 스트림의 트렉을 stop()시켜 스트림이 전송을 중지합니다.
+     * 화면 공유를 종료합니다.
      */
     function end() {
-
-        shareView.getTracks().forEach((track) => {
-            // log("화면 공유 중지")
-            track.stop();
-        });
-
-        // // 전송 중단 시 share-video 부분 hide
-        // $("#share-video").hide();
+        if (shareView) {
+            // shareView에서 발생하는 모든 트랙들에 대해 stop() 함수를 호출하여 스트림 전송 중지
+            shareView.getTracks().forEach(track => track.stop());
+            shareView = null;
+        }
     }
 
-    /**
-     * extends
-     */
+    // 생성자로 반환할 public 변수 선언
     this.start = start;
     this.end = end;
-
 }
 
 /**
- * screenHandler를 통해 스크린 API를 호출합니다
- * 원격 화면을 화면 공유 화면으로 교체
+ * 스크린 API를 호출하여 원격 화면을 화면 공유 화면으로 교체합니다.
+ * @returns {Promise<void>}
  */
 async function startScreenShare() {
-
-    // 스크린 API 호출 & 시작
-    await screenHandler.start();
+    await screenHandler.start(); // 화면 공유를 위해 ScreenHandler.start() 함수 호출
 
     let participant = participants[name];
     let video = participant.getVideoElement();
     participant.setLocalSteam(video.srcObject);
+    video.srcObject = shareView; // 본인의 화면에 화면 공유 화면 표시
 
-    // 본인 화면에 본인 화면 공유 시작
-    video.srcObject = shareView;
+    await participant.rtcPeer.peerConnection.getSenders().forEach(sender => {
+        // 원격 참가자에게도 화면 공유 화면을 전송하도록 RTCRtpSender.replaceTrack() 함수 호출
+        if (sender.track.kind === 'video') {
+            sender.replaceTrack(shareView.getVideoTracks()[0]);
+        }
+    });
 
-    // 상대 화면에 본인 공유 시작
-    await participant.rtcPeer.peerConnection.getSenders().forEach((sender) => {
-        sender.replaceTrack(shareView.getTracks()[0])
-    })
-
-    shareView.getVideoTracks()[0].addEventListener("ended", ()=>{
-        console.log('screensharing has ended')
-
+    // 원격 화면의 화면 공유가 종료되는 경우
+    shareView.getVideoTracks()[0].addEventListener("ended", () => {
         stopScreenShare();
     })
 }
 
+/**
+ * 화면 공유를 중지하고 기존 화상채팅으로 복원합니다.
+ * @returns {Promise<void>}
+ */
 async function stopScreenShare() {
-
-    // 스크린 API 호출 & 중지
-    await screenHandler.end();
-
+    await screenHandler.end(); // 화면 공유를 중지하기 위해 ScreenHandler.end() 함수 호출
     let participant = participants[name];
     let video = participant.getVideoElement();
+    video.srcObject = participant.getLocalStream(); // 본인의 화면을 원래의 원격 화면으로 복원
 
-    video.srcObject = participant.getLocalStream();
+    await participant.rtcPeer.peerConnection.getSenders().forEach(sender => {
+        // 원격 참가자에게도 화면 공유를 중지하도록 RTCRtpSender.replaceTrack() 함수 호출
+        if (sender.track.kind === 'video') {
+            sender.replaceTrack(participant.getLocalStream().getVideoTracks()[0]);
+        }
+    });
 
-    await participant.rtcPeer.peerConnection.getSenders().forEach((sender)=>{
-        sender.replaceTrack(participant.getLocalStream().getTracks()[1]);
-
-        let screenShareBtn = $("#screenShareBtn");
-
-        screenShareBtn.val("share Off");
-        screenShareBtn.data("flag", false);
-    })
-
+// 화면 공유 버튼을 초기화
+    let screenShareBtn = $("#screenShareBtn");
+    screenShareBtn.val("Share Screen");
+    screenShareBtn.data("flag", false);
 }
 
-// 화면공유 on off 기능
-async function screenShare(){
-    // 화면 공유 아닐 때 : flag = false
-    // 화면 공유 상태일 때 : flag = true
+/**
+
+ 화면 공유 버튼을 누르면 화면 공유를 시작하거나 중지합니다.
+
+ @returns {Promise<void>}
+ */
+async function screenShare() {
     let screenShareBtn = $("#screenShareBtn");
     let isScreenShare = screenShareBtn.data("flag");
 
-    if(isScreenShare){
-        await stopScreenShare();
-
-        screenShareBtn.val("share Off");
+    if (isScreenShare) { // 이미 화면 공유 중인 경우
+        await stopScreenShare(); // 화면 공유 중지
+        screenShareBtn.val("Share Screen"); // 버튼 텍스트 초기화
         screenShareBtn.data("flag", false);
-    }else{
-         await startScreenShare();
-
-        screenShareBtn.val("share On");
-        screenShareBtn.data("flag", true)
+    } else { // 화면 공유 중이 아닌 경우
+        await startScreenShare(); // 화면 공유 시작
+        screenShareBtn.val("Stop Sharing"); // 버튼 텍스트 변경
+        screenShareBtn.data("flag", true);
     }
 }
