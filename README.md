@@ -126,4 +126,4 @@ https://github.com/codejs-kr/webrtc-lab
 https://doc-kurento.readthedocs.io/en/latest/index.html
 
 ## License
-GNU General Public License v3.0 
+GNU General Public License v3.0

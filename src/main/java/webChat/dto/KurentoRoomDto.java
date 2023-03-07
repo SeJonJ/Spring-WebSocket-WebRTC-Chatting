@@ -266,7 +266,6 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
     for (final KurentoUserSession participant : this.getParticipants()) {
       // 만약 참여자의 정보가 파라미터로 넘어온 user 와 같지 않다면
       if (!participant.equals(user)) {
-        // TODO 여기는 추가 정리
         final JsonElement participantName = new JsonPrimitive(participant.getName());
         participantsArray.add(participantName);
       }

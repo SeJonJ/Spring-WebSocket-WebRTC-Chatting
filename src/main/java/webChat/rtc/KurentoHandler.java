@@ -18,6 +18,7 @@ import webChat.service.chatService.KurentoUserRegistry;
 
 import java.io.IOException;
 
+// TODO @MessageMapping 을 갖는 controller 로 리팩토링 할 것!
 @RequiredArgsConstructor
 public class KurentoHandler extends TextWebSocketHandler {
 
@@ -31,9 +32,9 @@ public class KurentoHandler extends TextWebSocketHandler {
 
     // 유저 등록? 을 위한 객체 생성
     @Autowired
-   private KurentoUserRegistry registry;
+    private KurentoUserRegistry registry;
 
-   // room 매니저
+    // room 매니저
     @Autowired
     private KurentoManager roomManager;
 
@@ -122,7 +123,7 @@ public class KurentoHandler extends TextWebSocketHandler {
         room.leave(user);
 
         // room 에서 userCount -1
-        room.setUserCount(room.getUserCount()-1);
+        room.setUserCount(room.getUserCount() - 1);
 
     }
 

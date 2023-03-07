@@ -12,11 +12,7 @@ import webChat.rtc.KurentoHandler;
 
 @Configuration
 @EnableWebSocket // 웹 소켓에 대해 자동 설정
-@RequiredArgsConstructor
-public class WebRtcConfig implements WebSocketConfigurer {
-    /* TODO WebRTC 관련 */
-    // signalHandler 대신 KurentoHandler 사용
-//    private final SignalHandler signalHandler;
+public class WebRtcConfig implements WebSocketConfigurer {// signalHandler 대신 KurentoHandler 사용
 
     // kurento 를 다루기 위한 핸들러
     @Bean
