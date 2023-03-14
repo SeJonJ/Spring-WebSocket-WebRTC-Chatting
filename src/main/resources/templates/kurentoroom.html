@@ -33,6 +33,15 @@
                 </div>
             </div>
 
+            <textarea id="dataChannelSend"
+                      placeholder="nter some text, then press Send."></textarea>
+            <textarea id="dataChannelReceive"></textarea>
+
+            <div id="buttons">
+                <button id="sendButton">Send</button>
+                <button id="closeButton">Stop</button>
+            </div>
+
             <h2 id="room-header"></h2>
             <div id="participants"></div>
             <input type="button" id="button-leave" onmouseup="leaveRoom();"

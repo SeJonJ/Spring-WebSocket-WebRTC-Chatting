@@ -74,7 +74,17 @@ public class KurentoUserSession implements Closeable {
     this.roomName = roomName;
 
     // 외부로 송신하는 미디어?
-    this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
+    this.outgoingMedia = new WebRtcEndpoint
+            .Builder(pipeline)
+            .useDataChannels()
+            .build();
+
+    // Media logic
+    KmsShowData kmsShowData = new KmsShowData.Builder(pipeline).build();
+
+    this.getOutgoingWebRtcPeer().connect(kmsShowData);
+    kmsShowData.connect(this.getOutgoingWebRtcPeer());
+
 
     // iceCandidateFounder 이벤트 리스너 등록
     // 이벤트가 발생했을 때 다른 유저들에게 새로운 iceCnadidate 후보를 알림

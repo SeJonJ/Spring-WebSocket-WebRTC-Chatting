@@ -27,12 +27,22 @@ ws.onopen = () => {
     register();
 }
 
-// console.log("location.host : "+location.host)
+// // console.log("location.host : "+location.host)
 var participants = {};
 
 let name = null;
 let roomId = null;
 let roomName = null;
+let dataChannel = null;
+
+const dataChannelOptions = {
+    ordered: true, // do not guarantee order
+    maxPacketLifeTime: 3, // in milliseconds
+};
+
+let sendButton = null;
+let dataChannelSend = null;
+let dataChannelReceive = null;
 
 const constraints = {
     // 'volume', 'channelCount', 'echoCancellation', 'autoGainControl', 'noiseSuppression', 'latency', 'sampleSize', 'sampleRate'
@@ -59,9 +69,28 @@ window.onbeforeunload = function () {
     ws.close();
 };
 
+$(function () {
+
+    sendButton = $('#sendButton');
+    dataChannelSend = $('#dataChannelSend');
+    dataChannelReceive = $('#dataChannelReceive');
+
+    sendButton.click(function () {
+        const text = dataChannelSend.val();
+        console.log("text : " + text);
+
+        const obj = {
+            "message": text,
+            "timestamp": new Date()
+        }
+
+        dataChannel.send(JSON.stringify(obj));
+    });
+});
+
 ws.onmessage = function (message) {
     var parsedMessage = JSON.parse(message.data);
-    console.info('Received message: ' + message.data);
+    // console.info('Received message: ' + message.data);
 
     switch (parsedMessage.id) {
         case 'existingParticipants':
@@ -128,9 +157,26 @@ function callResponse(message) {
     }
 }
 
+const initializeDataChannel = (participant) => {
+
+    dataChannel = participant.rtcPeer.peerConnection.createDataChannel('channel', dataChannelOptions);
+    initializeDataChannelListeners();
+};
+
+const initializeDataChannelListeners = () => {
+    dataChannel.onopen = () => console.log('dataChannel opened');
+    dataChannel.onclose = () => console.log('dataChannel closed');
+    dataChannel.onerror = (error) => console.error('dataChannel error:', error);
+
+    dataChannel.onmessage = ({data}) => {
+        console.log("일단 된다!")
+        console.log('dataChannel data', data);
+    };
+};
+
 function onExistingParticipants(msg) {
 
-    console.log(name + " registered in room " + roomId);
+    // console.log(name + " registered in room " + roomId);
     var participant = new Participant(name);
     participants[name] = participant;
     var video = participant.getVideoElement();
@@ -140,15 +186,62 @@ function onExistingParticipants(msg) {
         mediaConstraints: constraints,
         onicecandidate: participant.onIceCandidate.bind(participant)
     }
-    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
+
+    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
         function (error) {
             if (error) {
                 return console.error(error);
             }
+            initializeDataChannel(participant)
+
             this.generateOffer(participant.offerToReceiveVideo.bind(participant));
+
         });
 
+
     msg.data.forEach(receiveVideo);
+}
+
+function receiveVideo(sender) {
+    var participant = new Participant(sender);
+    participants[sender] = participant;
+    var video = participant.getVideoElement();
+
+    var options = {
+        remoteVideo: video,
+        onicecandidate: participant.onIceCandidate.bind(participant)
+    }
+
+    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
+        function (error) {
+            if (error) {
+                return console.error(error);
+            }
+
+            initializeDataChannel(participant)
+
+            this.generateOffer(participant.offerToReceiveVideo.bind(participant));
+
+        });
+
+}
+
+function onSendChannelStateChange() {
+    if (!dataChannel) return;
+    var readyState = dataChannel.readyState;
+    console.log("sencChannel state changed to " + readyState);
+    if (readyState == 'open') {
+        dataChannelSend.disabled = false;
+        dataChannelSend.focus();
+        // $('#send').attr('disabled', false);
+    } else {
+        dataChannelSend.disabled = true;
+        // $('#send').attr('disabled', true);
+    }
+}
+
+function recvMessage(event) {
+    console.log("Received message: " + event.data);
 }
 
 function leaveRoom() {
@@ -165,27 +258,9 @@ function leaveRoom() {
     location.replace("/");
 }
 
-function receiveVideo(sender) {
-    var participant = new Participant(sender);
-    participants[sender] = participant;
-    var video = participant.getVideoElement();
-
-    var options = {
-        remoteVideo: video,
-        onicecandidate: participant.onIceCandidate.bind(participant)
-    }
-
-    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
-        function (error) {
-            if (error) {
-                return console.error(error);
-            }
-            this.generateOffer(participant.offerToReceiveVideo.bind(participant));
-        });
-}
 
 function onParticipantLeft(request) {
-    console.log('Participant ' + request.name + ' left');
+    // console.log('Participant ' + request.name + ' left');
     var participant = participants[request.name];
     participant.dispose();
     delete participants[request.name];
@@ -193,9 +268,23 @@ function onParticipantLeft(request) {
 
 function sendMessage(message) {
     var jsonMessage = JSON.stringify(message);
-    console.log('Sending message: ' + jsonMessage);
+    // console.log('Sending message: ' + jsonMessage);
     ws.send(jsonMessage);
 }
+
+// dataChannel.onmessage = function(event) {
+//     console.log("Received message: " + event.data);
+//     // dataChannelReceive.val(event.data);
+//     //
+//     // // 비동기적으로 처리할 함수 호출
+//     // await handleData(event.data);
+// };
+
+async function handleData(data) {
+    // 비동기적으로 처리할 코드 작성
+    // ...
+}
+
 
 /** 화면 공유 실행 과정
  * 나와 연결된 다른 peer 에 나의 화면을 공유하기 위해서는 다른 peer 에 보내는 Track 에서 stream 을 교체할 필요가 있다.
@@ -252,7 +341,7 @@ function ScreenHandler() {
         try {
             shareView = await getCrossBrowserScreenCapture();
         } catch (err) {
-            console.log('Error getDisplayMedia', err);
+            // console.log('Error getDisplayMedia', err);
         }
         return shareView;
     }

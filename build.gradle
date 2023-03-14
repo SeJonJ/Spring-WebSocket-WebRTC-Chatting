@@ -74,22 +74,35 @@ dependencies {
 
 	/* Kurento 미디어 서버 관련 2개 */
 	// https://mvnrepository.com/artifact/org.kurento/kurento-client
-	implementation 'org.kurento:kurento-client:6.18.0'
+	implementation 'org.kurento:kurento-client:7.0.0'
 
 	// https://mvnrepository.com/artifact/org.kurento/kurento-utils-js
 	implementation group: 'org.kurento', name: 'kurento-utils-js', version: '6.18.0'
 
-	// https://mvnrepository.com/artifact/org.kurento/kurento-commons
-	implementation 'org.kurento:kurento-commons:6.18.0'
+// https://mvnrepository.com/artifact/org.kurento/kurento-commons
+	implementation 'org.kurento:kurento-commons:7.0.0'
+
 
 	// https://mvnrepository.com/artifact/org.kurento/kms-api-core
-	implementation 'org.kurento:kms-api-core:6.18.0'
+	implementation 'org.kurento:kms-api-core:7.0.0'
 
 	// https://mvnrepository.com/artifact/org.kurento/kms-api-elements
-	implementation 'org.kurento:kms-api-elements:6.18.0'
+	implementation 'org.kurento:kms-api-elements:7.0.0'
 
 	// https://mvnrepository.com/artifact/org.kurento/kms-api-filters
-	implementation 'org.kurento:kms-api-filters:6.18.0'
+	implementation 'org.kurento:kms-api-filters:7.0.0'
+
+	// https://mvnrepository.com/artifact/org.kurento/kms-api-filters
+	implementation 'org.kurento:kms-api-filters:7.0.0'
+
+	// https://mvnrepository.com/artifact/org.kurento.module/datachannelexample
+	implementation 'org.kurento.module:datachannelexample:7.0.0'
+
+	// https://mvnrepository.com/artifact/org.kurento/kurento-jsonrpc-js
+	implementation 'org.kurento:kurento-jsonrpc-js:6.18.0'
+
+	// webrtc 를 사용하기 위한 java 라이브러리
+	implementation 'dev.onvoid.webrtc:webrtc-java:0.7.0'
 
 }
 

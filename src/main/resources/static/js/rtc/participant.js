@@ -35,7 +35,7 @@ function Participant(name) {
 	container.id = name;
 	var span = document.createElement('span');
 	var video = document.createElement('video');
-	var rtcPeer;
+	let rtcPeer; // 유저의 rtcPeer
 	let localStream = null; // 유저의 로컬 스트림
 
 	container.appendChild(video);
