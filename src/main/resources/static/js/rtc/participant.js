@@ -96,7 +96,7 @@ function Participant(name) {
 
 
 	this.onIceCandidate = function (candidate, wp) {
-		  console.log("Local candidate" + JSON.stringify(candidate));
+		  // console.log("Local candidate" + JSON.stringify(candidate));
 
 		  var message = {
 		    id: 'onIceCandidate',
@@ -109,7 +109,7 @@ function Participant(name) {
 	Object.defineProperty(this, 'rtcPeer', { writable: true});
 
 	this.dispose = function() {
-		console.log('Disposing participant ' + this.name);
+		// console.log('Disposing participant ' + this.name);
 		this.rtcPeer.dispose();
 		container.parentNode.removeChild(container);
 	};
