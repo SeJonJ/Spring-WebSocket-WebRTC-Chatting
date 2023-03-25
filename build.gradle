@@ -76,8 +76,8 @@ dependencies {
 	// https://mvnrepository.com/artifact/org.kurento/kurento-client
 	implementation 'org.kurento:kurento-client:7.0.0'
 
-	// https://mvnrepository.com/artifact/org.kurento/kurento-utils-js
-	implementation group: 'org.kurento', name: 'kurento-utils-js', version: '6.18.0'
+//	// https://mvnrepository.com/artifact/org.kurento/kurento-utils-js
+//	implementation 'org.kurento:kurento-utils-js:7.0.0'
 
 // https://mvnrepository.com/artifact/org.kurento/kurento-commons
 	implementation 'org.kurento:kurento-commons:7.0.0'

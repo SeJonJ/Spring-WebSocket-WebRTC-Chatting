@@ -27,18 +27,12 @@ ws.onopen = () => {
     register();
 }
 
-// // console.log("location.host : "+location.host)
+console.log("location.host : "+location.host)
 var participants = {};
 
 let name = null;
 let roomId = null;
 let roomName = null;
-let dataChannel = null;
-
-const dataChannelOptions = {
-    ordered: true, // do not guarantee order
-    maxPacketLifeTime: 3, // in milliseconds
-};
 
 let sendButton = null;
 let dataChannelSend = null;
@@ -75,17 +69,7 @@ $(function () {
     dataChannelSend = $('#dataChannelSend');
     dataChannelReceive = $('#dataChannelReceive');
 
-    sendButton.click(function () {
-        const text = dataChannelSend.val();
-        console.log("text : " + text);
 
-        const obj = {
-            "message": text,
-            "timestamp": new Date()
-        }
-
-        dataChannel.send(JSON.stringify(obj));
-    });
 });
 
 ws.onmessage = function (message) {
@@ -156,27 +140,36 @@ function callResponse(message) {
         });
     }
 }
+const onMessage = (event) => {
+    console.log('Received message: ' + event.data);
 
-const initializeDataChannel = (participant) => {
-
-    dataChannel = participant.rtcPeer.peerConnection.createDataChannel('channel', dataChannelOptions);
-    initializeDataChannelListeners();
+    // for (var participantName in participants) {
+    //     if (participants.hasOwnProperty(participantName) && participantName !== name) {
+    //         participants[participantName].rtcPeer.dataChannel.send(event.data);
+    //     }
+    // }
 };
 
-const initializeDataChannelListeners = () => {
-    dataChannel.onopen = () => console.log('dataChannel opened');
-    dataChannel.onclose = () => console.log('dataChannel closed');
-    dataChannel.onerror = (error) => console.error('dataChannel error:', error);
+const onOpen = (participant) => {
+    console.log('Data channel opened');
 
-    dataChannel.onmessage = ({data}) => {
-        console.log("일단 된다!")
-        console.log('dataChannel data', data);
-    };
 };
 
+const onClosed = () => {
+    console.log('Data channel closed');
+};
+
+const onbufferedamountlow = () => {
+    console.log('Data channel buffered amount low');
+};
+
+const onError = (error) => {
+    console.error("Data channel error: ",error);
+};
+
+// TODO: 여기도 수정해야함
 function onExistingParticipants(msg) {
-
-    // console.log(name + " registered in room " + roomId);
+    console.log(name + " registered in room " + roomId);
     var participant = new Participant(name);
     participants[name] = participant;
     var video = participant.getVideoElement();
@@ -185,6 +178,15 @@ function onExistingParticipants(msg) {
         localVideo: video,
         mediaConstraints: constraints,
         onicecandidate: participant.onIceCandidate.bind(participant)
+        // dataChannels : true,
+        // dataChannelConfig: {
+        //     id : roomId,
+        //     onmessage : onMessage,
+        //     onopen : () => onOpen(participant),
+        //     onclose : onClosed,
+        //     onbufferedamountlow : onbufferedamountlow,
+        //     onerror : onError,
+        // }
     }
 
     participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
@@ -192,14 +194,13 @@ function onExistingParticipants(msg) {
             if (error) {
                 return console.error(error);
             }
-            initializeDataChannel(participant)
 
             this.generateOffer(participant.offerToReceiveVideo.bind(participant));
 
         });
 
 
-    msg.data.forEach(receiveVideo);
+    msg.data.forEach(sender => receiveVideo(sender));
 }
 
 function receiveVideo(sender) {
@@ -209,7 +210,16 @@ function receiveVideo(sender) {
 
     var options = {
         remoteVideo: video,
-        onicecandidate: participant.onIceCandidate.bind(participant)
+        onicecandidate: participant.onIceCandidate.bind(participant),
+        dataChannels: true,
+        dataChannelConfig: {
+            id: roomId,
+            onmessage: onMessage,
+            onopen: () => onOpen(participant),
+            onclose: onClosed,
+            onbufferedamountlow: onbufferedamountlow,
+            onerror: onError,
+        }
     }
 
     participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
@@ -218,30 +228,10 @@ function receiveVideo(sender) {
                 return console.error(error);
             }
 
-            initializeDataChannel(participant)
 
             this.generateOffer(participant.offerToReceiveVideo.bind(participant));
 
         });
-
-}
-
-function onSendChannelStateChange() {
-    if (!dataChannel) return;
-    var readyState = dataChannel.readyState;
-    console.log("sencChannel state changed to " + readyState);
-    if (readyState == 'open') {
-        dataChannelSend.disabled = false;
-        dataChannelSend.focus();
-        // $('#send').attr('disabled', false);
-    } else {
-        dataChannelSend.disabled = true;
-        // $('#send').attr('disabled', true);
-    }
-}
-
-function recvMessage(event) {
-    console.log("Received message: " + event.data);
 }
 
 function leaveRoom() {
@@ -260,7 +250,7 @@ function leaveRoom() {
 
 
 function onParticipantLeft(request) {
-    // console.log('Participant ' + request.name + ' left');
+    console.log('Participant ' + request.name + ' left');
     var participant = participants[request.name];
     participant.dispose();
     delete participants[request.name];
@@ -268,21 +258,8 @@ function onParticipantLeft(request) {
 
 function sendMessage(message) {
     var jsonMessage = JSON.stringify(message);
-    // console.log('Sending message: ' + jsonMessage);
+    console.log('Sending message: ' + jsonMessage);
     ws.send(jsonMessage);
-}
-
-// dataChannel.onmessage = function(event) {
-//     console.log("Received message: " + event.data);
-//     // dataChannelReceive.val(event.data);
-//     //
-//     // // 비동기적으로 처리할 함수 호출
-//     // await handleData(event.data);
-// };
-
-async function handleData(data) {
-    // 비동기적으로 처리할 코드 작성
-    // ...
 }
 
 

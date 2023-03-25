@@ -126,5 +126,4 @@ public class KurentoHandler extends TextWebSocketHandler {
         room.setUserCount(room.getUserCount() - 1);
 
     }
-
 }

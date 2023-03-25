@@ -36,6 +36,7 @@ function Participant(name) {
 	var span = document.createElement('span');
 	var video = document.createElement('video');
 	let rtcPeer; // 유저의 rtcPeer
+	let dataChannel; //  유저의 데이터 채널
 	let localStream = null; // 유저의 로컬 스트림
 
 	container.appendChild(video);
@@ -96,7 +97,7 @@ function Participant(name) {
 
 
 	this.onIceCandidate = function (candidate, wp) {
-		  // console.log("Local candidate" + JSON.stringify(candidate));
+		  console.log("Local candidate" + JSON.stringify(candidate));
 
 		  var message = {
 		    id: 'onIceCandidate',
@@ -109,7 +110,7 @@ function Participant(name) {
 	Object.defineProperty(this, 'rtcPeer', { writable: true});
 
 	this.dispose = function() {
-		// console.log('Disposing participant ' + this.name);
+		console.log('Disposing participant ' + this.name);
 		this.rtcPeer.dispose();
 		container.parentNode.removeChild(container);
 	};

@@ -86,16 +86,13 @@ public class KurentoUserSession implements Closeable {
             .build();
 
     // Media logic
-    KmsShowData kmsShowData = new KmsShowData.Builder(pipeline).build();
-
-    this.getOutgoingWebRtcPeer().connect(kmsShowData);
-    kmsShowData.connect(this.getOutgoingWebRtcPeer());
-
+//    KmsShowData kmsShowData = new KmsShowData.Builder(pipeline).build();
+//    this.getOutgoingWebRtcPeer().connect(kmsShowData);
+//    kmsShowData.connect(this.getOutgoingWebRtcPeer());
 
     // iceCandidateFounder 이벤트 리스너 등록
     // 이벤트가 발생했을 때 다른 유저들에게 새로운 iceCnadidate 후보를 알림
     this.outgoingMedia.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
-
 
       @Override
       public void onEvent(IceCandidateFoundEvent event) {
@@ -176,6 +173,9 @@ public class KurentoUserSession implements Closeable {
     // 들어온 유저가 Sdp 제안
     log.trace("USER {}: SdpOffer for {} is {}", this.name, sender.getName(), sdpOffer);
 
+    // 필요한 sdp 수정 사항을 여기에 적용합니다.
+    String modifiedSdpOffer = modifySdp(sdpOffer);
+
     /**
      *
      *  @Desc sdpOffer 에 대한 결과 String
@@ -193,11 +193,21 @@ public class KurentoUserSession implements Closeable {
     this.getEndpointForUser(sender).gatherCandidates();
   }
 
-  /**
-   * @Desc userSession 을 통해서 해당 유저의 WebRtcEndPoint 객체를 가져옴
-   * @Param UserSession : 보내는 유저의 userSession 객체
-   * @return WebRtcEndPoint
-   * */
+  // TODO 나중에 고쳐야함
+  private String modifySdp(String sdpOffer) {
+//    String[] lines = sdpOffer.split("\n");
+//
+//
+    return sdpOffer;
+  }
+
+
+
+    /**
+     * @Desc userSession 을 통해서 해당 유저의 WebRtcEndPoint 객체를 가져옴
+     * @Param UserSession : 보내는 유저의 userSession 객체
+     * @return WebRtcEndPoint
+     * */
   private WebRtcEndpoint getEndpointForUser(final KurentoUserSession sender) {
     // 만약 sender 명이 현재 user명과 일치한다면, 즉 sdpOffer 제안을 보내는 쪽과 받는 쪽이 동일하다면?
     // loopback 임을 찍고, 그대로 outgoinMedia 를 return
