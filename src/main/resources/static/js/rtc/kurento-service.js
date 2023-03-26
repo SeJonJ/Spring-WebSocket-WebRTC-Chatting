@@ -35,7 +35,6 @@ let roomId = null;
 let roomName = null;
 
 const constraints = {
-    // 'volume', 'channelCount', 'echoCancellation', 'autoGainControl', 'noiseSuppression', 'latency', 'sampleSize', 'sampleRate'
     audio: {
         autoGainControl: false,
         channelCount: 2,
@@ -45,14 +44,20 @@ const constraints = {
         sampleRate: 48000,
         sampleSize: 16,
         volume: 1.0
-    },
-    video: {
+    }
+};
+
+// TODO 여기 수정
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    constraints.video = {
         width: 1200,
         height: 1000,
         maxFrameRate: 50,
         minFrameRate: 40
-    }
-};
+    };
+} else {
+    console.log("Camera not available, using audio only");
+}
 
 // 웹 종료 시 실행
 window.onbeforeunload = function () {
@@ -140,6 +145,7 @@ function onExistingParticipants(msg) {
         mediaConstraints: constraints,
         onicecandidate: participant.onIceCandidate.bind(participant)
     }
+
     participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
         function (error) {
             if (error) {

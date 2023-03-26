@@ -1,40 +1,37 @@
-### 구성 환경
-#FROM openjdk:8-jdk-alpine
-#VOLUME /tmp
-### /./build/libs/Chat-0.0.1-SNAPSHOT.jar  위치에 만들어진 파일을 chatting.jar 로 복사하여 활용
-#COPY ./build/libs/Chat-8.1.jar chatting.jar
-#
-### application.properties 포함
-##ADD build/resources/main/application.properties /app/application.properties
-#
-### 아래 명령어로 실행
-#ENTRYPOINT ["java","-jar", "chatting.jar"]
-
 ## 베이스 이미지 + 이미지 별칭
-FROM openjdk:8-jdk-alpine AS builder
- # gradlew 복사
-COPY gradlew .
-# gradle 복사
-COPY gradle gradle
-# build.gradle 복사
-COPY build.gradle .
-# settings.gradle 복사
-COPY settings.gradle .
-# 웹 어플리케이션 소스 복사
-COPY src src
+FROM --platform=linux/amd64 adoptopenjdk:11-jdk-hotspot AS builder
 
-# gradlew 실행권한 부여
-RUN chmod +x ./gradlew
- # gradlew를 사용하여 실행 가능한 jar 파일 생성
-RUN ./gradlew bootJar
+# 환경변수 설정
+#ENV GRADLE_USER_HOME /gradle_cache
 
-# 베이스 이미지
-FROM openjdk:8-jdk-alpine
-# builder 이미지에서 build/libs/*.jar 파일을 app.jar로 복사
-COPY --from=builder build/libs/*.jar app.jar
+#### option 1. 기본 도커 이미지 빌드, 직접 bootJar 실행해야함
+## bootJar 로 만들어진 jar 파일을 chatting.jar 로 복사하여 활용
+COPY ./build/libs/Chat-9.0.jar chatting.jar
+
+##### option 2. 도커 이미지 빌드하면서 알아서 bootJar 실행하고 알아서 다 해줌
+## gradlew 복사
+#COPY gradlew .
+## gradle 복사
+#COPY gradle gradle
+## build.gradle 복사
+#COPY build.gradle .
+## settings.gradle 복사
+#COPY settings.gradle .
+## 웹 어플리케이션 소스 복사
+#COPY src src
+#
+### gradlew 실행권한 부여
+#RUN chmod +rwx ./gradlew
+### gradlew를 사용하여 실행 가능한 jar 파일 생성
+#RUN ./gradlew bootJar
+#
+## 베이스 이미지
+#FROM adoptopenjdk:11-jdk-hotspot
+## builder 이미지에서 build/libs/*.jar 파일을 app.jar로 복사
+#COPY --from=builder build/libs/*.jar chatting.jar
 
 # 컨테이너 Port 노출
 EXPOSE 8443
 
 # jar 파일 실행
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java", "-jar", "chatting.jar"]
