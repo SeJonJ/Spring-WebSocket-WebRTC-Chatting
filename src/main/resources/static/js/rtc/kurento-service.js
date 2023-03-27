@@ -177,16 +177,16 @@ function onExistingParticipants(msg) {
     var options = {
         localVideo: video,
         mediaConstraints: constraints,
-        onicecandidate: participant.onIceCandidate.bind(participant)
-        // dataChannels : true,
-        // dataChannelConfig: {
-        //     id : roomId,
-        //     onmessage : onMessage,
-        //     onopen : () => onOpen(participant),
-        //     onclose : onClosed,
-        //     onbufferedamountlow : onbufferedamountlow,
-        //     onerror : onError,
-        // }
+        onicecandidate: participant.onIceCandidate.bind(participant),
+        dataChannels : true,
+        dataChannelConfig: {
+            id : roomId,
+            onmessage : onMessage,
+            onopen : () => onOpen(participant),
+            onclose : onClosed,
+            onbufferedamountlow : onbufferedamountlow,
+            onerror : onError
+        }
     }
 
     participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
@@ -227,7 +227,6 @@ function receiveVideo(sender) {
             if (error) {
                 return console.error(error);
             }
-
 
             this.generateOffer(participant.offerToReceiveVideo.bind(participant));
 

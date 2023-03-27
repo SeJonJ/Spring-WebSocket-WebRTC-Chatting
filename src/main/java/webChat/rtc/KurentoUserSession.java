@@ -18,21 +18,13 @@
 package webChat.rtc;
 
 import com.google.gson.JsonObject;
-import dev.onvoid.webrtc.RTCDataChannel;
-import dev.onvoid.webrtc.RTCDataChannelInit;
-import dev.onvoid.webrtc.RTCPeerConnection;
 import lombok.RequiredArgsConstructor;
 import org.kurento.client.*;
 import org.kurento.jsonrpc.JsonUtils;
-import org.kurento.module.datachannelexample.KmsSendData;
-import org.kurento.module.datachannelexample.KmsShowData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
-import webChat.config.WebRtcConfig;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
