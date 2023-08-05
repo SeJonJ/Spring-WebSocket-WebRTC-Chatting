@@ -108,7 +108,11 @@ N:M 화상채팅의 경우 트래픽과 배포문제로 인한 것이니 이 점
     - 버그 확인 시 이슈 만들어주세요!
     - contribution 은 언제나 환영입니다!!
 
-https://chat-for-you.onrender.com/
+230805
+render 에서 더 이상 무료 계정 이슈가 있어서 현재 배포를 중단하였습니다.
+곧 자체 서버에 배포 예정입니다!!
+~~https://chat-for-you.onrender.com/~~
+
 
 
 ## 7. 구동 화면
