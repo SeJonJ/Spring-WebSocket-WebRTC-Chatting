@@ -80,7 +80,8 @@ public class KurentoHandler extends TextWebSocketHandler {
 
                 if (user != null) {
                     IceCandidate cand = new IceCandidate(candidate.get("candidate").getAsString(),
-                            candidate.get("sdpMid").getAsString(), candidate.get("sdpMLineIndex").getAsInt());
+                            candidate.get("sdpMid").getAsString(),
+                            candidate.get("sdpMLineIndex").getAsInt());
                     user.addCandidate(cand, jsonMessage.get("name").getAsString());
                 }
                 break;

@@ -21,6 +21,8 @@ import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import org.kurento.client.*;
 import org.kurento.jsonrpc.JsonUtils;
+import org.kurento.module.datachannelexample.KmsSendData;
+import org.kurento.module.datachannelexample.KmsShowData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.TextMessage;
@@ -45,6 +47,8 @@ public class KurentoUserSession implements Closeable {
   private final WebSocketSession session;
 
   private final MediaPipeline pipeline;
+  private final KmsShowData kmsShowData;
+  private final KmsSendData kmsSendData;
 
   private final String roomName;
 
@@ -64,23 +68,26 @@ public class KurentoUserSession implements Closeable {
    * @Param String 유저명, String 방이름, WebSocketSession 세션객체, MediaPipline (kurento)mediaPipeline 객체
    */
   public KurentoUserSession(String name, String roomName, WebSocketSession session,
-                            MediaPipeline pipeline) {
+                            MediaPipeline pipeline, KmsSendData kmsSendData, KmsShowData kmsShowData) {
 
-    this.pipeline = pipeline;
     this.name = name;
-    this.session = session;
     this.roomName = roomName;
+    this.session = session;
+    this.pipeline = pipeline;
+    this.kmsSendData = kmsSendData;
+    this.kmsShowData = kmsShowData;
 
     // 외부로 송신하는 미디어?
-    this.outgoingMedia = new WebRtcEndpoint
-            .Builder(pipeline)
-            .useDataChannels()
+    this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).useDataChannels()
             .build();
 
-    // Media logic
-//    KmsShowData kmsShowData = new KmsShowData.Builder(pipeline).build();
-//    this.getOutgoingWebRtcPeer().connect(kmsShowData);
-//    kmsShowData.connect(this.getOutgoingWebRtcPeer());
+    outgoingMedia.addDataChannelOpenedListener(ev -> {
+      outgoingMedia.createDataChannel(roomName);
+      log.info("event : {}", ev.getSource());
+    });
+
+    outgoingMedia.connect(kmsShowData);
+    outgoingMedia.connect(kmsSendData);
 
     // iceCandidateFounder 이벤트 리스너 등록
     // 이벤트가 발생했을 때 다른 유저들에게 새로운 iceCnadidate 후보를 알림
@@ -165,9 +172,6 @@ public class KurentoUserSession implements Closeable {
     // 들어온 유저가 Sdp 제안
     log.trace("USER {}: SdpOffer for {} is {}", this.name, sender.getName(), sdpOffer);
 
-    // 필요한 sdp 수정 사항을 여기에 적용합니다.
-    String modifiedSdpOffer = modifySdp(sdpOffer);
-
     /**
      *
      *  @Desc sdpOffer 에 대한 결과 String
@@ -184,16 +188,6 @@ public class KurentoUserSession implements Closeable {
     log.debug("gather candidates");
     this.getEndpointForUser(sender).gatherCandidates();
   }
-
-  // TODO 나중에 고쳐야함
-  private String modifySdp(String sdpOffer) {
-//    String[] lines = sdpOffer.split("\n");
-//
-//
-    return sdpOffer;
-  }
-
-
 
     /**
      * @Desc userSession 을 통해서 해당 유저의 WebRtcEndPoint 객체를 가져옴

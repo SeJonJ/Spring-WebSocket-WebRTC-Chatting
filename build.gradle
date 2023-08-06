@@ -77,7 +77,7 @@ dependencies {
 	implementation 'org.kurento:kurento-client:7.0.0'
 
 //	// https://mvnrepository.com/artifact/org.kurento/kurento-utils-js
-//	implementation 'org.kurento:kurento-utils-js:7.0.0'
+	implementation 'org.kurento:kurento-utils-js:7.0.0'
 
 // https://mvnrepository.com/artifact/org.kurento/kurento-commons
 	implementation 'org.kurento:kurento-commons:7.0.0'
@@ -100,6 +100,12 @@ dependencies {
 
 	// https://mvnrepository.com/artifact/org.kurento/kurento-jsonrpc-js
 	implementation 'org.kurento:kurento-jsonrpc-js:6.18.0'
+
+	// https://mvnrepository.com/artifact/org.kurento.tutorial/kurento-send-data-channel
+	implementation group: 'org.kurento.tutorial', name: 'kurento-send-data-channel', version: '6.18.0'
+
+	// https://mvnrepository.com/artifact/org.kurento.tutorial/kurento-show-data-channel
+	implementation group: 'org.kurento.tutorial', name: 'kurento-show-data-channel', version: '6.18.0'
 
 	// webrtc 를 사용하기 위한 java 라이브러리
 	implementation 'dev.onvoid.webrtc:webrtc-java:0.7.0'

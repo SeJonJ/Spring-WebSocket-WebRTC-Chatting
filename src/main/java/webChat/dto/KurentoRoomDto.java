@@ -26,6 +26,9 @@ import lombok.*;
 import org.kurento.client.Continuation;
 import org.kurento.client.KurentoClient;
 import org.kurento.client.MediaPipeline;
+import org.kurento.client.WebRtcEndpoint;
+import org.kurento.module.datachannelexample.KmsSendData;
+import org.kurento.module.datachannelexample.KmsShowData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.WebSocketSession;
@@ -72,6 +75,8 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
    * TODO ConcurrentHashMap 에 대해서도 공부해둘 것!
    * */
   private ConcurrentMap<String, KurentoUserSession> participants;
+  private KmsSendData kmsSendData;
+  private KmsShowData kmsShowData;
 
 
 //  // 채팅룸 이름?
@@ -88,6 +93,7 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
     this.chatType = chatType;
     this.kurento = kurento;
     this.participants = (ConcurrentMap<String, KurentoUserSession>) this.userList;
+
   }
 
   // 유저명 가져오기
@@ -108,7 +114,10 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
   // 생성자 대신 아래 메서드로 pipline 초기화
   public void createPipline(){
     this.pipeline = this.kurento.createMediaPipeline();
-//    log.info("pipline : {} ",this.pipeline);
+    // Media logic
+    kmsSendData = new KmsSendData.Builder(pipeline).build();
+    kmsShowData = new KmsShowData.Builder(pipeline).build();
+    log.info("pipline : {} ",this.pipeline);
   }
 
   /**
@@ -140,7 +149,10 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
     log.info("ROOM {}: adding participant {}", this.roomId, userName);
 
     // UserSession 은 유저명, room명, 유저 세션정보, pipline 파라미터로 받음
-    final KurentoUserSession participant = new KurentoUserSession(userName, this.roomId, session, this.pipeline);
+    final KurentoUserSession participant = new KurentoUserSession(userName, this.roomId, session, this.pipeline, kmsSendData, kmsShowData);
+
+    // kms datachannel 관련 연결
+    connectDataChannel(participant.getOutgoingWebRtcPeer());
 
     //
     joinRoom(participant);
@@ -321,4 +333,8 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
     log.debug("Room {} closed", this.roomId);
   }
 
+  private void connectDataChannel(WebRtcEndpoint outgoingMedia){
+    kmsShowData.connect(outgoingMedia);
+    kmsSendData.connect(outgoingMedia);
+  }
 }
