@@ -24,7 +24,7 @@ COPY settings.gradle .
 COPY src src
 
 # gradlew 실행권한 부여
-RUN chmod +x ./gradlew
+RUN chmod +rwx ./gradlew
  # gradlew를 사용하여 실행 가능한 jar 파일 생성
 RUN ./gradlew bootJar
 
