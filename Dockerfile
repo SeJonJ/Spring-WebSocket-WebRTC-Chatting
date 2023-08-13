@@ -1,37 +1,41 @@
-## 베이스 이미지 + 이미지 별칭
-FROM --platform=linux/amd64 adoptopenjdk:11-jdk-hotspot AS builder
+### 베이스 이미지 + 이미지 별칭
+#FROM adoptopenjdk:11-jdk AS builder
+## 필요한 파일들 복사
+#COPY gradlew build.gradle settings.gradle ./
+#COPY gradle gradle/
+#COPY src src/
+## gradlew 실행권한 부여 및 jar 파일 생성
+#RUN chmod +rwx ./gradlew && \
+#    ./gradlew bootJar
+## 실행 스테이지
+#FROM adoptopenjdk:11-jdk
+## jar 파일 복사
+#COPY --from=builder build/libs/*.jar app.jar
+## 컨테이너 Port 노출
+#EXPOSE 8443
+## jar 파일 실행
+#ENTRYPOINT ["java","-jar","/app.jar"]
 
-# 환경변수 설정
-#ENV GRADLE_USER_HOME /gradle_cache
+# adoptopenjdk:11-jdk를 기반 이미지로 사용합니다.
+FROM adoptopenjdk:11-jdk as builder
 
-#### option 1. 기본 도커 이미지 빌드, 직접 bootJar 실행해야함
-## bootJar 로 만들어진 jar 파일을 chatting.jar 로 복사하여 활용
-COPY ./build/libs/Chat-9.0.jar chatting.jar
+# 작업 디렉토리를 설정합니다.
+WORKDIR /workspace/app
 
-##### option 2. 도커 이미지 빌드하면서 알아서 bootJar 실행하고 알아서 다 해줌
-## gradlew 복사
-#COPY gradlew .
-## gradle 복사
-#COPY gradle gradle
-## build.gradle 복사
-#COPY build.gradle .
-## settings.gradle 복사
-#COPY settings.gradle .
-## 웹 어플리케이션 소스 복사
-#COPY src src
-#
-### gradlew 실행권한 부여
-#RUN chmod +rwx ./gradlew
-### gradlew를 사용하여 실행 가능한 jar 파일 생성
-#RUN ./gradlew bootJar
-#
-## 베이스 이미지
-#FROM adoptopenjdk:11-jdk-hotspot
-## builder 이미지에서 build/libs/*.jar 파일을 app.jar로 복사
-#COPY --from=builder build/libs/*.jar chatting.jar
+# 프로젝트의 모든 파일을 Docker 이미지 내부로 복사합니다.
+COPY . .
 
-# 컨테이너 Port 노출
+# Gradle을 사용하여 프로젝트를 빌드합니다.
+RUN ./gradlew clean build -x test
+
+# 런타임 이미지를 생성합니다.
+FROM adoptopenjdk:11-jdk
+
+# 3. 8443 포트를 외부로 노출합니다.
 EXPOSE 8443
 
-# jar 파일 실행
-ENTRYPOINT ["java", "-jar", "chatting.jar"]
+# 빌드된 JAR 파일을 런타임 이미지로 복사합니다.
+COPY --from=builder /workspace/app/build/libs/*.jar app.jar
+
+# Spring Boot 애플리케이션을 실행합니다.
+ENTRYPOINT ["java", "-Dkms.url=ws://210.220.67.85:30888/kurento", "-jar", "/app.jar"]
