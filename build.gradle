@@ -34,6 +34,9 @@ dependencies {
 	// MySQL DB
 	implementation 'mysql:mysql-connector-java'
 
+	// mariaDB
+	implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
+
 	//	JSON
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
