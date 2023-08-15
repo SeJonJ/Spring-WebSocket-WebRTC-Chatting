@@ -38,4 +38,4 @@ EXPOSE 8443
 COPY --from=builder /workspace/app/build/libs/*.jar app.jar
 
 # Spring Boot 애플리케이션을 실행합니다.
-ENTRYPOINT ["java", "-Dkms.url=ws://210.220.67.85:30888/kurento", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app.jar"]
