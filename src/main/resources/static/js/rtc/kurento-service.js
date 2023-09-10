@@ -65,7 +65,7 @@ let constraints = {
         noiseSuppression: true,
         sampleRate: 48000,
         sampleSize: 16,
-        volume: 0.8
+        volume: 0.5
     }
 };
 
@@ -78,27 +78,6 @@ navigator.mediaDevices.getUserMedia(constraints)
             maxFrameRate: 50,
             minFrameRate: 40
         };
-    })
-    .catch(error => {
-        if (error.name === 'NotAllowedError' || error.name === 'NotFoundError') {
-            if (error.message.includes('video')) {
-                // If video permission is denied or video device is not available
-                delete constraints.video;
-
-                // Retry accessing only the audio stream
-                navigator.mediaDevices.getUserMedia(constraints)
-                    .then(stream => {
-                        // Add your logic after successfully getting the media here.
-                    })
-                    .catch(error => {
-                        console.error('Failed to access media:', error);
-                    });
-            } else {
-                console.error('Failed to access media:', error);
-            }
-        } else {
-            console.error('Failed to access media:', error);
-        }
     });
 
 
@@ -398,14 +377,6 @@ async function startScreenShare() {
         // 원격 참가자에게도 화면 공유 화면을 전송하도록 RTCRtpSender.replaceTrack() 함수 호출
         if (sender.track.kind === 'video') {
             await sender.replaceTrack(shareView.getVideoTracks()[0]);
-        }
-        if (sender.track && sender.track.kind === 'audio') {
-            debugger
-            // 새로운 MediaStream 생성하고, 현재의 audio track과 새로운 video track을 추가
-            let newStream = new MediaStream([sender.track, shareView.getVideoTracks()[0]]);
-
-            // 새로운 RTCRtpSender 객체를 생성하여 비디오 트랙을 추가
-            await participant.rtcPeer.peerConnection.addTrack(shareView.getVideoTracks()[0], newStream);
         }
     });
 

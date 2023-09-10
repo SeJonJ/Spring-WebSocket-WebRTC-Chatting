@@ -14,24 +14,24 @@ public class SslConfig {
 
     @Bean
     public ServletWebServerFactory servletContainer() {
-        // Enable SSL Trafic
-        TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory() {
-            @Override
-            protected void postProcessContext(Context context) {
-                SecurityConstraint securityConstraint = new SecurityConstraint();
-
-                securityConstraint.setUserConstraint("CONFIDENTIAL");
-                SecurityCollection collection = new SecurityCollection();
-                collection.addPattern("/*");
-                securityConstraint.addCollection(collection);
-                context.addConstraint(securityConstraint);
-            }
-        };
+        CustomTomcatServletWebServerFactory tomcat = new CustomTomcatServletWebServerFactory();
 
         // Add HTTP to HTTPS redirect : http 로 요청이 들어오면 https 로 리다이렉트
         tomcat.addAdditionalTomcatConnectors(httpToHttpsRedirectConnector());
 
         return tomcat;
+    }
+
+    static class CustomTomcatServletWebServerFactory extends TomcatServletWebServerFactory {
+        @Override
+        protected void postProcessContext(Context context) {
+            SecurityConstraint securityConstraint = new SecurityConstraint();
+            securityConstraint.setUserConstraint("CONFIDENTIAL");
+            SecurityCollection collection = new SecurityCollection();
+            collection.addPattern("/*");
+            securityConstraint.addCollection(collection);
+            context.addConstraint(securityConstraint);
+        }
     }
 
     /*
