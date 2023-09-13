@@ -26,8 +26,28 @@ const PARTICIPANT_CLASS = 'participant';
  *                        The tag of the new element will be 'video<name>'
  * @return
  */
+
+function updateGridLayout() {
+	var participantsDiv = document.getElementById('participants');
+	var totalParticipants = participantsDiv.childElementCount;
+
+	// Remove all layout classes
+	['one', 'two', 'three'].forEach(function(cls) {
+		participantsDiv.classList.remove(cls);
+	});
+
+	// Assign the appropriate layout class
+	if (totalParticipants === 1) {
+		participantsDiv.classList.add('one');
+	} else if (totalParticipants === 2) {
+		participantsDiv.classList.add('two');
+	} else if (totalParticipants === 3) {
+		participantsDiv.classList.add('three');
+	}
+}
+
 function Participant(name) {
-	console.log("참여자명 : "+name)
+	//console.log("참여자명 : "+name)
 
 	this.name = name;
 	var container = document.createElement('div');
@@ -35,19 +55,26 @@ function Participant(name) {
 	container.id = name;
 	var span = document.createElement('span');
 	var video = document.createElement('video');
+	var audio  = document.createElement("audio");
+
 	var rtcPeer;
 	let localStream = null; // 유저의 로컬 스트림
 
 	container.appendChild(video);
 	container.appendChild(span);
+	container.appendChild(audio);
+
 	container.onclick = switchContainerClass;
 	document.getElementById('participants').appendChild(container);
+	updateGridLayout();
 
 	span.appendChild(document.createTextNode(name));
 
 	video.id = 'video-' + name;
 	video.autoplay = true;
 	video.controls = false;
+
+	audio.autoplay = true;
 
 	/** set user LocalStream */
 	this.setLocalSteam = function(stream){
@@ -67,15 +94,19 @@ function Participant(name) {
 		return video;
 	}
 
+	this.getAudioElement = function() {
+		return audio;
+	}
+
 	function switchContainerClass() {
 		if (container.className === PARTICIPANT_CLASS) {
 			var elements = Array.prototype.slice.call(document.getElementsByClassName(PARTICIPANT_MAIN_CLASS));
 			elements.forEach(function(item) {
-					item.className = PARTICIPANT_CLASS;
-				});
+				item.className = PARTICIPANT_CLASS;
+			});
 
-				container.className = PARTICIPANT_MAIN_CLASS;
-			} else {
+			container.className = PARTICIPANT_MAIN_CLASS;
+		} else {
 			container.className = PARTICIPANT_CLASS;
 		}
 	}
@@ -86,31 +117,45 @@ function Participant(name) {
 
 	this.offerToReceiveVideo = function(error, offerSdp, wp){
 		if (error) return console.error ("sdp offer error")
-		console.log('Invoking SDP offer callback function');
+		//console.log('Invoking SDP offer callback function');
 		var msg =  { id : "receiveVideoFrom",
-				sender : name,
-				sdpOffer : offerSdp
-			};
+			sender : name,
+			sdpOffer : offerSdp
+		};
 		sendMessage(msg);
 	}
 
 
 	this.onIceCandidate = function (candidate, wp) {
-		  console.log("Local candidate" + JSON.stringify(candidate));
+		//console.log("Local candidate" + JSON.stringify(candidate));
 
-		  var message = {
-		    id: 'onIceCandidate',
-		    candidate: candidate,
-		    name: name
-		  };
-		  sendMessage(message);
+		var message = {
+			id: 'onIceCandidate',
+			candidate: candidate,
+			name: name
+		};
+		sendMessage(message);
 	}
 
 	Object.defineProperty(this, 'rtcPeer', { writable: true});
 
 	this.dispose = function() {
-		console.log('Disposing participant ' + this.name);
+		//console.log('Disposing participant ' + this.name);
 		this.rtcPeer.dispose();
 		container.parentNode.removeChild(container);
 	};
 }
+
+function toggleParticipantScreen(event) {
+	const participant = event.currentTarget;
+	if (participant.classList.contains('expanded')) {
+		participant.classList.remove('expanded');
+	} else {
+		participant.classList.add('expanded');
+	}
+}
+
+const participantList = document.querySelectorAll('.participant, .participant.main');
+participantList.forEach(participant => {
+	participant.addEventListener('click', toggleParticipantScreen);
+});

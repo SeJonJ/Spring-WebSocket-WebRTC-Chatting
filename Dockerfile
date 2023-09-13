@@ -1,21 +1,3 @@
-### 베이스 이미지 + 이미지 별칭
-#FROM adoptopenjdk:11-jdk AS builder
-## 필요한 파일들 복사
-#COPY gradlew build.gradle settings.gradle ./
-#COPY gradle gradle/
-#COPY src src/
-## gradlew 실행권한 부여 및 jar 파일 생성
-#RUN chmod +rwx ./gradlew && \
-#    ./gradlew bootJar
-## 실행 스테이지
-#FROM adoptopenjdk:11-jdk
-## jar 파일 복사
-#COPY --from=builder build/libs/*.jar app.jar
-## 컨테이너 Port 노출
-#EXPOSE 8443
-## jar 파일 실행
-#ENTRYPOINT ["java","-jar","/app.jar"]
-
 # adoptopenjdk:11-jdk를 기반 이미지로 사용합니다.
 FROM adoptopenjdk:11-jdk as builder
 
