@@ -3,13 +3,23 @@ package webChat.utils;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
-
+import org.springframework.stereotype.Component;
+import javax.annotation.PostConstruct;
 import java.util.Date;
 
+// TODO secretKey 세팅 로직 수정 필요!!
+@Component
 public class JwtUtil {
 
     @Value("${JWT.SECRET_KEY}")
-    private String SECRET_KEY = "dGVzdGVyMTIz";
+    private String secretKey;
+
+    public static String SECRET_KEY;
+
+    @PostConstruct
+    private void setData(){
+        JwtUtil.SECRET_KEY = secretKey;
+    }
 
     private static JwtUtil jwtUtil = new JwtUtil();
 
@@ -27,7 +37,7 @@ public class JwtUtil {
                 .setSubject(key)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))  // 10 hours token validity
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(SignatureAlgorithm.HS256, JwtUtil.SECRET_KEY)
                 .compact();
     }
 
@@ -38,7 +48,7 @@ public class JwtUtil {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
+            Jwts.parser().setSigningKey(JwtUtil.SECRET_KEY).parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;
