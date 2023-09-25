@@ -82,6 +82,9 @@ dependencies {
 	// https://mvnrepository.com/artifact/org.kurento/kurento-utils-js
 	implementation group: 'org.kurento', name: 'kurento-utils-js', version: '6.18.0'
 
+	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'
+
 
 }
 

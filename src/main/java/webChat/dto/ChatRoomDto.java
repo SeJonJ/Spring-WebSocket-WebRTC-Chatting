@@ -2,10 +2,6 @@ package webChat.dto;
 
 import com.sun.istack.NotNull;
 import lombok.*;
-import org.springframework.web.socket.WebSocketSession;
-
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
