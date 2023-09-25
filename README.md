@@ -49,6 +49,7 @@
   - KMS : Kurento Media Server
     - 쿠렌토 미디어 서버를 사용한 N:M 채팅
     - 양방향 화면 공유
+4) 방 관리를 위한 BatchJob 및 RestfullAPI 개발
 
 ## 5. 구동방법
 1) Server Installation  
@@ -60,7 +61,7 @@
 - java -Dkms.url=ws://[KMS IP]:[PORT]/kurento -jar jar파일명
 
 3) Docker Container
-- DockerFile 생성
+- Spring 프로젝트를 Docker Image 로 만들기 위한 DockerFile
 ```bash
 FROM adoptopenjdk:11-jdk as builder
 
@@ -88,14 +89,6 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 
 
 ## 6. ChatForYou
-현재 데모 사이트에서는 문자채팅 및 1:1 화상채팅만 가능합니다.
-
-N:M 화상채팅의 경우 트래픽과 배포문제로 인한 것이니 이 점 확인부탁드립니다.
-
-- S3 파일 업로드는 계정 무료 기간이 지나 중단합니다 -> 추후 다른 방식으로 구현 할 예정입니다.  
-    - 버그 확인 시 이슈 만들어주세요!  
-    - contribution 은 언제나 환영입니다!!  
-
 # 230914
 - 자체 서버 배포 완료!
 - 현재 kurento 화상채팅을 적용한 서버 배포중입니다. 다만 아직 안정화 중이라서 자주 꺼지거나 그럴 수 있습니다

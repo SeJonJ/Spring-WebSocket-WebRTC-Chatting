@@ -3,14 +3,13 @@ package webChat.utils;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
 public class JwtUtil {
 
     @Value("${JWT.SECRET_KEY}")
-    private String SECRET_KEY = "d2tkNjM5MjU4QA==";
+    private String SECRET_KEY = "dGVzdGVyMTIz";
 
     private static JwtUtil jwtUtil = new JwtUtil();
 
