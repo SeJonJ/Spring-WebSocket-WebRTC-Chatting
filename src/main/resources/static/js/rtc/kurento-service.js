@@ -80,6 +80,51 @@ navigator.mediaDevices.getUserMedia(constraints)
         };
     });
 
+// navigator.mediaDevices와 그 하위의 getUserMedia 메서드가 존재하는지 확인합니다.
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    // 원래의 getUserMedia 메서드를 저장합니다.
+    var origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+
+    // getUserMedia 메서드를 덮어씁니다.
+    navigator.mediaDevices.getUserMedia = function (cs) {
+        // 원래의 getUserMedia 메서드를 호출합니다.
+        return origGetUserMedia(cs).catch(function (error) {
+            // 비디오 요청이 실패한 경우
+            if (cs.video) {
+                console.warn("Video error occurred, using dummy video instead.", error);
+
+                // 오디오 스트림만 요청합니다.
+                return navigator.mediaDevices.getUserMedia({ audio: cs.audio })
+                    .then(function (audioStream) {
+                        // 오디오 스트림에 더미 비디오 트랙을 추가합니다.
+                        const dummyVideoTrack = getDummyVideoTrack();
+                        audioStream.addTrack(dummyVideoTrack);
+                        // 수정된 스트림을 반환합니다.
+                        return audioStream;
+                    });
+            }
+
+            // 그외의 에러를 그대로 반환합니다.
+            return Promise.reject(error);
+        });
+    };
+
+    // 더미 비디오 트랙을 생성하는 함수입니다.
+    function getDummyVideoTrack() {
+        // 캔버스를 생성하여 더미 이미지를 그립니다.
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 600;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'gray';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 캔버스의 내용을 기반으로 더미 비디오 스트림을 생성합니다.
+        const dummyStream = canvas.captureStream(60);
+        // 더미 비디오 트랙을 반환합니다.
+        return dummyStream.getVideoTracks()[0];
+    }
+}
 
 // 웹 종료 시 실행
 window.onbeforeunload = function () {
@@ -174,7 +219,6 @@ function onExistingParticipants(msg) {
 
     function handleSuccess(stream) {
         var hasVideo = constraints.video && stream.getVideoTracks().length > 0;
-
         var options = {
             localVideo: hasVideo ? video : null,
             localAudio: audio,
@@ -197,32 +241,16 @@ function onExistingParticipants(msg) {
                 if (error) {
                     return console.error(error);
                 }
+
                 this.generateOffer(participant.offerToReceiveVideo.bind(participant));
             });
 
         msg.data.forEach(receiveVideo);
     }
 
-    function handleMediaError(error) {
-        console.error("Error accessing video, trying audio only.", error);
-        if (constraints.video) {
-            delete constraints.video;  // Remove video constraints
-            navigator.mediaDevices.getUserMedia(constraints)
-                .then(handleSuccess)
-                .catch(function(error) {
-                    console.error("Error accessing media devices.", error);
-                });
-        } else {
-            console.error("Error accessing media devices.", error);
-        }
-    }
-
     navigator.mediaDevices.getUserMedia(constraints)
         .then(handleSuccess)
-        .catch(handleMediaError);
 }
-
-
 
 function leaveRoom() {
     sendMessage({
@@ -374,6 +402,7 @@ async function startScreenShare() {
     video.srcObject = shareView; // 본인의 화면에 화면 공유 화면 표시
 
     await participant.rtcPeer.peerConnection.getSenders().forEach(async sender => {
+        debugger
         // 원격 참가자에게도 화면 공유 화면을 전송하도록 RTCRtpSender.replaceTrack() 함수 호출
         if (sender.track.kind === 'video') {
             await sender.replaceTrack(shareView.getVideoTracks()[0]);
