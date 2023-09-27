@@ -17,60 +17,84 @@
  *
  */
 
-// var script = document.createElement('script');
-// script.src = "https://code.jquery.com/jquery-3.6.1.min.js";
-// document.head.appendChild(script);
-
-// websocket 연결 확인 후 register() 실행
-var ws = new WebSocket('wss://' + location.host + '/signal');
-ws.onopen = () => {
-    register();
-}
-
-console.log("location.host : "+location.host)
-var participants = {};
+// //console.log("location.host : "+location.host)
+let locationHost = location.host
+let participants = {};
 
 let name = null;
 let roomId = null;
 let roomName = null;
 
-let sendButton = null;
-let dataChannelSend = null;
-let dataChannelReceive = null;
+// turn Config
+let turnUrl = null;
+let turnUser = null;
+let turnPwd = null;
 
-const constraints = {
-    // 'volume', 'channelCount', 'echoCancellation', 'autoGainControl', 'noiseSuppression', 'latency', 'sampleSize', 'sampleRate'
+// websocket 연결 확인 후 register() 실행
+var ws = new WebSocket('wss://' + locationHost + '/signal');
+ws.onopen = () => {
+    init();
+    register();
+}
+
+var init = function(){
+    fetch("https://"+locationHost+"/turnconfig", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json()) // JSON 데이터로 변환
+        .then(data => {
+            turnUrl = data.url;
+            turnUser = data.username;
+            turnPwd = data.credential;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+}
+
+let constraints = {
     audio: {
-        autoGainControl: false,
+        autoGainControl: true,
         channelCount: 2,
-        echoCancellation: false,
+        echoCancellation: true,
         latency: 0,
-        noiseSuppression: false,
+        noiseSuppression: true,
         sampleRate: 48000,
         sampleSize: 16,
-        volume: 1.0
-    },
-    video: {
-        width: 1200,
-        height: 1000,
-        maxFrameRate: 50,
-        minFrameRate: 40
+        volume: 0.5
     }
 };
 
+navigator.mediaDevices.getUserMedia(constraints)
+    .then(stream => {
+        // Add your logic after successfully getting the media here.
+        constraints.video = {
+            width: 1200,
+            height: 1000,
+            maxFrameRate: 50,
+            minFrameRate: 40
+        };
+    });
+
+
 // 웹 종료 시 실행
 window.onbeforeunload = function () {
+    sendMessage({
+        id: 'leaveRoom'
+    });
+
+    for (var key in participants) {
+        participants[key].dispose();
+    }
+
     ws.close();
+
+    location.replace("/");
 };
-
-$(function () {
-
-    sendButton = $('#sendButton');
-    dataChannelSend = $('#dataChannelSend');
-    dataChannelReceive = $('#dataChannelReceive');
-
-
-});
 
 ws.onmessage = function (message) {
     var parsedMessage = JSON.parse(message.data);
@@ -140,88 +164,65 @@ function callResponse(message) {
         });
     }
 }
-const onMessage = (event) => {
-    console.log('Received message: ' + event.data);
 
-    // for (var participantName in participants) {
-    //     if (participants.hasOwnProperty(participantName) && participantName !== name) {
-    //         participants[participantName].rtcPeer.dataChannel.send(event.data);
-    //     }
-    // }
-};
-
-const onOpen = (participant) => {
-    console.log('Data channel opened');
-
-};
-
-const onClosed = () => {
-    console.log('Data channel closed');
-};
-
-const onbufferedamountlow = () => {
-    console.log('Data channel buffered amount low');
-};
-
-const onError = (error) => {
-    console.error("Data channel error: ",error);
-};
-
-// TODO: 여기도 수정해야함
 function onExistingParticipants(msg) {
-    console.log(name + " registered in room " + roomId);
+    //console.log(name + " registered in room " + roomId);
     var participant = new Participant(name);
     participants[name] = participant;
     var video = participant.getVideoElement();
+    var audio = participant.getAudioElement();
 
-    var options = {
-        localVideo: video,
-        mediaConstraints: constraints,
-        onicecandidate: participant.onIceCandidate.bind(participant),
-        dataChannels : true,
-        dataChannelConfig: {
-            onmessage : onMessage,
-            onopen : () => onOpen(participant),
-            onclose : onClosed,
-            onbufferedamountlow : onbufferedamountlow,
-            onerror : onError
+    function handleSuccess(stream) {
+        var hasVideo = constraints.video && stream.getVideoTracks().length > 0;
+
+        var options = {
+            localVideo: hasVideo ? video : null,
+            localAudio: audio,
+            mediaStream: stream,
+            mediaConstraints: constraints,
+            onicecandidate: participant.onIceCandidate.bind(participant),
+            configuration: {
+                iceServers: [
+                    {
+                        urls: turnUrl,
+                        username: turnUser,
+                        credential: turnPwd
+                    }
+                ]
+            }
+        };
+
+        participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
+            function(error) {
+                if (error) {
+                    return console.error(error);
+                }
+                this.generateOffer(participant.offerToReceiveVideo.bind(participant));
+            });
+
+        msg.data.forEach(receiveVideo);
+    }
+
+    function handleMediaError(error) {
+        console.error("Error accessing video, trying audio only.", error);
+        if (constraints.video) {
+            delete constraints.video;  // Remove video constraints
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(handleSuccess)
+                .catch(function(error) {
+                    console.error("Error accessing media devices.", error);
+                });
+        } else {
+            console.error("Error accessing media devices.", error);
         }
     }
 
-    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
-        function (error) {
-            if (error) {
-                return console.error(error);
-            }
-
-            this.generateOffer(participant.offerToReceiveVideo.bind(participant));
-
-        });
-
-
-    msg.data.forEach(sender => receiveVideo(sender));
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(handleSuccess)
+        .catch(handleMediaError);
 }
 
-function receiveVideo(sender) {
-    var participant = new Participant(sender);
-    participants[sender] = participant;
-    var video = participant.getVideoElement();
 
-    var options = {
-        remoteVideo: video,
-        onicecandidate: participant.onIceCandidate.bind(participant)
-    }
-
-    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
-        function (error) {
-            if (error) {
-                return console.error(error);
-            }
-
-            this.generateOffer(participant.offerToReceiveVideo.bind(participant));
-
-        });
-}
 
 function leaveRoom() {
     sendMessage({
@@ -237,9 +238,43 @@ function leaveRoom() {
     location.replace("/");
 }
 
+function receiveVideo(sender) {
+    var participant = new Participant(sender);
+    participants[sender] = participant;
+    var video = participant.getVideoElement();
+    var audio = participant.getAudioElement();
+
+    var options = {
+        remoteVideo: video,
+        remoteAudio : audio,
+        onicecandidate: participant.onIceCandidate.bind(participant),
+        configuration: { // 이 부분에서 TURN 서버 연결 설정
+            iceServers: [
+                {
+                    urls: turnUrl,
+                    username: turnUser,
+                    credential: turnPwd
+                }
+            ]
+        }
+    }
+
+    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
+        function (error) {
+            if (error) {
+                return console.error(error);
+            }
+            this.generateOffer(participant.offerToReceiveVideo.bind(participant));
+        });
+
+    participant.rtcPeer.peerConnection.onaddstream = function(event) {
+        audio.srcObject = event.stream;
+        video.srcObject = event.stream;
+    };
+}
 
 function onParticipantLeft(request) {
-    console.log('Participant ' + request.name + ' left');
+    //console.log('Participant ' + request.name + ' left');
     var participant = participants[request.name];
     participant.dispose();
     delete participants[request.name];
@@ -247,10 +282,9 @@ function onParticipantLeft(request) {
 
 function sendMessage(message) {
     var jsonMessage = JSON.stringify(message);
-    console.log('Sending message: ' + jsonMessage);
+    //console.log('Sending message: ' + jsonMessage);
     ws.send(jsonMessage);
 }
-
 
 /** 화면 공유 실행 과정
  * 나와 연결된 다른 peer 에 나의 화면을 공유하기 위해서는 다른 peer 에 보내는 Track 에서 stream 을 교체할 필요가 있다.
@@ -307,7 +341,7 @@ function ScreenHandler() {
         try {
             shareView = await getCrossBrowserScreenCapture();
         } catch (err) {
-            // console.log('Error getDisplayMedia', err);
+            console.log('Error getDisplayMedia', err);
         }
         return shareView;
     }
@@ -334,16 +368,15 @@ function ScreenHandler() {
  */
 async function startScreenShare() {
     await screenHandler.start(); // 화면 공유를 위해 ScreenHandler.start() 함수 호출
-
     let participant = participants[name];
     let video = participant.getVideoElement();
     participant.setLocalSteam(video.srcObject);
     video.srcObject = shareView; // 본인의 화면에 화면 공유 화면 표시
 
-    await participant.rtcPeer.peerConnection.getSenders().forEach(sender => {
+    await participant.rtcPeer.peerConnection.getSenders().forEach(async sender => {
         // 원격 참가자에게도 화면 공유 화면을 전송하도록 RTCRtpSender.replaceTrack() 함수 호출
         if (sender.track.kind === 'video') {
-            sender.replaceTrack(shareView.getVideoTracks()[0]);
+            await sender.replaceTrack(shareView.getVideoTracks()[0]);
         }
     });
 

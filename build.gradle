@@ -34,6 +34,9 @@ dependencies {
 	// MySQL DB
 	implementation 'mysql:mysql-connector-java'
 
+	// mariaDB
+	implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
+
 	//	JSON
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
@@ -74,41 +77,14 @@ dependencies {
 
 	/* Kurento 미디어 서버 관련 2개 */
 	// https://mvnrepository.com/artifact/org.kurento/kurento-client
-	implementation 'org.kurento:kurento-client:7.0.0'
+	implementation group: 'org.kurento', name: 'kurento-client', version: '6.18.0'
 
-//	// https://mvnrepository.com/artifact/org.kurento/kurento-utils-js
-	implementation 'org.kurento:kurento-utils-js:7.0.0'
+	// https://mvnrepository.com/artifact/org.kurento/kurento-utils-js
+	implementation group: 'org.kurento', name: 'kurento-utils-js', version: '6.18.0'
 
-// https://mvnrepository.com/artifact/org.kurento/kurento-commons
-	implementation 'org.kurento:kurento-commons:7.0.0'
+	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'
 
-
-	// https://mvnrepository.com/artifact/org.kurento/kms-api-core
-	implementation 'org.kurento:kms-api-core:7.0.0'
-
-	// https://mvnrepository.com/artifact/org.kurento/kms-api-elements
-	implementation 'org.kurento:kms-api-elements:7.0.0'
-
-	// https://mvnrepository.com/artifact/org.kurento/kms-api-filters
-	implementation 'org.kurento:kms-api-filters:7.0.0'
-
-	// https://mvnrepository.com/artifact/org.kurento/kms-api-filters
-	implementation 'org.kurento:kms-api-filters:7.0.0'
-
-	// https://mvnrepository.com/artifact/org.kurento.module/datachannelexample
-	implementation 'org.kurento.module:datachannelexample:7.0.0'
-
-	// https://mvnrepository.com/artifact/org.kurento/kurento-jsonrpc-js
-	implementation 'org.kurento:kurento-jsonrpc-js:6.18.0'
-
-	// https://mvnrepository.com/artifact/org.kurento.tutorial/kurento-send-data-channel
-	implementation group: 'org.kurento.tutorial', name: 'kurento-send-data-channel', version: '6.18.0'
-
-	// https://mvnrepository.com/artifact/org.kurento.tutorial/kurento-show-data-channel
-	implementation group: 'org.kurento.tutorial', name: 'kurento-show-data-channel', version: '6.18.0'
-
-	// webrtc 를 사용하기 위한 java 라이브러리
-	implementation 'dev.onvoid.webrtc:webrtc-java:0.7.0'
 
 }
 

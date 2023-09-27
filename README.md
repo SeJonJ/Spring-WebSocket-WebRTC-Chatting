@@ -39,7 +39,7 @@
      - jquery, ajax 활용
    - 채팅방 암호화 - 09.12 완료
    - 채팅방 삭제
-     - 채팅방 삭제 시 해당 채팅방 안에 있는 파일들도 S3 에서 함께 삭제
+     - ~~채팅방 삭제 시 해당 채팅방 안에 있는 파일들도 S3 에서 함께 삭제~~
    - 채팅방 유저 인원 설정
      - 인원 제한 시 제한 된 인원만 채팅 참여 가능
 3) 화상채팅 기능 - WebRTC
@@ -49,67 +49,52 @@
   - KMS : Kurento Media Server
     - 쿠렌토 미디어 서버를 사용한 N:M 채팅
     - 양방향 화면 공유
+4) 방 관리를 위한 BatchJob 및 RestfullAPI 개발
 
 ## 5. 구동방법
-1) Server Installation
-- Kurento Media Server 설치
-- turn Server 설치 : coturn
-- Kurento Media Server 사용시 환경변수 설정 필요 : -Dkms.url=ws://[KMS IP]:[PORT]/kurento
+1) Server Installation  
+- Kurento Media Server 설치  
+- turn Server 설치 : coturn  
+- Kurento Media Server 사용시 환경변수 설정 필요 : -Dkms.url=ws://[KMS IP]:[PORT]/kurento  
 
 2) JAR Build
 - java -Dkms.url=ws://[KMS IP]:[PORT]/kurento -jar jar파일명
 
 3) Docker Container
-- DockerFile 생성
+- Spring 프로젝트를 Docker Image 로 만들기 위한 DockerFile
 ```bash
+FROM adoptopenjdk:11-jdk as builder
 
-- ## 베이스 이미지 + 이미지 별칭
-FROM openjdk:8-jdk-alpine AS builder
-# gradlew 복사
-COPY gradlew .
-# gradle 복사
-COPY gradle gradle
-# build.gradle 복사
-COPY build.gradle .
-# settings.gradle 복사
-COPY settings.gradle .
-# 웹 어플리케이션 소스 복사
-COPY src src
+# 작업 디렉토리를 설정합니다.
+WORKDIR /workspace/app
 
-# gradlew 실행권한 부여
-RUN chmod +x ./gradlew
-# gradlew를 사용하여 실행 가능한 jar 파일 생성
-RUN ./gradlew bootJar
+# 프로젝트의 모든 파일을 Docker 이미지 내부로 복사합니다.
+COPY . .
 
-# 베이스 이미지
-FROM openjdk:8-jdk-alpine
-# builder 이미지에서 build/libs/*.jar 파일을 app.jar로 복사
-COPY --from=builder build/libs/*.jar app.jar
+# Gradle을 사용하여 프로젝트를 빌드합니다.
+RUN ./gradlew clean build -x test
 
-# 컨테이너 Port 노출
+# 런타임 이미지를 생성합니다.
+FROM adoptopenjdk:11-jdk
+
+# 3. 8443 포트를 외부로 노출합니다.
 EXPOSE 8443
 
-# JAVA 옵션 설정
-ENV JAVA_OPTS="-Dkms.url=ws://<KMS IP>:<PORT>/kurento"
+# 빌드된 JAR 파일을 런타임 이미지로 복사합니다.
+COPY --from=builder /workspace/app/build/libs/*.jar app.jar
 
-# jar 파일 실행
-#ENTRYPOINT ["java", "-jar","/app.jar"]
-ENTRYPOINT java ${JAVA_OPTS} -jar /app.jar
+# Spring Boot 애플리케이션을 실행합니다.
+ENTRYPOINT ["java", "-jar", "/app.jar"]
 ```
 
 
 ## 6. ChatForYou
-현재 데모 사이트에서는 문자채팅 및 1:1 화상채팅만 가능합니다.
-
-N:M 화상채팅의 경우 트래픽과 배포문제로 인한 것이니 이 점 확인부탁드립니다.
-
-- S3 파일 업로드는 계정 무료 기간이 지나 중단합니다 -> 추후 다른 방식으로 구현 할 예정입니다.
-
-    - 버그 확인 시 이슈 만들어주세요!
-    - contribution 은 언제나 환영입니다!!
-
-https://chat-for-you.onrender.com/
-
+# 230914
+- 자체 서버 배포 완료!
+- 현재 kurento 화상채팅을 적용한 서버 배포중입니다. 다만 아직 안정화 중이라서 자주 꺼지거나 그럴 수 있습니다
+- 자체 서버를 사용하기 때문에 이전보다 조금 더 느릴 수 있습니다
+- 자체 인증서를 사용하기 때문에 사이트에 문제가 있을 수 있다고 나오지만...그런 이상한 사이트 아니에요ㅠ.ㅠ  
+https://hjproject.kro.kr:8653
 
 ## 7. 구동 화면
 

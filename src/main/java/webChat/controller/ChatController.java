@@ -2,16 +2,14 @@ package webChat.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import webChat.dto.ChatRoomMap;
 import webChat.service.chatService.ChatServiceMain;
@@ -19,6 +17,8 @@ import webChat.service.chatService.MsgChatService;
 import webChat.dto.ChatDto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Slf4j
@@ -32,6 +32,15 @@ public class ChatController {
 
     private final MsgChatService msgChatService;
     private final ChatServiceMain chatServiceMain;
+
+    @Value("${turn.server.urls}")
+    private String turnServerUrl;
+
+    @Value("${turn.server.username}")
+    private String turnServerUserName;
+
+    @Value("${turn.server.credential}")
+    private String turnServerCredential;
 
     // MessageMapping 을 통해 webSocket 로 들어오는 메시지를 발신 처리한다.
     // 이때 클라이언트에서는 /pub/chat/message 로 요청하게 되고 이것을 controller 가 받아서 처리한다.
@@ -115,5 +124,17 @@ public class ChatController {
         log.info("동작확인 {}", userName);
 
         return userName;
+    }
+
+    // turn server config
+    @PostMapping("/turnconfig")
+    @ResponseBody
+    public Map<String, String> turnServerConfig(){
+        Map<String, String> turnServerConfig = new HashMap<>();
+        turnServerConfig.put("url", turnServerUrl);
+        turnServerConfig.put("username", turnServerUserName);
+        turnServerConfig.put("credential", turnServerCredential);
+
+        return turnServerConfig;
     }
 }

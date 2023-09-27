@@ -2,6 +2,7 @@ package webChat.config;
 
 import lombok.RequiredArgsConstructor;
 import org.kurento.client.KurentoClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -9,10 +10,15 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 import webChat.rtc.KurentoHandler;
+import java.util.Objects;
 
 @Configuration
 @EnableWebSocket // 웹 소켓에 대해 자동 설정
 public class WebRtcConfig implements WebSocketConfigurer {// signalHandler 대신 KurentoHandler 사용
+
+    // kms.url 를 application.properties 에 저장 후 사용
+    @Value("${kms.url}")
+    private String kmsUrl;
 
     // kurento 를 다루기 위한 핸들러
     @Bean
@@ -21,11 +27,16 @@ public class WebRtcConfig implements WebSocketConfigurer {// signalHandler 대�
     }
 
     // Kurento Media Server 를 사용하기 위한 Bean 설정
-    // Bean 으로 등록 후 반드시!! VM 옵션에서 kurento 관련 설정을 해주어야한다.
-    // 아니면 에러남
+    // 환경변수가 들어오면 환경변수를 KMS_URL 로 설정 or
+    // 환경변수에 아무것도 안들어오면 application.properties 에 등록된 kms.url 을 가져와서 사용함
     @Bean
     public KurentoClient kurentoClient() {
-        return KurentoClient.create();
+        String envKmsUrl = System.getenv("KMS_URL");
+        if(Objects.isNull(envKmsUrl) || envKmsUrl.isEmpty()){
+            return KurentoClient.create(kmsUrl);
+        }
+
+        return KurentoClient.create(envKmsUrl);
     }
 
     // signal 로 요청이 왔을 때 아래의 WebSockerHandler 가 동작하도록 registry 에 설정
