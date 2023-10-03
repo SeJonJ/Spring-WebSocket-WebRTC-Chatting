@@ -28,6 +28,7 @@ public class ChatServiceMain {
 
     // 전체 채팅방 조회
     public List<ChatRoomDto> findAllRoom(){
+        // TODO room userCnt 로직 수정 필요
         // 채팅방 생성 순서를 최근순으로 반환
         List<ChatRoomDto> chatRooms = new ArrayList<>(ChatRoomMap.getInstance().getChatRooms().values());
         Collections.reverse(chatRooms);
