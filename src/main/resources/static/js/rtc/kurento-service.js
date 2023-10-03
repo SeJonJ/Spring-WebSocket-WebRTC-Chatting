@@ -73,8 +73,8 @@ navigator.mediaDevices.getUserMedia(constraints)
     .then(stream => {
         // Add your logic after successfully getting the media here.
         constraints.video = {
-            width: 1200,
-            height: 1000,
+            width: 1280,
+            height: 720,
             maxFrameRate: 50,
             minFrameRate: 40
         };
@@ -113,8 +113,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     function getDummyVideoTrack() {
         // 캔버스를 생성하여 더미 이미지를 그립니다.
         const canvas = document.createElement('canvas');
-        canvas.width = 800;
-        canvas.height = 600;
+        canvas.width = 1280;
+        canvas.height = 720;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = 'gray';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -402,7 +402,6 @@ async function startScreenShare() {
     video.srcObject = shareView; // 본인의 화면에 화면 공유 화면 표시
 
     await participant.rtcPeer.peerConnection.getSenders().forEach(async sender => {
-        debugger
         // 원격 참가자에게도 화면 공유 화면을 전송하도록 RTCRtpSender.replaceTrack() 함수 호출
         if (sender.track.kind === 'video') {
             await sender.replaceTrack(shareView.getVideoTracks()[0]);
