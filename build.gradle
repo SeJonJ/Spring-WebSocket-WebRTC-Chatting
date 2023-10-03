@@ -80,7 +80,13 @@ dependencies {
 	implementation group: 'org.kurento', name: 'kurento-client', version: '6.18.0'
 
 	// https://mvnrepository.com/artifact/org.kurento/kurento-utils-js
-	implementation group: 'org.kurento', name: 'kurento-utils-js', version: '6.18.0'
+//	implementation group: 'org.kurento', name: 'kurento-utils-js', version: '6.18.0'
+//
+//	// https://mvnrepository.com/artifact/org.kurento.tutorial/kurento-send-data-channel
+//	implementation group: 'org.kurento.tutorial', name: 'kurento-send-data-channel', version: '6.18.0'
+//
+//	// https://mvnrepository.com/artifact/org.kurento.tutorial/kurento-show-data-channel
+//	implementation group: 'org.kurento.tutorial', name: 'kurento-show-data-channel', version: '6.18.0'
 
 	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt
 	implementation 'io.jsonwebtoken:jjwt:0.9.1'

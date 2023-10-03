@@ -50,15 +50,15 @@ function Participant(name) {
 	//console.log("참여자명 : "+name)
 
 	this.name = name;
+	var rtcPeer = null;
+	var localStream = null; // 유저의 로컬 스트림
+
 	var container = document.createElement('div');
 	container.className = isPresentMainParticipant() ? PARTICIPANT_CLASS : PARTICIPANT_MAIN_CLASS;
 	container.id = name;
 	var span = document.createElement('span');
 	var video = document.createElement('video');
 	var audio  = document.createElement("audio");
-
-	var rtcPeer;
-	let localStream = null; // 유저의 로컬 스트림
 
 	container.appendChild(video);
 	container.appendChild(span);

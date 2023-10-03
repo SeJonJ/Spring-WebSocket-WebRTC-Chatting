@@ -33,11 +33,12 @@ let turnPwd = null;
 // websocket 연결 확인 후 register() 실행
 var ws = new WebSocket('wss://' + locationHost + '/signal');
 ws.onopen = () => {
-    init();
+    initTurnServer();
+    initDataChannel();
     register();
 }
 
-var init = function(){
+var initTurnServer = function(){
     fetch("https://"+locationHost+"/turnconfig", {
         method: 'POST',
         headers: {
@@ -53,7 +54,10 @@ var init = function(){
         .catch(error => {
             console.error('Error:', error);
         });
+}
 
+var initDataChannel = function () {
+    dataChannel.init();
 }
 
 let constraints = {
@@ -126,21 +130,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     }
 }
 
-// 웹 종료 시 실행
-window.onbeforeunload = function () {
-    sendMessage({
-        id: 'leaveRoom'
-    });
-
-    for (var key in participants) {
-        participants[key].dispose();
-    }
-
-    ws.close();
-
-    location.replace("/");
-};
-
 ws.onmessage = function (message) {
     var parsedMessage = JSON.parse(message.data);
     // console.info('Received message: ' + message.data);
@@ -211,20 +200,30 @@ function callResponse(message) {
 }
 
 function onExistingParticipants(msg) {
-    //console.log(name + " registered in room " + roomId);
+
     var participant = new Participant(name);
     participants[name] = participant;
+    dataChannel.initDataChannelUser(participant);
     var video = participant.getVideoElement();
     var audio = participant.getAudioElement();
 
     function handleSuccess(stream) {
-        var hasVideo = constraints.video && stream.getVideoTracks().length > 0;
+        var hasVideo = constraints.video && stream.getVideoTracks().length > 0
+
         var options = {
             localVideo: hasVideo ? video : null,
             localAudio: audio,
             mediaStream: stream,
             mediaConstraints: constraints,
             onicecandidate: participant.onIceCandidate.bind(participant),
+            dataChannels : true,
+            dataChannelConfig: {
+                id : dataChannel.getChannelName,
+                // onopen : dataChannel.handleDataChannelOpen,
+                // onclose : dataChannel.handleDataChannelClose,
+                onmessage : dataChannel.handleDataChannelMessageReceived,
+                onerror : dataChannel.handleDataChannelError
+            },
             configuration: {
                 iceServers: [
                     {
@@ -236,7 +235,7 @@ function onExistingParticipants(msg) {
             }
         };
 
-        participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendonly(options,
+        participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
             function(error) {
                 if (error) {
                     return console.error(error);
@@ -252,20 +251,6 @@ function onExistingParticipants(msg) {
         .then(handleSuccess)
 }
 
-function leaveRoom() {
-    sendMessage({
-        id: 'leaveRoom'
-    });
-
-    for (var key in participants) {
-        participants[key].dispose();
-    }
-
-    ws.close();
-
-    location.replace("/");
-}
-
 function receiveVideo(sender) {
     var participant = new Participant(sender);
     participants[sender] = participant;
@@ -276,6 +261,14 @@ function receiveVideo(sender) {
         remoteVideo: video,
         remoteAudio : audio,
         onicecandidate: participant.onIceCandidate.bind(participant),
+        dataChannels : true,
+        dataChannelConfig: {
+            id : dataChannel.getChannelName,
+            onopen : dataChannel.handleDataChannelOpen,
+            onclose : dataChannel.handleDataChannelClose,
+            onmessage : dataChannel.handleDataChannelMessageReceived,
+            onerror : dataChannel.handleDataChannelError
+        },
         configuration: { // 이 부분에서 TURN 서버 연결 설정
             iceServers: [
                 {
@@ -287,7 +280,7 @@ function receiveVideo(sender) {
         }
     }
 
-    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options,
+    participant.rtcPeer = new kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
         function (error) {
             if (error) {
                 return console.error(error);
@@ -301,9 +294,35 @@ function receiveVideo(sender) {
     };
 }
 
+// 웹 종료 시 실행
+window.onbeforeunload = function () {
+    sendDataChannelMessage("떠났다");
+    var delayInMilliseconds = 100;  // 0.1초 지연
+    var start = new Date().getTime();
+    while (new Date().getTime() < start + delayInMilliseconds);
+
+    sendMessage({
+        id: 'leaveRoom'
+    });
+
+    for (var key in participants) {
+        participants[key].dispose();
+    }
+
+    ws.close();
+
+};
+
+function leaveRoom() {
+
+    location.replace("/");
+
+}
+
 function onParticipantLeft(request) {
-    //console.log('Participant ' + request.name + ' left');
+
     var participant = participants[request.name];
+    //console.log('Participant ' + request.name + ' left');
     participant.dispose();
     delete participants[request.name];
 }
@@ -312,6 +331,15 @@ function sendMessage(message) {
     var jsonMessage = JSON.stringify(message);
     //console.log('Sending message: ' + jsonMessage);
     ws.send(jsonMessage);
+}
+
+// 메시지를 데이터 채널을 통해 전송하는 함수
+function sendDataChannelMessage(message){
+    if (participants[name].rtcPeer.dataChannel.readyState === 'open') {
+        dataChannel.sendMessage(message);
+    } else {
+        console.warn("Data channel is not open. Cannot send message.");
+    }
 }
 
 /** 화면 공유 실행 과정
