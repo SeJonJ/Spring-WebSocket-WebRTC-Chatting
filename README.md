@@ -89,12 +89,21 @@ ENTRYPOINT ["java", "-jar", "/app.jar"]
 
 
 ## 6. ChatForYou
+https://hjproject.kro.kr:8653
+
 # 230914
 - 자체 서버 배포 완료!
 - 현재 kurento 화상채팅을 적용한 서버 배포중입니다. 다만 아직 안정화 중이라서 자주 꺼지거나 그럴 수 있습니다
 - 자체 서버를 사용하기 때문에 이전보다 조금 더 느릴 수 있습니다
-- 자체 인증서를 사용하기 때문에 사이트에 문제가 있을 수 있다고 나오지만...그런 이상한 사이트 아니에요ㅠ.ㅠ  
-https://hjproject.kro.kr:8653
+- 자체 인증서를 사용하기 때문에 사이트에 문제가 있을 수 있다고 나오지만...그런 이상한 사이트 아니에요ㅠ.ㅠ 
+
+# **_사이트 이용시 공시 사항_**
+본 사이트는 오직 springboot 와 JavaScript 를 기본으로 하여 WebRTC 및 WebSocket 기술을 사용한 여러 기능을 공부하기 위한 사이트입니다.
+**따라서 해당 사이트를 이용함에 있어 발생할 수 있는 모든 법적 책임은 사이트를 이용하시는 본인에게 있음을 명시해주시기 바랍니다.**
+
+# **_Disclaimer when using this site_**
+This site is only for studying various functions using WebRTC and WebSocket technologies based on springboot and JavaScript.
+**Please note that all legal responsibilities that may arise from using this site are the responsibility of the person using the site.** 
 
 ## 7. 구동 화면
 
