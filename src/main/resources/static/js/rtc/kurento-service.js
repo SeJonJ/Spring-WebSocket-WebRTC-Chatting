@@ -1,20 +1,17 @@
 /*
- * (C) Copyright 2014 Kurento (http://kurento.org/)
+ * Copyright 2023 SejonJang (wkdtpwhs@gmail.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the  GNU General Public License v3.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *   https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Modified By : SeJonJnag <wkdtpwhs@gmail.com>
- *
  */
 
 // //console.log("location.host : "+location.host)
@@ -58,6 +55,7 @@ var initTurnServer = function(){
 
 var initDataChannel = function () {
     dataChannel.init();
+    dataChannelChatting.init();
 }
 
 let constraints = {
@@ -117,8 +115,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     function getDummyVideoTrack() {
         // 캔버스를 생성하여 더미 이미지를 그립니다.
         const canvas = document.createElement('canvas');
-        canvas.width = 1280;
-        canvas.height = 720;
+        // canvas.width = 1280;
+        // canvas.height = 720;
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = 'gray';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -175,7 +173,7 @@ function register() {
         name: $("#uuid").val(),
         room: roomId,
     }
-    sendMessage(message);
+    sendMessageToServer(message);
 }
 
 function onNewParticipant(request) {
@@ -216,8 +214,8 @@ function onExistingParticipants(msg) {
             mediaStream: stream,
             mediaConstraints: constraints,
             onicecandidate: participant.onIceCandidate.bind(participant),
-            dataChannels : true,
-            dataChannelConfig: {
+            dataChannels : true, // dataChannel 사용 여부
+            dataChannelConfig: { // dataChannel event 설정
                 id : dataChannel.getChannelName,
                 // onopen : dataChannel.handleDataChannelOpen,
                 // onclose : dataChannel.handleDataChannelClose,
@@ -261,8 +259,8 @@ function receiveVideo(sender) {
         remoteVideo: video,
         remoteAudio : audio,
         onicecandidate: participant.onIceCandidate.bind(participant),
-        dataChannels : true,
-        dataChannelConfig: {
+        dataChannels : true, // dataChannel 사용 여부
+        dataChannelConfig: { // dataChannel event 설정
             id : dataChannel.getChannelName,
             onopen : dataChannel.handleDataChannelOpen,
             onclose : dataChannel.handleDataChannelClose,
@@ -296,12 +294,12 @@ function receiveVideo(sender) {
 
 // 웹 종료 시 실행
 window.onbeforeunload = function () {
-    sendDataChannelMessage("떠났다");
+    sendDataChannelMessage("님이 떠나셨습니다ㅠㅠ");
     var delayInMilliseconds = 100;  // 0.1초 지연
     var start = new Date().getTime();
     while (new Date().getTime() < start + delayInMilliseconds);
 
-    sendMessage({
+    sendMessageToServer({
         id: 'leaveRoom'
     });
 
@@ -327,7 +325,7 @@ function onParticipantLeft(request) {
     delete participants[request.name];
 }
 
-function sendMessage(message) {
+function sendMessageToServer(message) {
     var jsonMessage = JSON.stringify(message);
     //console.log('Sending message: ' + jsonMessage);
     ws.send(jsonMessage);
