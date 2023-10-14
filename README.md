@@ -19,6 +19,7 @@
 - WebSocket & SocketJS
 - Stomp
 - WebRTC : P2P 실시간 화상 채팅, 화면 공유
+- WebRTC DataChannel : DataChannel 을 사용한 채팅
 - Kurento Media Server : N:M 채팅을 위한 KMS 사용
 
 ## 2. 다이어그램
@@ -49,7 +50,9 @@
   - KMS : Kurento Media Server
     - 쿠렌토 미디어 서버를 사용한 N:M 채팅
     - 양방향 화면 공유
-4) 방 관리를 위한 BatchJob 및 RestfullAPI 개발
+  - DataChannel
+    - DataChannel 을 사용한 채팅 기능 구현
+4) 방 관리를 위한 BatchJob 및 RestfulAPI 개발
 
 ## 5. 구동방법
 1) Server Installation  
@@ -120,4 +123,5 @@ https://github.com/codejs-kr/webrtc-lab
 https://doc-kurento.readthedocs.io/en/latest/index.html
 
 ## License
+* Copyright 2023 SejonJang (wkdtpwhs@gmail.com)  
 GNU General Public License v3.0 

@@ -18,6 +18,7 @@ public class RoomBatchJob {
     @Scheduled(cron = "0 0,30 * * * *", zone="Asia/Seoul") // 매 시간 30분에 실행 , 타임존 seoul 기준
     public void checkRoom(){
 
+        // TODO kurento 서버에 대해서 dispose 필요
         ConcurrentMap<String, ChatRoomDto> chatRooms = ChatRoomMap.getInstance().getChatRooms();
         List<String> roomNames = chatRooms.keySet()
                 .stream()

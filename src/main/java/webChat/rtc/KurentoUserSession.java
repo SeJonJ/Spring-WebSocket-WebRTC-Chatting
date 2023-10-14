@@ -1,7 +1,7 @@
 /*
- * (C) Copyright 2014 Kurento (http://kurento.org/)
+ * Copyright 2023 SejonJang (wkdtpwhs@gmail.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the  GNU General Public License v3.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -23,7 +23,6 @@ import org.kurento.client.*;
 import org.kurento.jsonrpc.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -74,7 +73,9 @@ public class KurentoUserSession implements Closeable {
     this.roomName = roomName;
 
     // 외부로 송신하는 미디어?
-    this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline).build();
+    this.outgoingMedia = new WebRtcEndpoint.Builder(pipeline)
+            .useDataChannels()
+            .build();
 
     // iceCandidateFounder 이벤트 리스너 등록
     // 이벤트가 발생했을 때 다른 유저들에게 새로운 iceCnadidate 후보를 알림
@@ -203,7 +204,9 @@ public class KurentoUserSession implements Closeable {
       log.debug("PARTICIPANT {}: creating new endpoint for {}", this.name, sender.getName());
 
       // 새로 incoming , 즉 webRtcEndpoint 를 만들고
-      incoming = new WebRtcEndpoint.Builder(pipeline).build();
+      incoming = new WebRtcEndpoint.Builder(pipeline)
+              .useDataChannels()
+              .build();
 
       // incoming 객체의 addIceCandidateFoundListener 메서드 실행
       incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
