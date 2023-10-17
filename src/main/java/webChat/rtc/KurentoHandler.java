@@ -13,8 +13,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import webChat.dto.KurentoRoomDto;
-import webChat.service.chatService.KurentoManager;
-import webChat.service.chatService.KurentoUserRegistry;
+import webChat.service.chat.KurentoManager;
+import webChat.service.chat.KurentoUserRegistry;
 
 import java.io.IOException;
 

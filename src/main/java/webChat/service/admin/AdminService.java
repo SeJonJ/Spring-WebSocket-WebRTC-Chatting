@@ -1,4 +1,4 @@
-package webChat.service.adminService;
+package webChat.service.admin;
 
 import java.util.Map;
 

@@ -8,7 +8,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import webChat.dto.ChatRoomMap;
-import webChat.service.chatService.ChatServiceMain;
+import webChat.dto.ChatType;
+import webChat.service.chat.ChatServiceMain;
 import webChat.dto.ChatRoomDto;
 import webChat.service.social.PrincipalDetails;
 
@@ -39,7 +40,6 @@ public class ChatRoomController {
 
         room = chatServiceMain.createChatRoom(name, roomPwd, Boolean.parseBoolean(secretChk), Integer.parseInt(maxUserCnt), chatType);
 
-
         log.info("CREATE Chat Room [{}]", room);
 
         rttr.addFlashAttribute("roomName", room);
@@ -65,7 +65,7 @@ public class ChatRoomController {
         model.addAttribute("room", room);
 
 
-        if (ChatRoomDto.ChatType.MSG.equals(room.getChatType())) {
+        if (ChatType.MSG.equals(room.getChatType())) {
             return "chatroom";
         }else{
             String uuid = UUID.randomUUID().toString().split("-")[0];

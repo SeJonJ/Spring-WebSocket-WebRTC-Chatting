@@ -1,4 +1,4 @@
-package webChat.service.adminService;
+package webChat.service.admin;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;

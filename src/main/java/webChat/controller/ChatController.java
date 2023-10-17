@@ -12,8 +12,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import webChat.dto.ChatRoomMap;
-import webChat.service.chatService.ChatServiceMain;
-import webChat.service.chatService.MsgChatService;
+import webChat.service.chat.ChatServiceMain;
+import webChat.service.chat.MsgChatService;
 import webChat.dto.ChatDto;
 
 import java.util.ArrayList;

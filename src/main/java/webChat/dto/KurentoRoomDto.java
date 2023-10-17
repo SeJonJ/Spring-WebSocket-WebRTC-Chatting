@@ -91,6 +91,7 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
   }
 
   // 유저명 가져오기
+  @Override
   public String getRoomId() {
     return roomId;
   }
