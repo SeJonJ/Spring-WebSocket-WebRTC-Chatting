@@ -15,7 +15,7 @@
  *
  */
 
-package webChat.service.chatService;
+package webChat.service.chat;
 
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

@@ -24,9 +24,6 @@ public class ChatRoomDto {
 
     private String roomPwd; // 채팅방 삭제시 필요한 pwd
     private boolean secretChk; // 채팅방 잠금 여부
-    public enum ChatType{  // 화상 채팅, 문자 채팅
-        MSG, RTC
-    }
     private ChatType chatType; //  채팅 타입 여부
 
     // ChatRoomDto 클래스는 하나로 가되 서비스를 나누었음

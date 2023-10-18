@@ -3,10 +3,9 @@ package webChat.controller;
 import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import webChat.service.adminService.AdminService;
+import webChat.service.admin.AdminService;
 import webChat.utils.JwtUtil;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController

@@ -6,10 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import webChat.dto.FileUploadDto;
-import webChat.service.fileService.S3FileService;
-
-import java.io.IOException;
-import java.util.UUID;
+import webChat.service.file.S3FileService;
 
 @RestController
 @RequestMapping("/s3")

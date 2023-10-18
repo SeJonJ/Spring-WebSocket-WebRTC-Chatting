@@ -15,10 +15,9 @@
  *
  */
 
-package webChat.service.chatService;
+package webChat.service.chat;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 import webChat.rtc.KurentoUserSession;
