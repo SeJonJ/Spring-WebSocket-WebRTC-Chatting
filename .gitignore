@@ -39,3 +39,5 @@ out/
 ## custom ##
 /src/main/resources/application.properties
 #src/main/java/webChat/utils/JwtUtil.java
+/src/main/generated/webChat/mapper/ChatUserMapperImpl.java
+/src/main/generated/webChat/mapper/DailyInfoMapperImpl.java

@@ -42,7 +42,7 @@
     </style>
 </head>
 <body>
-<div id="visitorCount" style="position: absolute; top: 10px; right: 10px;">방문자 수: 0</div>
+<div id="visitorCount" style="position: absolute; top: 10px; right: 10px;"></div>
 <div class="container">
     <div class="container">
         <h2>채팅방 리스트</h2>
@@ -253,8 +253,8 @@
         </div>
     </div>
 </div>
-<div aria-hidden="true" aria-labelledby="announcementModalLabel" class="modal fade" id="announcementModal"
-     tabindex="-1">
+<div id="announcementModal" class="modal fade" tabindex="-1" aria-labelledby="announcementModalLabel" aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -262,32 +262,78 @@
                 <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
             </div>
             <div class="modal-body">
-                안녕하세요, ChatForYou을 이용해주셔서 감사합니다. 제 사이트는 모든 사용자가 안전하고 쾌적한 환경에서 화상채팅을 즐길 수 있도록 노력하고 있습니다. 이를 위해 아래와 같은 행위는
-                엄격히 금지되어 있으니 이용에 참고 부탁드립니다.
-                <br/><br/>
-                <strong>비속어 및 부적절한 언어 사용 금지:</strong><br/>
-                모든 사용자가 편안하게 대화할 수 있도록 비속어나 부적절한 언어의 사용은 금지되어 있습니다.
-                <br/><br/>
-                <strong>불쾌감을 줄 수 있는 행위 금지:</strong><br/>
-                타 사용자를 위협하거나 불쾌감을 줄 수 있는 모든 행위는 금지되어 있습니다. 이에 해당하는 행위를 발견할 경우 즉시 서비스 이용이 제한될 수 있습니다.
-                <br/><br/>
-                <strong>불법적인 활동 금지:</strong><br/>
-                불법적인 활동, 예를 들어 불법 스트리밍, 저작권 침해, 불법 광고 등은 엄격히 금지되어 있습니다. 해당 활동을 발견할 경우 즉시 서비스 이용이 제한되며, 관련 법률에 따라 처벌받을 수
-                있습니다.
-                <br/><br/>
-                <strong>법적 책임에 관한 안내:</strong><br/>
-                사용자는 ChatForYou을 이용함에 있어 발생하는 모든 행위에 대한 법적 책임을 지게 됩니다. ChatForYou은 사용자의 불법 행위에 대한 어떠한 책임도 지지 않습니다.
-                <br/><br/>
-                우리는 사용자 여러분의 협조와 지키려는 노력을 바탕으로 더 나은 서비스 환경을 제공하기 위해 노력하고 있습니다. 사용 중 문제나 건의사항이 있으시면 wkdtpwhs@gmail.com 로
-                연락 주시기 바랍니다.
-                감사합니다.
+                <ul class="nav nav-tabs" id="announcementTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button aria-controls="korea" aria-selected="true" class="nav-link active" data-bs-toggle="tab"
+                                href="#korea" id="korea-tab" role="tab">Korea
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button aria-controls="eng" aria-selected="false" class="nav-link" data-bs-toggle="tab"
+                                href="#eng" id="eng-tab" role="tab">Eng
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="announcementTabsContent">
+                    <div aria-labelledby="korea-tab" class="tab-pane fade show active" id="korea" role="tabpanel">
+                        안녕하세요, <strong style="color: red;"> ChatForYou </strong> 를 이용해주셔서 감사합니다. 제 사이트는 모든 사용자가 안전하고 쾌적한
+                        환경에서 화상채팅을 즐길 수 있도록 노력하고 있습니다. 이를 위해 아래와 같은 행위는 엄격히 금지되어 있으니 이용에 참고 부탁드립니다.
+                        <br/><br/>
+                        <strong style="color: red;">비속어 및 부적절한 언어 사용 금지:</strong>
+                        모든 사용자가 편안하게 대화할 수 있도록 비속어나 부적절한 언어의 사용은 금지되어 있습니다.
+                        <br/><br/>
+                        <strong style="color: red;">불쾌감을 줄 수 있는 행위 금지:</strong>
+                        타 사용자를 위협하거나 불쾌감을 줄 수 있는 모든 행위는 금지되어 있습니다. 이에 해당하는 행위를 발견할 경우 즉시 서비스 이용이 제한될 수 있습니다.
+                        <br/><br/>
+                        <strong style="color: red;">불법적인 활동 금지:</strong>
+                        불법적인 활동, 예를 들어 불법 스트리밍, 저작권 침해, 불법 광고 등은 엄격히 금지되어 있습니다. 해당 활동을 발견할 경우 즉시 서비스 이용이 제한되며, 관련 법률에 따라
+                        처벌받을 수 있습니다.
+                        <br/><br/>
+                        <strong style="color: red;">법적 책임에 관한 안내:</strong>
+                        사용자는 ChatForYou을 이용함에 있어 발생하는 모든 행위에 대한 법적 책임을 지게 됩니다. ChatForYou은 사용자의 불법 행위에 대한 어떠한 책임도 지지
+                        않습니다.
+                        <br/><br/>
+                        저는 여러분의 협조와 지키려는 노력을 바탕으로 더 나은 서비스 환경을 제공하기 위해 노력하고 있습니다.
+                        사용 중 문제나 건의사항이 있으시면 <strong>wkdtpwhs@gmail.com</strong>
+                        로 연락 주시기 바랍니다.
+                        감사합니다.
+                    </div>
+                    <div aria-labelledby="eng-tab" class="tab-pane fade" id="eng" role="tabpanel">
+                        Hello, thank you for using <strong style="color: red;"> ChatForYou. </strong> Our site strives
+                        to provide all users with a safe and pleasant environment to enjoy video chatting. For this
+                        reason, please note that the following actions are strictly prohibited.
+                        <br/><br/>
+                        <strong><strong style="color: red;">Prohibition of slang and inappropriate
+                            language:</strong></strong><br/>
+                        The use of slang or inappropriate language is prohibited to ensure that all users can have a
+                        comfortable conversation.
+                        <br/><br/>
+                        <strong><strong style="color: red;">Prohibition of actions that can cause
+                            discomfort:</strong></strong><br/>
+                        Any action that can threaten other users or cause discomfort is prohibited. If such actions are
+                        detected, the use of the service can be immediately restricted.
+                        <br/><br/>
+                        <strong><strong style="color: red;">Prohibition of illegal activities:</strong></strong><br/>
+                        Illegal activities, such as illegal streaming, copyright infringement, and illegal advertising,
+                        are strictly prohibited. If such activities are detected, the use of the service can be
+                        immediately restricted, and you may be punished under relevant laws.
+                        <br/><br/>
+                        <strong><strong style="color: red;">Legal responsibility:</strong></strong><br/>
+                        Users are legally responsible for all actions taken while using ChatForYou. ChatForYou does not
+                        take any responsibility for illegal actions of the user.
+                        <br/><br/>
+                        We are striving to provide a better service environment based on the cooperation and efforts of
+                        our users. If you have any issues or suggestions while using the service, please contact us at
+                        <strong>wkdtpwhs@gmail.com</strong>.
+                        Thank you.
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <div class="form-check">
                     <input class="form-check-input" id="dontShowAgain" type="checkbox"/>
-                    <label class="form-check-label" for="dontShowAgain">오늘은 더 이상 안보기</label>
+                    <label class="form-check-label" for="dontShowAgain">오늘은 더 이상 안보기(Don't show again today)</label>
                 </div>
-
                 <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">확인</button>
             </div>
         </div>

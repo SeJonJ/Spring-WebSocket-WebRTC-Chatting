@@ -1,4 +1,5 @@
 let roomId;
+const locationHost = location.host;
 
 $(function () {
     let $maxUserCnt = $("#maxUserCnt");
@@ -24,6 +25,48 @@ $(function () {
             $maxUserCnt.attr('disabled', false);
         }
     })
+
+
+    function checkVisitor() {
+        let url = "https://" + location.host + "/visitor";
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                "visitedToday": sessionStorage.getItem("visitedToday")
+            },
+            success: function (data) {
+                dailyVisitor = data;
+                $('#visitorCount').text('방문자 수 : ' + dailyVisitor);
+            },
+            error: function (error) {
+                console.error("Error fetching data: ", error);
+            },
+            complete: function () {
+                // 일일 방문자 check
+                if (!sessionStorage.getItem('visitedToday') || sessionStorage.getItem('visitedToday') === false) {
+                    sessionStorage.setItem('visitedToday', 'true');
+                }
+            }
+        });
+    }
+    checkVisitor();
+
+
+    // hideAnnouncement 값이 없거나 false 라면 show 아니면 hide
+    if (!sessionStorage.getItem('hideAnnouncement') || sessionStorage.getItem('hideAnnouncement') === 'false') {
+        $('#announcementModal').modal('show');
+    } else {
+        $('#announcementModal').modal('hide');
+    }
+
+    // "오늘 하루 안보기" 버튼 누르면 sessionStorage 에 item 생성
+    $('#announcementModal').on('hide.bs.modal', function (event) {
+        if (document.getElementById('dontShowAgain').checked) {
+            sessionStorage.setItem('hideAnnouncement', 'true');
+        }
+    });
 })
 
 
@@ -70,26 +113,6 @@ function confirmPWD() {
             }
         })
     })
-
-    // 일일 방문자 check
-    let visitorCount = localStorage.getItem('visitorCount') || 0;
-    visitorCount++;
-    localStorage.setItem('visitorCount', visitorCount);
-    document.getElementById('visitorCount').innerText = '방문자 수: ' + visitorCount;
-
-    // hideAnnouncement 값이 없거나 false 라면 show 아니면 hide
-    if (!sessionStorage.getItem('hideAnnouncement') || sessionStorage.getItem('hideAnnouncement') === 'false') {
-        $('#announcementModal').modal('show');
-    } else {
-        $('#announcementModal').modal('hide');
-    }
-
-    // "오늘 하루 안보기" 버튼 누르면 sessionStorage 에 item 생성
-    $('#announcementModal').on('hide.bs.modal', function (event) {
-        if (document.getElementById('dontShowAgain').checked) {
-            sessionStorage.setItem('hideAnnouncement', 'true');
-        }
-    });
 }
 
 // 채팅 인원 숫자만 정규식 체크

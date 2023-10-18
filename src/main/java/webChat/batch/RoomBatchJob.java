@@ -45,8 +45,7 @@ public class RoomBatchJob {
         log.info("##########################");
     }
 
-//    @Scheduled(cron = "0 0 */3 * * *", zone = "Asia/Seoul") // 3시간 마다 , 타임존 seoul 기준
-    @Scheduled(cron = "*/5 * * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 */3 * * *", zone = "Asia/Seoul") // 3시간 마다 , 타임존 seoul 기준
     public void dailyInfoInsert() {
         LocalDate nowDate = LocalDate.now();
         DailyInfo findDailyInfo = dailyInfoRepository.findByDate(nowDate);

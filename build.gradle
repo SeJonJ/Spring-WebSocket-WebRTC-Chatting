@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'Terian'
-version = '6.5'
+version = '6.6'
 sourceCompatibility = '1.8'
 
 configurations {
