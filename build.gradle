@@ -31,6 +31,9 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 
+	// https://mvnrepository.com/artifact/cglib/cglib
+	implementation 'cglib:cglib:3.3.0'
+
 	// MySQL DB
 	implementation 'mysql:mysql-connector-java'
 

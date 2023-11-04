@@ -19,5 +19,9 @@ EXPOSE 8443
 # 빌드된 JAR 파일을 런타임 이미지로 복사합니다.
 COPY --from=builder /workspace/app/build/libs/*.jar app.jar
 
+## 추후 배포중 메모리 부족시 활성화 할 것
+#ENV JAVA_OPTS="-Xms1024m -Xmx4g"
+#ENTRYPOINT java $JAVA_OPTS -jar /app.jar
+
 # Spring Boot 애플리케이션을 실행합니다.
 ENTRYPOINT ["java", "-jar", "/app.jar"]
