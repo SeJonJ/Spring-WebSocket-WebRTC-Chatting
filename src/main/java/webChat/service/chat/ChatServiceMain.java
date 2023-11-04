@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import webChat.dto.ChatRoomDto;
 import webChat.dto.ChatRoomMap;
 import webChat.dto.ChatType;
+import webChat.dto.KurentoRoomDto;
 import webChat.service.analysis.AnalysisService;
 import webChat.service.file.FileService;
 
@@ -20,7 +21,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 public class ChatServiceMain {
-
+    private final KurentoManager kurentoManager;
     private final MsgChatService msgChatService;
     private final RtcChatService rtcChatService;
 
@@ -104,11 +105,14 @@ public class ChatServiceMain {
 
         try {
             // 채팅방 타입에 따라서 단순히 채팅방만 삭제할지 업로드된 파일도 삭제할지 결정
-            ChatRoomMap.getInstance().getChatRooms().remove(roomId);
+            ChatRoomDto room = ChatRoomMap.getInstance().getChatRooms().remove(roomId);
 
-            if (ChatRoomMap.getInstance().getChatRooms().get(roomId).getChatType().equals(ChatType.MSG)) { // MSG 채팅방은 사진도 추가 삭제
+            if (room.getChatType().equals(ChatType.MSG)) { // MSG 채팅방은 사진도 추가 삭제
                 // 채팅방 안에 있는 파일 삭제
                 fileService.deleteFileDir(roomId);
+            } else {
+                KurentoRoomDto kurentoRoom = (KurentoRoomDto) room;
+                kurentoManager.removeRoom(kurentoRoom);
             }
 
             log.info("삭제 완료 roomId : {}", roomId);
