@@ -5,8 +5,6 @@ let chanId = 0;
 
 const dataChannel = {
     user : null,
-    userTextInput :  $('.text-box'),
-    messagesContainer : $('.messages'),
     init: function() {
         // 핸들러들을 바인딩하여 'this'가 항상 dataChannel 객체를 참조하도록 보장하기 위함
         this.handleDataChannelOpen = this.handleDataChannelOpen.bind(this);
@@ -48,38 +46,34 @@ const dataChannel = {
     showNewMessage: function(recvMessage, type) {
         // 기본은 '나'가 보낸것
         type = type === undefined ? 'self' : type;
-        var newMessage = this.userTextInput.html()
-            .replace(/\<div\>|\<br.*?\>/ig, '\n').replace(/\<\/div\>/g, '')
-            .trim()
-            .replace(/\n/g, '<br>');
-
-        // var messagesContainer = $('.messages');
 
         if (type === 'self') {
-            if (!newMessage) return;
+            if (!recvMessage) return;
 
-            this.messagesContainer.append([
+            dataChannelChatting.messagesContainer.append([
                 '<li class="self">',
-                newMessage,
+                recvMessage,
                 '</li>'
             ].join(''));
 
-            this.sendMessage(newMessage);
+            this.sendMessage(recvMessage);
+
+            // clean out old message
+            dataChannelChatting.userTextInput.html('');
+
+            // focus on input
+            dataChannelChatting.userTextInput.focus();
+
+            dataChannelChatting.messagesContainer.finish().animate({
+                scrollTop: dataChannelChatting.messagesContainer.prop("scrollHeight")
+            }, 250);
+
         } else {
-            this.messagesContainer.append([
+            dataChannelChatting.messagesContainer.append([
                 '<li class="other">',
                 recvMessage,
                 '</li>'
             ].join(''));
         }
-
-        // clean out old message
-        this.userTextInput.html('');
-        // focus on input
-        this.userTextInput.focus();
-
-        this.messagesContainer.finish().animate({
-            scrollTop: this.messagesContainer.prop("scrollHeight")
-        }, 250);
     }
 }
