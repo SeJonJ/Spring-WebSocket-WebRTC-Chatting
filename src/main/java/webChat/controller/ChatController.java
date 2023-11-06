@@ -121,7 +121,7 @@ public class ChatController {
 
         // 유저 이름 확인
         String userName = msgChatService.isDuplicateName(ChatRoomMap.getInstance().getChatRooms(), roomId, username);
-        log.info("동작확인 {}", userName);
+        log.info("유저 확인 {}", userName);
 
         return userName;
     }

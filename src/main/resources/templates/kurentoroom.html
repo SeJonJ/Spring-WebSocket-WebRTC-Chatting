@@ -33,14 +33,22 @@
                     <div class="mr-2" data-toggle="buttons">
                         <input type="button" class="btn btn-outline-success" id="screenShareBtn" value="share Off"
                                data-flag="false" onclick="screenShare()">
+                        <input type="button" class="btn btn-outline-success localVideoToggle" id="videoBtn" value="video Off"
+                               data-flag="true">
+                        <input type="button" class="btn btn-outline-success localAudioToggle" id="audioBtn" value="audio Off"
+                               data-flag="true">
                     </div>
                 </div>
             </div>
+            <!-- "유저 설정" 모달 트리거 버튼 -->
+            <div class="settings-button d-flex justify-content-around mb-3">
+                <button type="button" class="btn btn-primary" id="userSetting" data-toggle="modal" data-target="#userSettingsModal">
+                    유저 설정
+                </button>
+            </div>
 
             <h2 id="room-header"></h2>
-            <div id="participants">
-                <div class="participant-container"></div>
-            </div>
+            <div id="participants"></div>
             <input type="button" id="button-leave" onmouseup="leaveRoom();"
                    value="Leave room">
         </div>
@@ -76,3 +84,29 @@
 <script src="/js/rtc/dataChannelChatting.js"></script>
 </body>
 </html>
+
+<!-- HTML에 음량 조절 슬라이더 추가 -->
+<div class="volume-control" type="hidden">
+    <input type="hidden" id="volumeControl" min="0" max="1" step="0.01" value="0.5" />
+</div>
+
+<!-- "유저 설정" 모달 -->
+<div class="modal fade" id="userSettingsModal" tabindex="-1" role="dialog" aria-labelledby="userSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userSettingsModalLabel">유저 설정</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- 여기에 participants 내용이 들어갈 예정 -->
+                <ul id="participantsList" class="list-group"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>

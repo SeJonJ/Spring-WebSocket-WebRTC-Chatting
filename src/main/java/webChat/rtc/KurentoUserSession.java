@@ -314,6 +314,7 @@ public class KurentoUserSession implements Closeable {
   public void sendMessage(JsonObject message) throws IOException {
     log.debug("USER {}: Sending message {}", name, message);
     synchronized (session) {
+      // TODO 예외 발생 시 접속 재시도하도록 유도
       session.sendMessage(new TextMessage(message.toString()));
     }
   }
