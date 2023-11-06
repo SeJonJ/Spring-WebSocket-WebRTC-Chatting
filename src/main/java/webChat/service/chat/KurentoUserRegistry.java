@@ -20,8 +20,10 @@ package webChat.service.chat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
+import webChat.controller.ExceptionController;
 import webChat.rtc.KurentoUserSession;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -93,9 +95,10 @@ public class KurentoUserRegistry {
    * */
   public KurentoUserSession removeBySession(WebSocketSession session) {
     final KurentoUserSession user = getBySession(session);
-    usersByName.remove(user.getName());
-    usersBySessionId.remove(session.getId());
+      if (Objects.nonNull(user)) {
+        usersByName.remove(user.getName());
+        usersBySessionId.remove(session.getId());
+      }
     return user;
   }
-
 }

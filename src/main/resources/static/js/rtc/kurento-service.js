@@ -466,7 +466,6 @@ async function stopScreenShare() {
 /**
 
  화면 공유 버튼을 누르면 화면 공유를 시작하거나 중지합니다.
-
  @returns {Promise<void>}
  */
 async function screenShare() {
