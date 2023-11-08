@@ -153,6 +153,16 @@ ws.onmessage = function (message) {
                 }
             });
             break;
+        case 'ConnectionFail': // 연결 실패 메시지 처리
+
+            // 모달을 표시
+            $('#connectionFailModal').modal('show');
+
+            // 모달의 확인 버튼에 클릭 이벤트 핸들러를 연결
+            $('#reconnectButton').click(function() {
+                leaveRoom('error');
+            });
+            break;
         default:
             console.error('Unrecognized message', parsedMessage);
     }
@@ -294,26 +304,34 @@ function receiveVideo(sender) {
 
 // 웹 종료 시 실행
 window.onbeforeunload = function () {
-    sendDataChannelMessage("님이 떠나셨습니다ㅠㅠ");
-    var delayInMilliseconds = 100;  // 0.1초 지연
-    var start = new Date().getTime();
-    while (new Date().getTime() < start + delayInMilliseconds);
-
-    sendMessageToServer({
-        id: 'leaveRoom'
-    });
-
-    for (var key in participants) {
-        participants[key].dispose();
-    }
-
-    ws.close();
-
+    leaveRoom();
 };
 
-function leaveRoom() {
+function leaveRoom(type) {
+    if(type !== 'error'){ // type 이 error 이 아닐 경우에만 퇴장 메시지 전송
+        sendDataChannelMessage("님이 떠나셨습니다ㅠㅠ");
+    }
 
-    location.replace("/");
+    let leftUserfunc = function(){
+        // 서버로 연결 종료 메시지 전달
+        sendMessageToServer({
+            id: 'leaveRoom'
+        });
+
+        // 진행 중인 모든 연결을 종료
+        for (let key in participants) {
+            if (participants.hasOwnProperty(key)) {
+                participants[key].dispose();
+            }
+        }
+
+        // WebSocket 연결을 종료합니다.
+        ws.close();
+
+        location.replace("/");
+    }
+
+    setInterval(leftUserfunc, 10); // 퇴장 메시지 전송을 위해 timeout 설정
 
 }
 

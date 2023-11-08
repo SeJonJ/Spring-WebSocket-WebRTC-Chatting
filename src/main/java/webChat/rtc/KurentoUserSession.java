@@ -28,6 +28,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -257,19 +258,21 @@ public class KurentoUserSession implements Closeable {
     final WebRtcEndpoint incoming = incomingMedia.remove(senderName);
 
     log.debug("PARTICIPANT {}: removing endpoint for {}", this.name, senderName);
-    incoming.release(new Continuation<Void>() {
-      @Override
-      public void onSuccess(Void result) throws Exception {
-        log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
-                KurentoUserSession.this.name, senderName);
-      }
+    if (Objects.nonNull(incoming)) {
+      incoming.release(new Continuation<Void>() {
+        @Override
+        public void onSuccess(Void result) throws Exception {
+          log.trace("PARTICIPANT {}: Released successfully incoming EP for {}",
+                  KurentoUserSession.this.name, senderName);
+        }
 
-      @Override
-      public void onError(Throwable cause) throws Exception {
-        log.warn("PARTICIPANT {}: Could not release incoming EP for {}", KurentoUserSession.this.name,
-                senderName);
-      }
-    });
+        @Override
+        public void onError(Throwable cause) throws Exception {
+          log.warn("PARTICIPANT {}: Could not release incoming EP for {}", KurentoUserSession.this.name,
+                  senderName);
+        }
+      });
+    }
   }
 
   @Override
@@ -314,8 +317,13 @@ public class KurentoUserSession implements Closeable {
   public void sendMessage(JsonObject message) throws IOException {
     log.debug("USER {}: Sending message {}", name, message);
     synchronized (session) {
-      // TODO 예외 발생 시 접속 재시도하도록 유도
-      session.sendMessage(new TextMessage(message.toString()));
+      try {
+        session.sendMessage(new TextMessage(message.toString()));
+      } catch (Exception e) {
+        message.addProperty("id", "ConnectionFail");
+        message.addProperty("data", e.getMessage());
+        session.sendMessage(new TextMessage(message.toString()));
+      }
     }
   }
 

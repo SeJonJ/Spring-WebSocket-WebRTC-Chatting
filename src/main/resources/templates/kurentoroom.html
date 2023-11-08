@@ -110,3 +110,25 @@
         </div>
     </div>
 </div>
+
+<!-- Connection Fail Modal -->
+<div class="modal" tabindex="-1" role="dialog" id="connectionFailModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">연결 실패</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p> 서버와의 연결 불안정으로 인해 연결이 종료되었습니다.<br></br>
+                    방에 재입장하여 다시 연결해주시기 바랍니다.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="reconnectButton">확인</button>
+            </div>
+        </div>
+    </div>
+</div>

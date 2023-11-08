@@ -17,6 +17,7 @@ import webChat.service.chat.KurentoManager;
 import webChat.service.chat.KurentoUserRegistry;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 public class KurentoHandler extends TextWebSocketHandler {
@@ -60,14 +61,18 @@ public class KurentoHandler extends TextWebSocketHandler {
                 break;
 
             case "receiveVideoFrom": // receiveVideoFrom 인 경우
-                // sender 명 - 사용자명 - 과
-                final String senderName = jsonMessage.get("sender").getAsString();
-                // 유저명을 통해 session 값을 가져온다
-                final KurentoUserSession sender = registry.getByName(senderName);
-                // jsonMessage 에서 sdpOffer 값을 가져온다
-                final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
-                // 이후 receiveVideoFrom 실행 => 아마도 특정 유저로부터 받은 비디오를 다른 유저에게 넘겨주는게 아닌가...?
-                user.receiveVideoFrom(sender, sdpOffer);
+                try {
+                    // sender 명 - 사용자명 - 과
+                    final String senderName = jsonMessage.get("sender").getAsString();
+                    // 유저명을 통해 session 값을 가져온다
+                    final KurentoUserSession sender = registry.getByName(senderName);
+                    // jsonMessage 에서 sdpOffer 값을 가져온다
+                    final String sdpOffer = jsonMessage.get("sdpOffer").getAsString();
+                    // 이후 receiveVideoFrom 실행 => 아마도 특정 유저로부터 받은 비디오를 다른 유저에게 넘겨주는게 아닌가...?
+                    user.receiveVideoFrom(sender, sdpOffer);
+                } catch (Exception e){
+                    connectException(user, e);
+                }
                 break;
 
             case "leaveRoom": // 유저가 나간 경우
@@ -116,13 +121,24 @@ public class KurentoHandler extends TextWebSocketHandler {
 
     // 유저가 room 에서 떠났을 때
     private void leaveRoom(KurentoUserSession user) throws IOException {
-        // 유저명을 기준으로 room 을 가져온다
-        final KurentoRoomDto room = roomManager.getRoom(user.getRoomName());
-        // room 에서 유저를 제거하고
-        room.leave(user);
+        if (Objects.nonNull(user)) {
+            // 유저명을 기준으로 room 을 가져온다
+            final KurentoRoomDto room = roomManager.getRoom(user.getRoomName());
 
-        // room 에서 userCount -1
-        room.setUserCount(room.getUserCount()-1);
+            // room 에서 유저를 제거하고
+            room.leave(user);
+
+            // room 에서 userCount -1
+            room.setUserCount(room.getUserCount()-1);
+        }
+    }
+
+    private void connectException(KurentoUserSession user, Exception e) throws IOException {
+        JsonObject message = new JsonObject();
+        message.addProperty("id", "ConnectionFail");
+        message.addProperty("data", e.getMessage());
+
+        user.sendMessage(message);
 
     }
 
