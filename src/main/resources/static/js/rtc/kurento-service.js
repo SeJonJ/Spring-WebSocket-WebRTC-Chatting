@@ -331,7 +331,7 @@ function leaveRoom(type) {
         location.replace("/");
     }
 
-    setInterval(leftUserfunc, 10); // 퇴장 메시지 전송을 위해 timeout 설정
+    setTimeout(leftUserfunc, 100); // 퇴장 메시지 전송을 위해 timeout 설정
 
 }
 

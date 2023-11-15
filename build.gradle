@@ -21,7 +21,13 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.2.2'
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter'
+	// 스프링 부트 모니터링을 위한 엔트포인트 활성화
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+//	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.2.2'
+//	implementation 'org.springframework.boot:spring-boot-starter-actuator:3.1.0'
+
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'mysql:mysql-connector-java'
@@ -94,9 +100,17 @@ dependencies {
 	// https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt
 	implementation 'io.jsonwebtoken:jjwt:0.9.1'
 
+	// 프로메테우스 라이브러리
+	// https://mvnrepository.com/artifact/io.micrometer/micrometer-registry-prometheus
+	implementation 'io.micrometer:micrometer-registry-prometheus:1.11.3'
+
+	// geoip 라이브러리
+	// https://mvnrepository.com/artifact/com.maxmind.geoip2/geoip2
+	implementation 'com.maxmind.geoip2:geoip2:4.0.1'
+
 
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+//	useJUnitPlatform()
 }
