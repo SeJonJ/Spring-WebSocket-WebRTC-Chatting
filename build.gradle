@@ -21,7 +21,7 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter'
+//	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter'
 	// 스프링 부트 모니터링을 위한 엔트포인트 활성화
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
@@ -112,5 +112,5 @@ dependencies {
 }
 
 tasks.named('test') {
-//	useJUnitPlatform()
+	useJUnitPlatform()
 }
