@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.kurento.client.IceCandidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -31,12 +30,10 @@ public class KurentoHandler extends TextWebSocketHandler {
     private static final Gson gson = new GsonBuilder().create();
 
     // 유저 등록? 을 위한 객체 생성
-    @Autowired
-   private KurentoUserRegistry registry;
+   private final KurentoUserRegistry registry;
 
    // room 매니저
-    @Autowired
-    private KurentoManager roomManager;
+    private final KurentoManager roomManager;
 
     // 이전에 사용하던 그 메서드
     @Override
