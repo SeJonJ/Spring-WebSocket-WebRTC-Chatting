@@ -2,7 +2,6 @@ package webChat.service.analysis;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
