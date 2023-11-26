@@ -64,7 +64,7 @@ public class KurentoManager {
   }
 
   /**
-   *
+   * room 삭제 및 close
    * @param room
    * @Desc room 삭제
    */
