@@ -95,11 +95,11 @@ public class KurentoHandler extends TextWebSocketHandler {
     }
 
     // 유저의 연결이 끊어진 경우
-    // 참여자 목록에서 유저 제거
+    // leaveRoom 실행
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         KurentoUserSession user = registry.removeBySession(session);
-//        roomManager.getRoom(user.getRoomName()).leave(user);
+        this.leaveRoom(user);
     }
 
     // 유저가 Room 에 입장했을 때
@@ -121,16 +121,23 @@ public class KurentoHandler extends TextWebSocketHandler {
 
     // 유저가 room 에서 떠났을 때
     private void leaveRoom(KurentoUserSession user) throws IOException {
-        if (Objects.nonNull(user)) {
-            // 유저명을 기준으로 room 을 가져온다
-            final KurentoRoomDto room = roomManager.getRoom(user.getRoomName());
-
-            // room 에서 유저를 제거하고
-            room.leave(user);
-
-            // room 에서 userCount -1
-            room.setUserCount(room.getUserCount()-1);
+        // user 가 null 이면 return
+        if (Objects.isNull(user)) {
+            return;
         }
+
+        final KurentoRoomDto room = roomManager.getRoom(user.getRoomName());
+
+        // 유저가 room 의 participants 에 없다면 return
+        if (!room.getParticipants().contains(user)) {
+            return;
+        }
+
+        // room 에서 유저를 제거하고
+        room.leave(user);
+
+        // room 에서 userCount -1
+        room.setUserCount(room.getUserCount()-1);
     }
 
     private void connectException(KurentoUserSession user, Exception e) throws IOException {
