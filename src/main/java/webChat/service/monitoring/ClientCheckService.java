@@ -2,8 +2,6 @@ package webChat.service.monitoring;
 
 import webChat.dto.ClientInfo;
 
-import java.util.List;
-
 /**
  * clientinfo 객체로 여러 체크 로직 구현하기 위한 서비스
  */
@@ -16,5 +14,5 @@ public interface ClientCheckService {
      */
     Boolean checkBlackList(ClientInfo clientInfo);
 
-    Boolean checkIPsInSubnet(List<String> ipList, String cidr);
+    Boolean checkIsAllowedIp(String cidr);
 }

@@ -1,8 +1,6 @@
-package webChat.service.monitoring;
+package webChat.service.monitoring.impl;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.model.CityResponse;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +9,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.HandlerInterceptor;
 import webChat.controller.ExceptionController;
 import webChat.dto.ClientInfo;
+import webChat.service.monitoring.ClientCheckService;
+import webChat.service.monitoring.MonitoringService;
+import webChat.service.monitoring.PrometheusService;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -26,10 +26,8 @@ public class MonitoringServiceImpl implements MonitoringService,HandlerIntercept
 
     private static final Logger log = LoggerFactory.getLogger(MonitoringServiceImpl.class);
 
-    // prometheus 연결을 위한 registry
-    private final MeterRegistry meterRegistry;
-
     private final ClientCheckService clientCheckService;
+    private final PrometheusService prometheusService;
 
     // 웹 접속 시 HandlerInterceptor 가 먼저 해당 정보를 인터셉트해와서 정보를 저장
     // prometheus 에 전달한다
@@ -42,13 +40,7 @@ public class MonitoringServiceImpl implements MonitoringService,HandlerIntercept
         log.debug("ipAddrs ::: "+request.getRemoteHost());
         log.debug("##########################################");
 
-
-        if ("0:0:0:0:0:0:0:1".equals(ipAddress) || "127.0.0.1".equals(ipAddress)) { // 로컬에서는 true
-            return true;
-        }
-
-        List<String> cidrList = Arrays.asList("192.168.0.0/24", "10.96.0.0/12", "10.244.0.0/24", "10.244.1.0/24", "10.244.2.0/24");
-        if (clientCheckService.checkIPsInSubnet(cidrList, ipAddress)){
+        if (Boolean.TRUE.equals(clientCheckService.checkIsAllowedIp(ipAddress))){
             return true;
         }
 
@@ -60,13 +52,11 @@ public class MonitoringServiceImpl implements MonitoringService,HandlerIntercept
 
         Boolean isBlack = clientCheckService.checkBlackList(clientInfo);
 
-        // 국가별 접속 횟수를 측정하는 메트릭스
-        Counter.builder("access_client_info")
-                .tags(ClientInfo.toPrometheusMetric(clientInfo))
-                .register(meterRegistry)
-                .increment();
+        prometheusService.saveCountInfo("access_client_info", clientInfo);
 
         if(isBlack){
+            // black access 정보만 따로 저장
+            prometheusService.saveCountInfo("black_access_info", clientInfo);
             throw new ExceptionController.AccessForbiddenException("black ip");
         }
         return !isBlack;

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import webChat.service.monitoring.MonitoringServiceImpl;
+import webChat.service.monitoring.impl.MonitoringServiceImpl;
 
 // 인터셉터를 위한 config 설정
 // HandlerInterceptor 를 사용하기 WebMvcConfigurer 를 구현한 클래스에 registry 에
