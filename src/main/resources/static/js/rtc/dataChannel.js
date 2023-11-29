@@ -43,7 +43,7 @@ const dataChannel = {
         if (this.isNullOrUndefined(message)) return;
         this.user.rtcPeer.send(this.user.name + " : " + message);
     },
-    showNewMessage: function(recvMessage, type) {
+    showNewMessage: function(recvMessage, type) { // 이거는 datachannelChatting 으로 넘어가야하는거...?
         // 기본은 '나'가 보낸것
         type = type === undefined ? 'self' : type;
 

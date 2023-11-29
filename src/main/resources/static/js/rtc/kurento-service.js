@@ -302,37 +302,40 @@ function receiveVideo(sender) {
     };
 }
 
-// 웹 종료 시 실행
+var leftUserfunc = function(){
+    // 서버로 연결 종료 메시지 전달
+    sendMessageToServer({
+        id: 'leaveRoom'
+    });
+
+    // 진행 중인 모든 연결을 종료
+    for (let key in participants) {
+        if (participants.hasOwnProperty(key)) {
+            participants[key].dispose();
+        }
+    }
+
+    // WebSocket 연결을 종료합니다.
+    ws.close();
+}
+
+// 웹 종료 or 새로고침 시 이벤트
 window.onbeforeunload = function () {
     leaveRoom();
 };
 
+// 나가기 버튼 눌렀을 때 이벤트
+// 결국 replace  되기 때문에 얘도 onbeforeunload 를 탄다
+$('#button-leave').on('click', function(){
+    location.replace('/');
+});
+
 function leaveRoom(type) {
     if(type !== 'error'){ // type 이 error 이 아닐 경우에만 퇴장 메시지 전송
-        sendDataChannelMessage("님이 떠나셨습니다ㅠㅠ");
+        sendDataChannelMessage(" 님이 떠나셨습니다ㅠㅠ");
     }
 
-    let leftUserfunc = function(){
-        // 서버로 연결 종료 메시지 전달
-        sendMessageToServer({
-            id: 'leaveRoom'
-        });
-
-        // 진행 중인 모든 연결을 종료
-        for (let key in participants) {
-            if (participants.hasOwnProperty(key)) {
-                participants[key].dispose();
-            }
-        }
-
-        // WebSocket 연결을 종료합니다.
-        ws.close();
-
-        location.replace("/");
-    }
-
-    setInterval(leftUserfunc, 10); // 퇴장 메시지 전송을 위해 timeout 설정
-
+    setTimeout(leftUserfunc, 10); // 퇴장 메시지 전송을 위해 timeout 설정
 }
 
 function onParticipantLeft(request) {

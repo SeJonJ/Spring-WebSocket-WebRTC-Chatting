@@ -164,8 +164,6 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
     log.debug("PARTICIPANT {}: Leaving room {}", user.getName(), this.roomId);
     this.removeParticipant(user.getName());
 
-    log.info("PARTICIPANTS {} ", this.participants);
-
     user.close();
   }
 
@@ -198,7 +196,7 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
         // 즉, newParticipantMsg 를 send함
         participant.sendMessage(newParticipantMsg);
       } catch (final IOException e) {
-        log.debug("ROOM {}: participant {} could not be notified", roomId, participant.getName(), e);
+        log.error("ROOM {}: participant {} could not be notified", roomId, participant.getName(), e);
       }
 
       // list 에 유저명 추가
@@ -298,8 +296,7 @@ public class KurentoRoomDto extends ChatRoomDto implements Closeable {
         // 유저 close
         user.close();
       } catch (IOException e) {
-        log.debug("ROOM {}: Could not invoke close on participant {}", this.roomId, user.getName(),
-                e);
+        log.debug("ROOM {}: Could not invoke close on participant {}", this.roomId, user.getName(), e);
       }
     } // for 문 끝
 

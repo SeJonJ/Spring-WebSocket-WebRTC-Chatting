@@ -196,21 +196,21 @@ public class KurentoUserSession implements Closeable {
     log.debug("PARTICIPANT {}: receiving video from {}", this.name, sender.getName());
 
     // sender 의 이름으로 나의 incomingMedia 에서 sender 의 webrtcEndpoint 객체를 가져옴
-    WebRtcEndpoint incoming = incomingMedia.get(sender.getName());
+    WebRtcEndpoint incomingMedia = this.incomingMedia.get(sender.getName());
 
-    // 만약 가져온 incoming 이 null 이라면
+    // 만약 가져온 incomingMedia 이 null 이라면
     // 즉 현재 내가 갖고 있는 incomingMedia 에 sender 의 webrtcEndPoint 객체가 없다면
-    if (incoming == null) {
+    if (incomingMedia == null) {
       // 새로운 endpoint 가 만들어졌음을 확인
       log.debug("PARTICIPANT {}: creating new endpoint for {}", this.name, sender.getName());
 
-      // 새로 incoming , 즉 webRtcEndpoint 를 만들고
-      incoming = new WebRtcEndpoint.Builder(pipeline)
+      // 새로 incomingMedia , 즉 webRtcEndpoint 를 만들고
+      incomingMedia = new WebRtcEndpoint.Builder(pipeline)
               .useDataChannels()
               .build();
 
-      // incoming 객체의 addIceCandidateFoundListener 메서드 실행
-      incoming.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
+      // incomingMedia 객체의 addIceCandidateFoundListener 메서드 실행
+      incomingMedia.addIceCandidateFoundListener(new EventListener<IceCandidateFoundEvent>() {
 
         @Override
         public void onEvent(IceCandidateFoundEvent event) {
@@ -236,17 +236,17 @@ public class KurentoUserSession implements Closeable {
         }
       });
 
-      // incomingMedia 에 유저명과 새로 생성된 incoming - webrtcEndPoint 객체 - 을 넣어준다
-      incomingMedia.put(sender.getName(), incoming);
+      // incomingMedia 에 유저명과 새로 생성된 incomingMedia - webrtcEndPoint 객체 - 을 넣어준다
+      this.incomingMedia.put(sender.getName(), incomingMedia);
     }
 
     log.debug("PARTICIPANT {}: obtained endpoint for {}", this.name, sender.getName());
 
     /** 여기가 이해가 안갔었음 */
-    // sender 기존에 갖고 있던 webRtcEndPoint 와 새로 생성된 incoming 을 연결한다
-    sender.getOutgoingWebRtcPeer().connect(incoming);
+    // sender 기존에 갖고 있던 webRtcEndPoint 와 새로 생성된 incomingMedia 을 연결한다
+    sender.getOutgoingWebRtcPeer().connect(incomingMedia);
 
-    return incoming;
+    return incomingMedia;
   }
 
   public void cancelVideoFrom(final KurentoUserSession sender) {
@@ -322,7 +322,7 @@ public class KurentoUserSession implements Closeable {
       } catch (Exception e) {
         message.addProperty("id", "ConnectionFail");
         message.addProperty("data", e.getMessage());
-        session.sendMessage(new TextMessage(message.toString()));
+        this.sendMessage(message);
       }
     }
   }

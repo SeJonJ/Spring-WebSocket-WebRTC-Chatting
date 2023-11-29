@@ -31,12 +31,10 @@ public class KurentoHandler extends TextWebSocketHandler {
     private static final Gson gson = new GsonBuilder().create();
 
     // 유저 등록? 을 위한 객체 생성
-    @Autowired
-   private KurentoUserRegistry registry;
+   private final KurentoUserRegistry registry;
 
    // room 매니저
-    @Autowired
-    private KurentoManager roomManager;
+    private final KurentoManager roomManager;
 
     // 이전에 사용하던 그 메서드
     @Override

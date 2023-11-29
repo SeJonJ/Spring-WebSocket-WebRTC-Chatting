@@ -10,6 +10,8 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 import webChat.rtc.KurentoHandler;
+import webChat.service.chat.KurentoManager;
+import webChat.service.chat.KurentoUserRegistry;
 import java.util.Objects;
 
 @Configuration
@@ -24,10 +26,16 @@ public class WebRtcConfig implements WebSocketConfigurer {
     @Value("${kms.url}")
     private String kmsUrl;
 
+    // 유저 등록? 을 위한 객체 생성
+    private final KurentoUserRegistry registry;
+
+    // room 매니저
+    private final KurentoManager roomManager;
+
     // kurento 를 다루기 위한 핸들러
     @Bean
     public KurentoHandler kurentoHandler(){
-        return new KurentoHandler();
+        return new KurentoHandler(registry, roomManager);
     }
 
     // Kurento Media Server 를 사용하기 위한 Bean 설정
