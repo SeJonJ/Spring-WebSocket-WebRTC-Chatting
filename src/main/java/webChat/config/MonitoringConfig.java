@@ -19,6 +19,6 @@ public class MonitoringConfig implements WebMvcConfigurer {
         // addInterceptors 의 파라미터에는 HandlerInterceptor 를 구현한 구현체 클래스를 넣는다
         // addPathPatterns 는 특정한 패턴 즉 특정한 요청에 대해서만 인터셉터 가능!
         registry.addInterceptor(monitoringServiceImpl)
-                .addPathPatterns("/");
+                .addPathPatterns("/user_agree");
     }
 }

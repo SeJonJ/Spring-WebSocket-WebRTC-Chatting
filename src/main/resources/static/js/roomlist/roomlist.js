@@ -67,6 +67,18 @@ $(function () {
             sessionStorage.setItem('hideAnnouncement', 'true');
         }
     });
+
+    $("#agreeBtn").click(function(){
+        fetch("https://"+locationHost+"/user_agree", {
+            method: 'GET'
+        })
+            .then(response => {
+                console.info("user agree!!")
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    })
 })
 
 
