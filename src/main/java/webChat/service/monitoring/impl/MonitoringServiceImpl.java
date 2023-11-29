@@ -40,28 +40,26 @@ public class MonitoringServiceImpl implements MonitoringService,HandlerIntercept
         log.debug("ipAddrs ::: "+request.getRemoteHost());
         log.debug("##########################################");
 
-        throw new ExceptionController.InternalServerError("server error");
+        if (Boolean.TRUE.equals(clientCheckService.checkIsAllowedIp(ipAddress))){
+            return true;
+        }
 
-//        if (Boolean.TRUE.equals(clientCheckService.checkIsAllowedIp(ipAddress))){
-//            return true;
-//        }
-//
-//        ClientInfo clientInfo = getClientInfoByAddrs(ipAddress);
-//
-//        if(Objects.isNull(clientInfo)){
-//            throw new ExceptionController.AccessForbiddenException("no clientinfo");
-//        }
-//
-//        Boolean isBlack = clientCheckService.checkBlackList(clientInfo);
-//
-//        prometheusService.saveCountInfo("access_client_info", clientInfo);
-//
-//        if(isBlack){
-//            // black access 정보만 따로 저장
-//            prometheusService.saveCountInfo("black_access_info", clientInfo);
-//            throw new ExceptionController.AccessForbiddenException("black ip");
-//        }
-//        return !isBlack;
+        ClientInfo clientInfo = getClientInfoByAddrs(ipAddress);
+
+        if(Objects.isNull(clientInfo)){
+            throw new ExceptionController.AccessForbiddenException("no clientinfo");
+        }
+
+        Boolean isBlack = clientCheckService.checkBlackList(clientInfo);
+
+        prometheusService.saveCountInfo("access_client_info", clientInfo);
+
+        if(isBlack){
+            // black access 정보만 따로 저장
+            prometheusService.saveCountInfo("black_access_info", clientInfo);
+            throw new ExceptionController.AccessForbiddenException("black ip");
+        }
+        return !isBlack;
     }
 
     @Override
