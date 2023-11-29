@@ -23,14 +23,14 @@ public class ExceptionController {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)  // 401 status code :: 권한없음
     @ExceptionHandler(UnauthorizedException.class)
     @ResponseBody
-    public Map<String, String> unauthorizedException(Exception e) {
+    public String unauthorizedException(Exception e) {
         log.error("error :: "+e.getMessage());
         log.error("error trace :: "+e.getCause());
 
         Map<String, String> result = new HashMap<>();
         result.put("code", "401");
         result.put("message", "You Have No Authentication");
-        return result;
+        return "error/500"; // 500 에러 페이지로 리디렉션
     }
 
     // 권한이 없을 때 발생하는 커스텀 예외
@@ -44,7 +44,7 @@ public class ExceptionController {
     @ResponseStatus(HttpStatus.BAD_REQUEST) // 400 status code
     @ExceptionHandler(MissingRequestHeaderException.class)
     @ResponseBody
-    public Map<String, String> missingHeaderException(Exception e) {
+    public String missingHeaderException(Exception e) {
         log.error("error :: "+e.getMessage());
         log.error("error trace :: "+e.getCause());
 
@@ -52,7 +52,7 @@ public class ExceptionController {
         result.put("code", "500");
         result.put("message", "Required header is missing :: " + e.getMessage());
 
-        return result;
+        return "error/500"; // 500 에러 페이지로 리디렉션
     }
 
     // 잘못된 요청을 받았을 때 발생하는 커스텀 예외
@@ -65,15 +65,9 @@ public class ExceptionController {
     // 500 서버에러
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(HttpServerErrorException.InternalServerError.class)
-    @ResponseBody
-    public Map<String, String> interalServerError(Exception e){
+    public @ResponseBody String interalServerError(Exception e){
         e.printStackTrace();
-
-        Map<String, String> result = new HashMap<>();
-        result.put("code", "500");
-        result.put("message", e.getMessage());
-
-        return result;
+        return "error/500"; // 500 에러 페이지로 리디렉션
     }
 
     // 서버 에러 발생 시 예외 핸들러
