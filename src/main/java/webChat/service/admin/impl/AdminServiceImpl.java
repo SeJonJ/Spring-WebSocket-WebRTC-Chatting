@@ -1,4 +1,4 @@
-package webChat.service.admin;
+package webChat.service.admin.impl;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import webChat.dto.ChatRoomDto;
 import webChat.dto.ChatRoomMap;
 import webChat.dto.KurentoRoomDto;
+import webChat.service.admin.AdminService;
 import webChat.service.chat.KurentoManager;
 
 import java.util.HashMap;
@@ -16,7 +17,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @Service
 @RequiredArgsConstructor
-public class AdminServiceImpl implements AdminService{
+public class AdminServiceImpl implements AdminService {
 
     private final KurentoManager kurentoManager;
 

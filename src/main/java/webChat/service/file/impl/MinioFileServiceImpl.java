@@ -1,4 +1,4 @@
-package webChat.service.file;
+package webChat.service.file.impl;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.GetObjectRequest;
@@ -18,7 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import webChat.config.MinioConfig;
 import webChat.dto.FileUploadDto;
+import webChat.service.file.FileService;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,19 +29,9 @@ import java.io.IOException;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class S3FileService implements FileService{
+public class S3FileServiceImpl implements FileService {
 
-    // AmazonS3 주입받기
-    private final AmazonS3 amazonS3;
-
-    // application.properties 에 설정한 변수들을 가져와서 사용할 수 있게 함
-    // S3 bucket 이름
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
-
-    // S3 base URL
-    @Value("${cloud.aws.s3.bucket.url}")
-    private String baseUrl;
+    private final MinioConfig minioConfig;
 
     // MultipartFile 과 transcation, roomId 를 전달받는다.
     // 이때 transcation 는 파일 이름 중복 방지를 위한 UUID 를 의미한다.
@@ -89,23 +81,21 @@ public class S3FileService implements FileService{
     // roomId 를 적어주면 기준이 되는 roomId 아래의 모든 파일이 삭제된다.
     @Override
     public void deleteFileDir(String path) {
-        for (S3ObjectSummary summary : amazonS3.listObjects(bucket, path).getObjectSummaries()) {
-            amazonS3.deleteObject(bucket, summary.getKey());
-        }
+
     }
 
     // byte 배열 타입을 return 한다.
     @Override
     public ResponseEntity<byte[]> getObject(String fileDir, String fileName) throws IOException {
         // bucket 와 fileDir 을 사용해서 S3 에 있는 객체 - object - 를 가져온다.
-        S3Object object = amazonS3.getObject(new GetObjectRequest(bucket, fileDir));
+//        S3Object object = amazonS3.getObject(new GetObjectRequest(bucket, fileDir));
 
         // object 를 S3ObjectInputStream 형태로 변환한다.
-        S3ObjectInputStream objectInputStream = object.getObjectContent();
+//        S3ObjectInputStream objectInputStream = object.getObjectContent();
 
         // 이후 다시 byte 배열 형태로 변환한다.
         // 아마도 파일 전송을 위해서는 다시 byte[] 즉, binary 로 변환해서 전달해야햐기 때문
-        byte[] bytes = IOUtils.toByteArray(objectInputStream);
+//        byte[] bytes = IOUtils.toByteArray(objectInputStream);
 
         // 여기는 httpHeader 에 파일 다운로드 요청을 하기 위한내용
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -123,7 +113,8 @@ public class S3FileService implements FileService{
         // 이를 통해서 header 에 따라서 다른 동작을 가능하게 할 수 있다 => 파일 다운로드!!
 
         // 나는 object가 변환된 byte 데이터, httpHeader 와 HttpStatus 가 포함된다.
-        return new ResponseEntity<>(bytes, httpHeaders, HttpStatus.OK);
+//        return new ResponseEntity<>(bytes, httpHeaders, HttpStatus.OK);
+        return null;
     }
 
 }
