@@ -66,12 +66,17 @@ public class RoomBatchJob {
             findDailyInfo.setDailyRoomCnt(dailyRoomCnt);
             dailyInfoRepository.save(findDailyInfo);
         } else {
+            analysisService.resetDailyInfo(); // dailyInfo 초기화
+
             DailyInfo dailyInfo = DailyInfo.builder()
-                    .dailyVisitor(dailyVisitor)
-                    .dailyRoomCnt(dailyRoomCnt)
+                    .dailyVisitor(0)
+                    .dailyRoomCnt(0)
                     .date(nowDate)
                     .build();
             dailyInfoRepository.save(dailyInfo);
+
+            log.info("##########################");
+            log.info("NEW DAY :: Reset Daily Info");
         }
 
         log.info("##########################");
