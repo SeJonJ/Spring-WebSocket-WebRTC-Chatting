@@ -1,31 +1,35 @@
 package webChat.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import webChat.dto.FileUploadDto;
-import webChat.service.file.S3FileService;
+import webChat.service.file.impl.MinioFileServiceImpl;
+
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/s3")
+@RequestMapping("/file")
+@RequiredArgsConstructor
 @Slf4j
 public class FileController {
 
-    @Autowired
-    private S3FileService fileService;
+    private final MinioFileServiceImpl fileService;
 
     // 프론트에서 ajax 를 통해 /upload 로 MultipartFile 형태로 파일과 roomId 를 전달받는다.
     // 전달받은 file 를 uploadFile 메서드를 통해 업로드한다.
     @PostMapping("/upload")
-    public FileUploadDto uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("roomId")String roomId){
+    public FileUploadDto uploadFile(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam("roomId")String roomId){
 
-//        FileUploadDto fileReq = fileService.uploadFile(file, UUID.randomUUID().toString(), roomId);
-//        log.info("최종 upload Data {}", fileReq);
+        FileUploadDto uploadFile = fileService.uploadFile(file, UUID.randomUUID().toString(), roomId);
+        log.info("최종 upload Data {}", uploadFile);
 
         // fileReq 객체 리턴
-        return null;
+        return uploadFile;
     }
 
     // get 으로 요청이 오면 아래 download 메서드를 실행한다.

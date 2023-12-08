@@ -1,19 +1,12 @@
 package webChat.service.file.impl;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.amazonaws.services.s3.transfer.TransferManager;
-import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
-import com.amazonaws.services.s3.transfer.Upload;
-import com.amazonaws.util.IOUtils;
+import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -21,54 +14,61 @@ import org.springframework.web.multipart.MultipartFile;
 import webChat.config.MinioConfig;
 import webChat.dto.FileUploadDto;
 import webChat.service.file.FileService;
-
-import java.io.File;
+import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class S3FileServiceImpl implements FileService {
+public class MinioFileServiceImpl implements FileService {
 
     private final MinioConfig minioConfig;
+    private MinioClient minioClient;
+
+    @PostConstruct
+    private void initMinioClient() {
+        minioClient = MinioClient.builder()
+                .endpoint(minioConfig.getUrl())
+                .credentials(minioConfig.getAccessKey(), minioConfig.getSecretKey())
+                .build();
+    }
 
     // MultipartFile 과 transcation, roomId 를 전달받는다.
     // 이때 transcation 는 파일 이름 중복 방지를 위한 UUID 를 의미한다.
     @Override
-    public FileUploadDto uploadFile(MultipartFile file, String transaction, String roomId) {
-        try{
+    public FileUploadDto uploadFile(MultipartFile file, String path, String roomId) {
+        String originFileName = file.getOriginalFilename();
+        String fullPath = roomId+"/"+path+"/"+originFileName;
 
-            String filename = file.getOriginalFilename(); // 파일원본 이름
-            String key = roomId+"/"+transaction+"/"+filename; // S3 파일 경로
-
-            // 매개변수로 넘어온 multipartFile 을 File 객체로 변환 시켜서 저장하기 위한 메서드
-            File convertedFile = convertMultipartFileToFile(file, transaction + filename);
-
-            // 아마존 S3 에 파일 업로드를 위해 사용하는 TransferManagerBuilder
-            TransferManager transferManager = TransferManagerBuilder
-                    .standard()
-                    .withS3Client(amazonS3)
+        try {
+            PutObjectArgs args = PutObjectArgs.builder()
+                    .bucket(minioConfig.getBucketName())
+                    .object(fullPath)
+                    .stream(file.getInputStream(), file.getSize(), -1)
+                    .contentType(file.getContentType())
                     .build();
 
-            // bucket 에 key 와 converedFile 을 이용해서 파일 업로드
-            Upload upload = transferManager.upload(bucket, key, convertedFile);
-            upload.waitForUploadResult();
+            minioClient.ignoreCertCheck();
+            minioClient.putObject(args);
 
-            // 변환된 File 객체 삭제
-            removeFile(convertedFile);
-
-            // uploadDTO 객체 빌드
-            FileUploadDto uploadReq = FileUploadDto.builder()
-                    .transaction(transaction)
-                    .chatRoom(roomId)
-                    .originFileName(filename)
-                    .fileDir(key)
-                    .s3DataUrl(baseUrl+"/"+key)
-                    .build();
+            String url = minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(Method.GET)
+                            .bucket(minioConfig.getBucketName())
+                            .object(fullPath)
+                            .expiry(10, TimeUnit.MINUTES)
+                            .build());
 
             // uploadDTO 객체 리턴
-            return uploadReq;
+            return new FileUploadDto().builder()
+                    .fileName(file.getName())
+                    .originFileName(originFileName)
+                    .roomId(roomId)
+                    .filePath(fullPath)
+                    .minioDataUrl(url)
+                    .build();
 
         } catch (Exception e) {
             log.error("fileUploadException {}", e.getMessage());
