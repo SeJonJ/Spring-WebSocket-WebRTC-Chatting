@@ -29,7 +29,10 @@ const roomId = url.get('roomId');
 
 function connect(event) {
     username = document.querySelector('#name').value.trim();
-
+    if (username === '' || !username) {
+        event.preventDefault();
+        return;
+    }
     // username 중복 확인
     isDuplicateName();
 
@@ -43,11 +46,7 @@ function connect(event) {
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, onConnected, onError);
-
-
     event.preventDefault();
-
-
 }
 
 function onConnected() {
@@ -81,7 +80,7 @@ function isDuplicateName() {
             "roomId": roomId
         },
         success: function (data) {
-            console.log("함수 동작 확인 : " + data);
+            // console.log("함수 동작 확인 : " + data);
 
             username = data;
         }
@@ -170,20 +169,20 @@ function onMessageReceived(payload) {
     }
 
     var contentElement = document.createElement('p');
-    debugger
     // 만약 minioDataUrl 의 값이 null 이 아니라면 => chat 내용이 파일 업로드와 관련된 내용이라면
     // img 를 채팅에 보여주는 작업
-    if(chat.minioDataUrl != null){
+    if(chat.file != null){
+        const file = chat.file;
         var imgElement = document.createElement('img');
-        imgElement.setAttribute("src", chat.minioDataUrl);
+        imgElement.setAttribute("src", file.minioDataUrl);
         imgElement.setAttribute("width", "300");
         imgElement.setAttribute("height", "300");
 
         var downBtnElement = document.createElement('button');
         downBtnElement.setAttribute("class", "btn fa fa-download");
         downBtnElement.setAttribute("id", "downBtn");
-        downBtnElement.setAttribute("name", chat.fileName);
-        downBtnElement.setAttribute("onclick", `downloadFile('${chat.filePath}', '${chat.filePath}')`);
+        downBtnElement.setAttribute("name", file.fileName);
+        downBtnElement.setAttribute("onclick", `downloadFile('${file.fileName}', '${file.filePath}')`);
 
         contentElement.appendChild(imgElement);
         contentElement.appendChild(downBtnElement);
@@ -253,15 +252,17 @@ function uploadFile(){
         contentType: false
     }).done(function (data){
         // console.log("업로드 성공")
+        if (data.status === 'FAIL') {
+            alert("서버와의 연결 문제로 파일 업로드에 실패했습니다 \n 잠시 후 다시 시도해주세요")
+            return;
+        }
 
         var chatMessage = {
             "roomId": roomId,
             sender: username,
             message: username+"님의 파일 업로드",
             type: 'TALK',
-            minioDataUrl : data.minioDataUrl, // Dataurl
-            "fileName": data.originFileName, // 원본 파일 이름
-            "filePath": data.filePath // 업로드 된 위치
+            file : data
         };
 
         // 해당 내용을 발신한다.
@@ -283,6 +284,7 @@ function downloadFile(name, dir){
     $.ajax({
         url: url, // 요청 url 은 download/{name}
         data: {
+            "fileName" : name,
             "filePath" : dir // 파일의 경로를 파라미터로 넣는다.
         },
         dataType: 'binary', // 파일 다운로드를 위해서는 binary 타입으로 받아야한다.

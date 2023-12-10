@@ -104,16 +104,15 @@ public class ChatServiceMain {
     public void delChatRoom(String roomId){
 
         try {
-            // 채팅방 타입에 따라서 단순히 채팅방만 삭제할지 업로드된 파일도 삭제할지 결정
             ChatRoomDto room = ChatRoomMap.getInstance().getChatRooms().remove(roomId);
 
-            if (room.getChatType().equals(ChatType.MSG)) { // MSG 채팅방은 사진도 추가 삭제
-                // 채팅방 안에 있는 파일 삭제
-                fileService.deleteFileDir(roomId);
-            } else {
+            if (room.getChatType().equals(ChatType.RTC)) {
                 KurentoRoomDto kurentoRoom = (KurentoRoomDto) room;
                 kurentoManager.removeRoom(kurentoRoom);
             }
+
+            // 채팅방 안에 있는 파일 삭제
+            fileService.deleteFileDir(roomId);
 
             log.info("삭제 완료 roomId : {}", roomId);
 
