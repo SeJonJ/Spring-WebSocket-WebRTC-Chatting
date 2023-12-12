@@ -65,6 +65,7 @@ function onConnected() {
         })
     )
 
+    fileUtil.init();
     connectingElement.classList.add('hidden');
 
 }
@@ -72,19 +73,22 @@ function onConnected() {
 // 유저 닉네임 중복 확인
 function isDuplicateName() {
 
-    $.ajax({
-        type: "GET",
-        url: "/chat/duplicateName",
-        data: {
-            "username": username,
-            "roomId": roomId
-        },
-        success: function (data) {
-            // console.log("함수 동작 확인 : " + data);
+    let url = '/chat/duplicateName';
+    let data = {
+        "username": username,
+        "roomId": roomId
+    }
 
-            username = data;
-        }
-    })
+    let successCallback = function(data){
+        // console.log("함수 동작 확인 : " + data);
+        username = data;
+    }
+
+    let errorCallback = function(error){
+        console.error(error)
+    }
+
+    ajax(url, 'GET', '', data, successCallback, errorCallback);
 
 }
 
@@ -93,21 +97,25 @@ function isDuplicateName() {
 function getUserList() {
     const $list = $("#list");
 
-    $.ajax({
-        type: "GET",
-        url: "/chat/userlist",
-        data: {
-            "roomId": roomId
-        },
-        success: function (data) {
-            var users = "";
-            for (let i = 0; i < data.length; i++) {
-                //console.log("data[i] : "+data[i]);
-                users += "<li class='dropdown-item'>" + data[i] + "</li>"
-            }
-            $list.html(users);
+    let url = '/chat/userlist';
+    let data = {
+        "roomId": roomId
+    }
+
+    let successCallback = function(data){
+        var users = "";
+        for (let i = 0; i < data.length; i++) {
+            //console.log("data[i] : "+data[i]);
+            users += "<li class='dropdown-item'>" + data[i] + "</li>"
         }
-    })
+        $list.html(users);
+    }
+
+    let errorCallback = function(error){
+        console.error(error)
+    }
+
+    ajax(url, 'GET', '', data, successCallback, errorCallback);
 }
 
 
@@ -182,7 +190,10 @@ function onMessageReceived(payload) {
         downBtnElement.setAttribute("class", "btn fa fa-download");
         downBtnElement.setAttribute("id", "downBtn");
         downBtnElement.setAttribute("name", file.fileName);
-        downBtnElement.setAttribute("onclick", `downloadFile('${file.fileName}', '${file.filePath}')`);
+
+        downBtnElement.addEventListener('click', function() {
+            fileUtil.downloadFile(file.fileName, file.filePath);
+        });
 
         contentElement.appendChild(imgElement);
         contentElement.appendChild(downBtnElement);
@@ -213,90 +224,3 @@ function getAvatarColor(messageSender) {
 
 usernameForm.addEventListener('submit', connect, true)
 messageForm.addEventListener('submit', sendMessage, true)
-
-/// 파일 업로드 부분 ////
-function uploadFile(){
-    var file = $("#file")[0].files[0];
-    var formData = new FormData();
-    formData.append("file",file);
-    formData.append("roomId", roomId);
-
-    // 확장자 추출
-    var fileDot = file.name.lastIndexOf(".");
-
-    // 확장자 검사
-    var fileType = file.name.substring(fileDot + 1, file.name.length);
-    // console.log("type : " + fileType);
-
-    if (!(fileType == "png" || fileType == "jpg" || fileType == "jpeg" || fileType == "gif"))
-    {
-        alert("파일 업로드는 png, jpg, gif, jpeg 만 가능합니다");
-        return;
-    }
-
-    // ajax 로 multipart/form-data 를 넘겨줄 때는
-    //         processData: false,
-    //         contentType: false
-    // 처럼 설정해주어야 한다.
-
-    // 동작 순서
-    // post 로 rest 요청한다.
-    // 1. 먼저 upload 로 파일 업로드를 요청한다.
-    // 2. upload 가 성공적으로 완료되면 data 에 upload 객체를 받고,
-    // 이를 이용해 chatMessage 를 작성한다.
-    $.ajax({
-        type : 'POST',
-        url : '/file/upload',
-        data : formData,
-        processData: false,
-        contentType: false
-    }).done(function (data){
-        // console.log("업로드 성공")
-        if (data.status === 'FAIL') {
-            alert("서버와의 연결 문제로 파일 업로드에 실패했습니다 \n 잠시 후 다시 시도해주세요")
-            return;
-        }
-
-        var chatMessage = {
-            "roomId": roomId,
-            sender: username,
-            message: username+"님의 파일 업로드",
-            type: 'TALK',
-            file : data
-        };
-
-        // 해당 내용을 발신한다.
-        stompClient.send("/pub/chat/sendMessage", {}, JSON.stringify(chatMessage));
-    }).fail(function (error){
-        alert(error);
-    })
-}
-
-// 파일 다운로드 부분 //
-// 버튼을 누르면 downloadFile 메서드가 실행됨
-// 다운로드 url 은 /s3/download+원본파일이름
-function downloadFile(name, dir){
-    // console.log("파일 이름 : "+name);
-    // console.log("파일 경로 : " + dir);
-    let url = "/file/download/"+name;
-
-    // get 으로 rest 요청한다.
-    $.ajax({
-        url: url, // 요청 url 은 download/{name}
-        data: {
-            "fileName" : name,
-            "filePath" : dir // 파일의 경로를 파라미터로 넣는다.
-        },
-        dataType: 'binary', // 파일 다운로드를 위해서는 binary 타입으로 받아야한다.
-        xhrFields: {
-            'responseType': 'blob' // 여기도 마찬가지
-        },
-        success: function(data) {
-
-            var link = document.createElement('a');
-            link.href = URL.createObjectURL(data);
-            link.download = name;
-            link.click();
-        }
-    });
-}

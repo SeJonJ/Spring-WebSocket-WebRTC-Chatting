@@ -29,27 +29,27 @@ $(function () {
 
     function checkVisitor() {
         let url = "https://" + location.host + "/visitor";
+        let data = {
+            "isVisitedToday": sessionStorage.getItem("isVisitedToday")
+        };
 
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: {
-                "visitedToday": sessionStorage.getItem("visitedToday")
-            },
-            success: function (data) {
-                dailyVisitor = data;
-                $('#visitorCount').text('방문자 수 : ' + dailyVisitor);
-            },
-            error: function (error) {
-                console.error("Error fetching data: ", error);
-            },
-            complete: function () {
-                // 일일 방문자 check
-                if (!sessionStorage.getItem('visitedToday') || sessionStorage.getItem('visitedToday') === false) {
-                    sessionStorage.setItem('visitedToday', 'true');
-                }
+        let successCallback = function(data){
+            dailyVisitor = data;
+            $('#visitorCount').text('방문자 수 : ' + dailyVisitor);
+        };
+
+        let errorCallback = function(error){
+            console.error("Error ajax data: ", error);
+        };
+
+        let completeCallback = function (result) {
+            // 일일 방문자 check
+            if (!sessionStorage.getItem('isVisitedToday') || sessionStorage.getItem('isVisitedToday') === false) {
+                sessionStorage.setItem('isVisitedToday', 'true');
             }
-        });
+        };
+
+        ajax(url, 'POST', '', data, successCallback, errorCallback, completeCallback);
     }
     checkVisitor();
 
@@ -81,7 +81,6 @@ $(function () {
     })
 })
 
-
 // 채팅방 설정 시 비밀번호 확인 - keyup 펑션 활용
 function confirmPWD() {
     $("#confirmPwd").on("keyup", function () {
@@ -89,42 +88,45 @@ function confirmPWD() {
         const $configRoomBtn = $("#configRoomBtn");
         let $confirmLabel = $("#confirmLabel");
 
-        $.ajax({
-            type: "post",
-            url: "/chat/confirmPwd/" + roomId,
-            data: {
+        let url = '/chat/confirmPwd/' + roomId
+        let data = {
                 "roomPwd": $confirmPwd
-            },
-            success: function (result) {
-                // console.log("동작완료")
+        };
+        let successCallback = function(result){
+            // console.log("동작완료")
 
-                // result 의 결과에 따라서 아래 내용 실행
-                if (result) { // true 일때는
-                    // $configRoomBtn 를 활성화 상태로 만들고 비밀번호 확인 완료를 출력
-                    $configRoomBtn.attr("class", "btn btn-primary");
-                    $configRoomBtn.attr("aria-disabled", false);
+            // result 의 결과에 따라서 아래 내용 실행
+            if (result) { // true 일때는
+                // $configRoomBtn 를 활성화 상태로 만들고 비밀번호 확인 완료를 출력
+                $configRoomBtn.attr("class", "btn btn-primary");
+                $configRoomBtn.attr("aria-disabled", false);
 
-                    $confirmLabel.html("<span id='confirm'>비밀번호 확인 완료</span>");
-                    $("#confirm").css({
-                        "color": "#0D6EFD",
-                        "font-weight": "bold",
-                    });
+                $confirmLabel.html("<span id='confirm'>비밀번호 확인 완료</span>");
+                $("#confirm").css({
+                    "color": "#0D6EFD",
+                    "font-weight": "bold",
+                });
 
-                } else { // false 일때는
-                    // $configRoomBtn 를 비활성화 상태로 만들고 비밀번호가 틀립니다 문구를 출력
-                    $configRoomBtn.attr("class", "btn btn-primary disabled");
-                    $configRoomBtn.attr("aria-disabled", true);
+            } else { // false 일때는
+                // $configRoomBtn 를 비활성화 상태로 만들고 비밀번호가 틀립니다 문구를 출력
+                $configRoomBtn.attr("class", "btn btn-primary disabled");
+                $configRoomBtn.attr("aria-disabled", true);
 
-                    $confirmLabel.html("<span id='confirm'>비밀번호가 틀립니다</span>");
-                    $("#confirm").css({
-                        "color": "#FA3E3E",
-                        "font-weight": "bold",
-                    });
+                $confirmLabel.html("<span id='confirm'>비밀번호가 틀립니다</span>");
+                $("#confirm").css({
+                    "color": "#FA3E3E",
+                    "font-weight": "bold",
+                });
 
-                }
             }
-        })
-    })
+        };
+
+        let errorCallback = function (error) {
+          console.error(error)
+        };
+
+        ajax(url, 'POST', '', data, successCallback, errorCallback);
+    });
 }
 
 // 채팅 인원 숫자만 정규식 체크
@@ -200,28 +202,31 @@ function createRoom() {
 
 // 채팅방 입장 시 비밀번호 확인
 function enterRoom() {
-    let $enterPwd = $("#enterPwd").val();
+    let $enterPwd = $('#enterPwd').val();
 
-    $.ajax({
-        type: "post",
-        url: "/chat/confirmPwd/" + roomId,
-        async: false,
-        data: {
-            "roomPwd": $enterPwd
-        },
-        success: function (result) {
-            // console.log("동작완료")
-            // console.log("확인 : "+chkRoomUserCnt(roomId))
+    let url = '/chat/confirmPwd/' + roomId;
+    let data = {
+        'roomPwd': $enterPwd
+    };
+    let successCallback = function (result) {
+        // console.log("동작완료")
+        // console.log("확인 : "+chkRoomUserCnt(roomId))
 
-            if (result) {
-                if (chkRoomUserCnt(roomId)) {
-                    location.href = "/chat/room?roomId=" + roomId;
-                }
-            } else {
-                alert("비밀번호가 틀립니다. \n 비밀번호를 확인해주세요")
+        if (result) {
+            let enterRoomFnc = function(){
+                location.href = '/chat/room?roomId=' + roomId;
             }
+            chkRoomUserCnt(roomId, enterRoomFnc);
+
+        } else {
+            alert("비밀번호가 틀립니다. \n 비밀번호를 확인해주세요");
         }
-    })
+    };
+    let errorCallback = function (error) {
+        console.error(error);
+    }
+
+    ajax(url, 'POST', false, data, successCallback, errorCallback);
 }
 
 // 채팅방 삭제
@@ -230,25 +235,24 @@ function delRoom() {
 }
 
 // 채팅방 입장 시 인원 수에 따라서 입장 여부 결정
-function chkRoomUserCnt(roomId) {
-    let chk;
+function chkRoomUserCnt(roomId, enterRoom) {
+    let url = '/chat/chkUserCnt/' + roomId;
+    let successCallback = function (result) {
+        // console.log("여기가 먼저")
+        if (!result) {
+            alert("채팅방이 꽉 차서 입장 할 수 없습니다");
+            return;
+        }
 
-    // 비동기 처리 설정 false 로 변경 => ajax 통신이 완료된 후 return 문 실행
+        enterRoom();
+    };
+    let errorCallback = function (error) {
+        console.error(error);
+    }
+
+    // 비동기 처리 false 인 경우에는 ajax 통신이 완료된 후 return 문 실행
     // 기본설정 async = true 인 경우에는 ajax 통신 후 결과가 나올 때까지 기다리지 않고 먼저 return 문이 실행되서
     // 제대로된 값 - 원하는 값 - 이 return 되지 않아서 문제가 발생한다.
-    $.ajax({
-        type: "GET",
-        url: "/chat/chkUserCnt/" + roomId,
-        async: false,
-        success: function (result) {
+    ajax(url, 'GET', 'false', '', successCallback, errorCallback);
 
-            // console.log("여기가 먼저")
-            if (!result) {
-                alert("채팅방이 꽉 차서 입장 할 수 없습니다");
-            }
-
-            chk = result;
-        }
-    })
-    return chk;
 }

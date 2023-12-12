@@ -34,7 +34,7 @@ public class FileController {
 
     // get 으로 요청이 오면 아래 download 메서드를 실행한다.
     // fileName 과 파라미터로 넘어온 fileDir 을 getObject 메서드에 매개변수로 넣는다.
-    @GetMapping("/download/{fileName}")
+    @PostMapping("/download/{fileName}")
     public ResponseEntity<byte[]> download(
             @RequestParam("fileName")String fileName,
             @RequestParam("filePath")String filePath){

@@ -41,10 +41,10 @@ public class MinioConfig {
                 .endpoint(this.getUrl())
                 .credentials(this.getAccessKey(), this.getSecretKey())
                 .build();
-//        try {
-//            minioClient.ignoreCertCheck(); // ssl 인증 연결 무시
-//        } catch (KeyManagementException | NoSuchAlgorithmException e) {
-//            throw new RuntimeException(e);
-//        }
+        try {
+            minioClient.ignoreCertCheck(); // ssl 인증 연결 무시
+        } catch (KeyManagementException | NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

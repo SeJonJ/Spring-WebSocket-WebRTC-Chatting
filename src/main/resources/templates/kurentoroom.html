@@ -75,7 +75,7 @@
             <div class="footer">
                 <div class="absolute bottom-2 md:bottom-3 left-2 md:left-4">
                     <div class="flex">
-                        <button class="btn relative p-0 text-black dark:text-white" aria-label="Attach files">
+                        <button class="btn relative p-0 text-black dark:text-white" id="uploadFile" aria-label="Attach files">
                             <div class="flex w-full gap-2 items-center justify-center">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                      xmlns="http://www.w3.org/2000/svg">
@@ -94,6 +94,8 @@
     </div>
     <!-- chatting end -->
 </div>
+<script src="/js/common/ajaxUtil.js"></script>
+<script src="/js/common/fileUtil.js"></script>
 <script src="/js/rtc/participant.js"></script>
 <script src="/js/rtc/kurento-utils.js"></script>
 <script src="/js/rtc/kurento-service.js"></script>
