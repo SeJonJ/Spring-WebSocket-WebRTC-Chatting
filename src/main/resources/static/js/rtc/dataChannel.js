@@ -29,7 +29,33 @@ const dataChannel = {
     handleDataChannelMessageReceived: function(event) {
         if (this.isNullOrUndefined(event)) return;
         // console.log("dataChannel.OnMessage:", event);
-        this.showNewMessage(event.data, "other")
+        let recvMessage = JSON.parse(event.data);
+
+        if (recvMessage.type === "file") {
+            // 파일 메시지 처리
+            console.log("Received file:", recvMessage.fileName);
+
+            // 전송 후 받아온 파일 데이터를 Blob 객체로 변환
+            const blob = new Blob([recvMessage.fileData], {type: recvMessage.fileType});
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = recvMessage.fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            // 굳이...데이터 채널로 보낼 필요가 있어...?
+            // 1. server ajax 통신 -> 파일 업로드
+            // 2. server ajax 통신 -> 파일 다운로드 링크 생성
+            // 3. 해당 링크 누르면 다운로드 되도록 하면 끝 아님??
+        } else {
+            // 일반 메시지 처리
+            let message = recvMessage.userName + " : " + recvMessage.message;
+            this.showNewMessage(message, "other");
+        }
     },
     handleDataChannelError: function(error) {
         if (this.isNullOrUndefined(error)) return;
