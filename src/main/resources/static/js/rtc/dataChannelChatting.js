@@ -1,9 +1,9 @@
 /*
-* dataChannel 을 사용한 채팅을 위한 js
+* dataChannel 채팅을 위한 js
 * */
 const dataChannelChatting = {
     element: $('.floating-chat'),
-    $sendMessageBtn : $("#sendMessageBtn"),
+    $sendMessageBtn : $('#sendMessageBtn'),
     userTextInput :  $('.text-box'),
     messagesContainer : $('.messages'),
     init: function() {
@@ -25,12 +25,12 @@ const dataChannelChatting = {
                 // shift + enter 사용 시 한줄 띄우기
             } else if (event.which === 13) {
                 event.preventDefault(); // 기본 동작(한줄 띄우기)을 방지
-                dataChannel.showNewMessage(self.parseMessage(self.userTextInput), "self");
+                dataChannel.showNewMessage(self.parseMessage(self.userTextInput), 'self');
             }
         });
 
         this.$sendMessageBtn.on("click", function(){
-            dataChannel.showNewMessage(self.parseMessage(self.userTextInput), "self");
+            dataChannel.showNewMessage(self.parseMessage(self.userTextInput), 'self');
         });
 
     },

@@ -252,3 +252,65 @@ body {
     margin-right: 0;
   }
 }
+
+/*.floating-chat .chat .messages img {*/
+/*  position: relative;*/
+/*  clear: both;*/
+/*  display: inline-block;*/
+/*  padding: 14px;*/
+/*  margin: 0 0 20px 0;*/
+/*  font: 12px/16px "Noto Sans", sans-serif;*/
+/*  border-radius: 10px;*/
+/*  background-color: rgba(25, 147, 147, 0.2);*/
+/*  word-wrap: break-word;*/
+/*  max-width: 81%;*/
+/*}*/
+/*.floating-chat .chat .messages img:before {*/
+/*  position: absolute;*/
+/*  top: 0;*/
+/*  width: 25px;*/
+/*  height: 25px;*/
+/*  border-radius: 25px;*/
+/*  content: "";*/
+/*  background-size: cover;*/
+/*}*/
+/*.floating-chat .chat .messages img:after {*/
+/*  position: absolute;*/
+/*  top: 10px;*/
+/*  content: "";*/
+/*  width: 0;*/
+/*  height: 0;*/
+/*  border-top: 10px solid rgba(25, 147, 147, 0.2);*/
+/*}*/
+/*.floating-chat .chat .messages img.other {*/
+/*  animation: show-chat-odd 0.15s 1 ease-in;*/
+/*  -moz-animation: show-chat-odd 0.15s 1 ease-in;*/
+/*  -webkit-animation: show-chat-odd 0.15s 1 ease-in;*/
+/*  float: right;*/
+/*  margin-right: 45px;*/
+/*  color: #0ad5c1;*/
+/*}*/
+/*.floating-chat .chat .messages img.other:before {*/
+/*  right: -45px;*/
+/*  background-image: url(https://github.com/Thatkookooguy.png);*/
+/*}*/
+/*.floating-chat .chat .messages img.other:after {*/
+/*  border-right: 10px solid transparent;*/
+/*  right: -10px;*/
+/*}*/
+/*.floating-chat .chat .messages img.self {*/
+/*  animation: show-chat-even 0.15s 1 ease-in;*/
+/*  -moz-animation: show-chat-even 0.15s 1 ease-in;*/
+/*  -webkit-animation: show-chat-even 0.15s 1 ease-in;*/
+/*  float: left;*/
+/*  margin-left: 45px;*/
+/*  color: #0ec879;*/
+/*}*/
+/*.floating-chat .chat .messages img.self:before {*/
+/*  left: -45px;*/
+/*  background-image: url(https://github.com/ortichon.png);*/
+/*}*/
+/*.floating-chat .chat .messages img.self:after {*/
+/*  border-left: 10px solid transparent;*/
+/*  left: -10px;*/
+/*}*/

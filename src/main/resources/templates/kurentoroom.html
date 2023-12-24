@@ -85,7 +85,8 @@
                                 </svg>
                             </div>
                         </button>
-                        <input multiple="" type="file" tabindex="-1" style="display: none;"></div>
+                        <input type="file" id="file" style="display: none;" />
+                    </div>
                 </div>
                 <div class="text-box" contenteditable="true" disabled="true"></div>
                 <button id="sendMessage">send</button>
@@ -95,12 +96,12 @@
     <!-- chatting end -->
 </div>
 <script src="/js/common/ajaxUtil.js"></script>
-<script src="/js/common/fileUtil.js"></script>
 <script src="/js/rtc/participant.js"></script>
 <script src="/js/rtc/kurento-utils.js"></script>
 <script src="/js/rtc/kurento-service.js"></script>
 <script src="/js/rtc/dataChannel.js"></script>
 <script src="/js/rtc/dataChannelChatting.js"></script>
+<script src="/js/rtc/dataChannelFileUtil.js"></script>
 </body>
 </html>
 

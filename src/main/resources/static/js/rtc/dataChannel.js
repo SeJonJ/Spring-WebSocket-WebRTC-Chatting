@@ -26,31 +26,23 @@ const dataChannel = {
         // console.log("dataChannel.OnOpen", event);
         this.sendMessage("등장!!")
     },
-    handleDataChannelMessageReceived: function(event) {
+    handleDataChannelMessageReceived: function(event) { // datachannel 메시지 받는 부분
         if (this.isNullOrUndefined(event)) return;
         // console.log("dataChannel.OnMessage:", event);
         let recvMessage = JSON.parse(event.data);
 
         if (recvMessage.type === "file") {
+            let file = recvMessage.fileMeta;
+
             // 파일 메시지 처리
-            console.log("Received file:", recvMessage.fileName);
+            console.log("Received file:", file.fileName);
 
-            // 전송 후 받아온 파일 데이터를 Blob 객체로 변환
-            const blob = new Blob([recvMessage.fileData], {type: recvMessage.fileType});
+            let sendUser = recvMessage.userName;
+            let message = sendUser + " 님이 파일을 업로드하였습니다";
 
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = recvMessage.fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            this.showNewMessage(message, 'other');
+            this.showNewFileMessage(file, 'other');
 
-            // 굳이...데이터 채널로 보낼 필요가 있어...?
-            // 1. server ajax 통신 -> 파일 업로드
-            // 2. server ajax 통신 -> 파일 다운로드 링크 생성
-            // 3. 해당 링크 누르면 다운로드 되도록 하면 끝 아님??
         } else {
             // 일반 메시지 처리
             let message = recvMessage.userName + " : " + recvMessage.message;
@@ -67,9 +59,21 @@ const dataChannel = {
     },
     sendMessage: function(message) {
         if (this.isNullOrUndefined(message)) return;
-        this.user.rtcPeer.send(this.user.name + " : " + message);
+        let messageData = {
+            type : "message",
+            userName : this.user.name,
+            message : message
+        }
+
+        this.user.rtcPeer.send(JSON.stringify(messageData));
     },
-    showNewMessage: function(recvMessage, type) { // 이거는 datachannelChatting 으로 넘어가야하는거...?
+    sendFileMessage : function(fileMeta){
+        fileMeta.userName = this.user.name;
+        this.user.rtcPeer.send(JSON.stringify(fileMeta));
+        this.showNewFileMessage(fileMeta.fileMeta, 'self');
+    },
+    showNewMessage: function(recvMessage, type) {
+        // TODO 이거는 datachannelChatting 으로 넘어가야하는거...? 고민할것! => 넘어가는게 맞는듯ㅠ
         // 기본은 '나'가 보낸것
         type = type === undefined ? 'self' : type;
 
@@ -101,5 +105,31 @@ const dataChannel = {
                 '</li>'
             ].join(''));
         }
+    },
+    showNewFileMessage : function(file, type){
+
+        // 이미지 요소 생성 및 설정
+        var imgElement = $('<img>', {
+            src: file.minioDataUrl,
+            width: 300,
+            height: 300
+        });
+        imgElement.addClass(type);
+
+        // 다운로드 버튼 요소 생성 및 설정
+        var downBtnElement = $('<button>', {
+            class: 'btn fa fa-download',
+            id: 'downBtn',
+            name: file.fileName
+        }).on('click', function() {
+            dataChannelFileUtil.downloadFile(file.fileName, file.filePath);
+        });
+
+        // contentElement 생성
+        var contentElement = $('<li>').append(imgElement, downBtnElement);
+        contentElement.addClass(type);
+
+        // messagesContainer에 contentElement 추가
+        dataChannelChatting.messagesContainer.append(contentElement);
     }
 }
