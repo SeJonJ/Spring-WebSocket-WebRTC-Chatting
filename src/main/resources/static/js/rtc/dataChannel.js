@@ -80,7 +80,7 @@ const dataChannel = {
         if (type === 'self') {
             if (!recvMessage) return;
 
-            dataChannelChatting.messagesContainer.append([
+            dataChannelChatting.$messagesContainer.append([
                 '<li class="self">',
                 recvMessage,
                 '</li>'
@@ -89,17 +89,17 @@ const dataChannel = {
             this.sendMessage(recvMessage);
 
             // clean out old message
-            dataChannelChatting.userTextInput.html('');
+            dataChannelChatting.$userTextInput.html('');
 
             // focus on input
-            dataChannelChatting.userTextInput.focus();
+            dataChannelChatting.$userTextInput.focus();
 
-            dataChannelChatting.messagesContainer.finish().animate({
-                scrollTop: dataChannelChatting.messagesContainer.prop("scrollHeight")
+            dataChannelChatting.$messagesContainer.finish().animate({
+                scrollTop: dataChannelChatting.$messagesContainer.prop("scrollHeight")
             }, 250);
 
         } else {
-            dataChannelChatting.messagesContainer.append([
+            dataChannelChatting.$messagesContainer.append([
                 '<li class="other">',
                 recvMessage,
                 '</li>'
@@ -129,7 +129,7 @@ const dataChannel = {
         var contentElement = $('<li>').append(imgElement, downBtnElement);
         contentElement.addClass(type);
 
-        // messagesContainer에 contentElement 추가
-        dataChannelChatting.messagesContainer.append(contentElement);
+        // $messagesContainer에 contentElement 추가
+        dataChannelChatting.$messagesContainer.append(contentElement);
     }
 }
