@@ -37,4 +37,6 @@ public interface FileService {
     }
 
     ResponseEntity<byte[]> getObject(String fileName, String filePath) throws Exception;
+
+    void uploadFileSizeCheck(MultipartFile file);
 }

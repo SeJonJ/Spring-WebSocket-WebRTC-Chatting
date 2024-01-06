@@ -9,6 +9,7 @@ import webChat.dto.ChatRoomMap;
 import webChat.dto.KurentoRoomDto;
 import webChat.service.admin.AdminService;
 import webChat.service.chat.KurentoManager;
+import webChat.service.file.FileService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 public class AdminServiceImpl implements AdminService {
 
     private final KurentoManager kurentoManager;
+    private final FileService fileService;
 
     @Override
     public Map<String, Object> getAllRooms() {
@@ -52,9 +54,11 @@ public class AdminServiceImpl implements AdminService {
 
         if (kurentoRoom.isPresent()) {
             kurentoManager.removeRoom(kurentoRoom.get());
-
             return "success del chatroom";
         }
+
+        // room 안에 있는 파일 삭제
+        fileService.deleteFileDir(roomId);
 
         return "no such room exist";
     }

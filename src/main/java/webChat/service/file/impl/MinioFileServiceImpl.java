@@ -6,6 +6,7 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.IOUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,11 +14,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import webChat.config.MinioConfig;
+import webChat.controller.ExceptionController;
 import webChat.dto.FileDto;
 import webChat.service.file.FileService;
+import webChat.utils.StringUtil;
 
 import javax.annotation.PostConstruct;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +33,9 @@ public class MinioFileServiceImpl implements FileService {
 
     private final MinioConfig minioConfig;
     private MinioClient minioClient;
+
+    @Value("${allowed.file_extension}")
+    ArrayList<String> allowedFileExtensions;
 
     @PostConstruct
     private void initMinioClient() {
@@ -42,6 +49,8 @@ public class MinioFileServiceImpl implements FileService {
         String originFileName = file.getOriginalFilename();
         String path = UUID.randomUUID().toString().split("-")[0];
         String fullPath = roomId + "/" + path + "/" + originFileName;
+
+        this.uploadFileSizeCheck(file);
 
         try {
             PutObjectArgs args = PutObjectArgs.builder()
@@ -102,6 +111,7 @@ public class MinioFileServiceImpl implements FileService {
                         .build());
             }
         } catch (Exception e) {
+            log.error("error Message ::: {}", e.getCause());
             e.printStackTrace();
         }
     }
@@ -138,6 +148,14 @@ public class MinioFileServiceImpl implements FileService {
 
         // 나는 object가 변환된 byte 데이터, httpHeader 와 HttpStatus 가 포함된다.
         return new ResponseEntity<>(bytes, httpHeaders, HttpStatus.OK);
+    }
+
+    @Override
+    public void uploadFileSizeCheck(MultipartFile file) {
+        String extension = StringUtil.getExtension(file);
+        if (!allowedFileExtensions.contains(extension)) {
+            throw new ExceptionController.FileExtensionException("file extension exception");
+        }
     }
 
 }

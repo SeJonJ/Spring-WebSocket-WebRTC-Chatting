@@ -62,7 +62,14 @@ const dataChannelFileUtil = {
         };
 
         let errorCallback = function (error) {
-
+            let errorJson = error?.responseJSON;
+            if (!errorJson) {
+                alert('파일 업로드 용량 또는 파일 확장자를 확인해주세요 \n 확장자 : jpg, jepg, png, gif \n 용량 제한 : Max 10MB');
+                return;
+            }
+            if (errorJson?.code === '40022') {
+                alert('업로드는 jpg, jepg, png, gif 파일 만 가능합니다');
+            }
         };
 
         // 2. 서버에 파일 전송
