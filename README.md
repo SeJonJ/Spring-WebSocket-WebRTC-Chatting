@@ -1,4 +1,4 @@
-# SpringBoot WebSocket Chatting Project
+# SpringBoot WebRTC Chatting Project
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FSeJonJ%2FSpring-WebSocket-Chatting&count_bg=%233310C8&title_bg=%2316C86B&icon=&icon_color=%23E7E7E7&title=HITS&edge_flat=true)](https://hits.seeyoufarm.com)
 
 ## 0. Spring Boot 와 WebSocket 을 활용한 채팅 만들기 프로젝트
@@ -36,11 +36,8 @@
      - RestAPI 기반 메시지 전송/수신
    - 채팅방 유저 리스트 & 유저 숫자 확인
 2) 채팅방 추가 기능
-   - Amazon S3 기반으로 하는 채팅방 파일 업로드&다운로드 
-     - jquery, ajax 활용
    - 채팅방 암호화 - 09.12 완료
    - 채팅방 삭제
-     - ~~채팅방 삭제 시 해당 채팅방 안에 있는 파일들도 S3 에서 함께 삭제~~
    - 채팅방 유저 인원 설정
      - 인원 제한 시 제한 된 인원만 채팅 참여 가능
 3) 화상채팅 기능 - WebRTC
@@ -56,6 +53,12 @@
 5) ChatForYou 모니터링 : 성능 모니터링 및 black list 제한
    - 성능 모니터링을 위한 prometheus 및 grafana 와 연동
    - black list 에 해당하는 IP 가 접속 시 접속 차단
+6) minIO Object Storage : 파일 업로드/다운로드 기능
+   - minIO Object Storage 를 사용하여 파일 업로드/다운로드 기능 구현  
+   - 화상 채팅 방의 경우 dataChannel 을 사용해 파일 정보 전송  
+   - 파일 확장자 제한 및 업로드 용량 제한 로직 추가  
+   -> 확장자 제한 : jpg, jpeg, png, gif  
+   -> 용량 제한 : MAX 10MB
 
 ## 5. 구동방법
 1) Server Installation  
@@ -121,6 +124,8 @@ This site is only for studying various functions using WebRTC and WebSocket tech
 ### Grafana 성능 모니터링 && Access 모니터링  
 ![monitoring.png](info%2Fmonitoring.png)
 
+### DataChannel file Up/Download
+![chatforyou_fileupdown.gif](info%2Fchatforyou_fileupdown.gif)
 
 ## Reference
 https://github.com/Benkoff/WebRTC-SS

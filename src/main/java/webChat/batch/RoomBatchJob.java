@@ -12,6 +12,7 @@ import webChat.dto.KurentoRoomDto;
 import webChat.repository.DailyInfoRepository;
 import webChat.service.analysis.AnalysisService;
 import webChat.service.chat.KurentoManager;
+import webChat.service.file.FileService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,6 +29,7 @@ public class RoomBatchJob {
     private final KurentoManager kurentoManager;
     private final AnalysisService analysisService;
     private final DailyInfoRepository dailyInfoRepository;
+    private final FileService fileService;
 
     @Scheduled(cron = "0 0,30 * * * *", zone = "Asia/Seoul") // 매 시간 30분에 실행 , 타임존 seoul 기준
     public void checkRoom() {
@@ -43,6 +45,9 @@ public class RoomBatchJob {
                         if (room.getChatType().equals(ChatType.RTC)) {
                             kurentoManager.removeRoom((KurentoRoomDto) room);
                         }
+                        // room 에서 업로드된 모든 파일 삭제
+                        fileService.deleteFileDir(room.getRoomId());
+
                         delRoomCnt.incrementAndGet();
                     }
                 });

@@ -56,6 +56,7 @@ var initTurnServer = function(){
 var initDataChannel = function () {
     dataChannel.init();
     dataChannelChatting.init();
+    dataChannelFileUtil.init();
 }
 
 let constraints = {

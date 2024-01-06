@@ -98,20 +98,4 @@ public class MonitoringServiceImpl implements MonitoringService,HandlerIntercept
             throw new ExceptionController.AccessForbiddenException("can not find ipAddrs");
         }
     }
-
-//    @Override
-//    public Boolean checkBlackList(ClientInfo clientInfo) {
-//
-//        try {
-//            ClassPathResource blackList = new ClassPathResource("geodata/GeoLite2-ASN-Blocks-IPv4.json");
-//            InputStream inputStream = blackList.getInputStream();
-//            ObjectMapper mapper = new ObjectMapper();
-//            JsonNode jsonNode = mapper.readTree(inputStream);
-//            return false;
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//    }
-
 }

@@ -9,7 +9,7 @@ import webChat.dto.ChatUserDto.ChatUserDtoBuilder;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2023-12-06T20:29:09+0900",
+    date = "2024-01-06T13:59:20+0900",
     comments = "version: 1.4.2.Final, compiler: javac, environment: Java 11.0.11 (AdoptOpenJDK)"
 )
 @Component

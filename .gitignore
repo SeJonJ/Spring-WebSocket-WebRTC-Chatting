@@ -42,3 +42,4 @@ out/
 /src/main/generated/webChat/mapper/ChatUserMapperImpl.java
 /src/main/generated/webChat/mapper/DailyInfoMapperImpl.java
 /src/main/resources/geodata/
+/src/main/resources/ssl/

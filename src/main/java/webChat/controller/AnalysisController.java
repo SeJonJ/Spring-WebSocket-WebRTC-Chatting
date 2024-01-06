@@ -15,9 +15,9 @@ public class AnalysisController {
     private final AnalysisService analysisService;
 
     @PostMapping(value = "/visitor", produces="application/json; charset=UTF8")
-    @ResponseBody
-    public int getDailyVisitor(@RequestParam(defaultValue = "false") Boolean visitedToday){
-        if(visitedToday){
+    public @ResponseBody int getDailyVisitor(
+            @RequestParam(defaultValue = "false") Boolean isVisitedToday){
+        if(isVisitedToday){
             return analysisService.getDailyVisitor();
         }
         return analysisService.increaseVisitor();

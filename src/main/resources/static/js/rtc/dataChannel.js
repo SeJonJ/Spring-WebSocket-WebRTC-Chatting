@@ -26,10 +26,28 @@ const dataChannel = {
         // console.log("dataChannel.OnOpen", event);
         this.sendMessage("등장!!")
     },
-    handleDataChannelMessageReceived: function(event) {
+    handleDataChannelMessageReceived: function(event) { // datachannel 메시지 받는 부분
         if (this.isNullOrUndefined(event)) return;
         // console.log("dataChannel.OnMessage:", event);
-        this.showNewMessage(event.data, "other")
+        let recvMessage = JSON.parse(event.data);
+
+        if (recvMessage.type === "file") {
+            let file = recvMessage.fileMeta;
+
+            // 파일 메시지 처리
+            console.log("Received file:", file.fileName);
+
+            let sendUser = recvMessage.userName;
+            let message = sendUser + " 님이 파일을 업로드하였습니다";
+
+            this.showNewMessage(message, 'other');
+            this.showNewFileMessage(file, 'other');
+
+        } else {
+            // 일반 메시지 처리
+            let message = recvMessage.userName + " : " + recvMessage.message;
+            this.showNewMessage(message, "other");
+        }
     },
     handleDataChannelError: function(error) {
         if (this.isNullOrUndefined(error)) return;
@@ -41,16 +59,28 @@ const dataChannel = {
     },
     sendMessage: function(message) {
         if (this.isNullOrUndefined(message)) return;
-        this.user.rtcPeer.send(this.user.name + " : " + message);
+        let messageData = {
+            type : "message",
+            userName : this.user.name,
+            message : message
+        }
+
+        this.user.rtcPeer.send(JSON.stringify(messageData));
     },
-    showNewMessage: function(recvMessage, type) { // 이거는 datachannelChatting 으로 넘어가야하는거...?
+    sendFileMessage : function(fileMeta){
+        fileMeta.userName = this.user.name;
+        this.user.rtcPeer.send(JSON.stringify(fileMeta));
+        this.showNewFileMessage(fileMeta.fileMeta, 'self');
+    },
+    showNewMessage: function(recvMessage, type) {
+        // TODO 이거는 datachannelChatting 으로 넘어가야하는거...? 고민할것! => 넘어가는게 맞는듯ㅠ
         // 기본은 '나'가 보낸것
         type = type === undefined ? 'self' : type;
 
         if (type === 'self') {
             if (!recvMessage) return;
 
-            dataChannelChatting.messagesContainer.append([
+            dataChannelChatting.$messagesContainer.append([
                 '<li class="self">',
                 recvMessage,
                 '</li>'
@@ -59,21 +89,47 @@ const dataChannel = {
             this.sendMessage(recvMessage);
 
             // clean out old message
-            dataChannelChatting.userTextInput.html('');
+            dataChannelChatting.$userTextInput.html('');
 
             // focus on input
-            dataChannelChatting.userTextInput.focus();
+            dataChannelChatting.$userTextInput.focus();
 
-            dataChannelChatting.messagesContainer.finish().animate({
-                scrollTop: dataChannelChatting.messagesContainer.prop("scrollHeight")
+            dataChannelChatting.$messagesContainer.finish().animate({
+                scrollTop: dataChannelChatting.$messagesContainer.prop("scrollHeight")
             }, 250);
 
         } else {
-            dataChannelChatting.messagesContainer.append([
+            dataChannelChatting.$messagesContainer.append([
                 '<li class="other">',
                 recvMessage,
                 '</li>'
             ].join(''));
         }
+    },
+    showNewFileMessage : function(file, type){
+
+        // 이미지 요소 생성 및 설정
+        var imgElement = $('<img>', {
+            src: file.minioDataUrl,
+            width: 300,
+            height: 300
+        });
+        imgElement.addClass(type);
+
+        // 다운로드 버튼 요소 생성 및 설정
+        var downBtnElement = $('<button>', {
+            class: 'btn fa fa-download',
+            id: 'downBtn',
+            name: file.fileName
+        }).on('click', function() {
+            dataChannelFileUtil.downloadFile(file.fileName, file.filePath);
+        });
+
+        // contentElement 생성
+        var contentElement = $('<li>').append(imgElement, downBtnElement);
+        contentElement.addClass(type);
+
+        // $messagesContainer에 contentElement 추가
+        dataChannelChatting.$messagesContainer.append(contentElement);
     }
 }
