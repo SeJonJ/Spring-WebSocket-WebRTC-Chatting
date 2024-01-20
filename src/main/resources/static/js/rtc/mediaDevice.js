@@ -6,16 +6,48 @@ const mediaDevice = {
     myDevice: null,
     audioInputs: null,
     audioOutputs: null,
-    getMediaDevices: navigator.mediaDevices.enumerateDevices(),
+    // getMediaDevices: navigator.mediaDevices.enumerateDevices(),
     init: function () {
         const self = this;
 
-        self.getMediaDevices
+        // self.getDeviceLiet();
+        self.setMediaDeviceArea(); // 장비 선택 영역 set
+        self.initClickEvent(); // 장비 클릭 이벤트 set
+        self.hideDropDownEvent(); // focusout 이벤트 set
+    },
+    initClickEvent : function(){
+        const self = this;
+        $('#input_dropDownContainer').click(function() {
+            self.dropDown('input');
+            $('#output_dropDownPosition').hide();
+        });
+
+        $('#output_dropDownContainer').click(function() {
+            self.dropDown('output');
+            $('#input_dropDownPosition').hide();
+        });
+    },
+    getDeviceLiet : function () {
+        const self = this;
+        navigator.mediaDevices.enumerateDevices().then(devices => {
+            self.audioInputs = devices.filter(device => device.kind === 'audioinput');
+            self.audioOutputs = devices.filter(device => device.kind === 'audiooutput');
+
+            console.log(self.audioInputs);
+            console.log(self.audioOutputs);
+        })
+            .catch(error => {
+                console.log(error, "error getting devices");
+                if (onError && typeof onError === 'function') {
+                    onError(error);
+                }
+            });
+    },
+    setMediaDeviceArea : function(){
+        const self = this;
+        navigator.mediaDevices.enumerateDevices()
             .then(devices => {
-                // 'devices' is the array of MediaDeviceInfo objects
-                // console.log(devices);
-                self.getDeviceLiet(devices);
-                // Dynamically add devices to dropdown
+                // 'devices' 는  MediaDeviceInfo 를 담은 array
                 devices.forEach(function (device) {
 
                     if (device.kind === 'audioinput') {
@@ -50,33 +82,6 @@ const mediaDevice = {
             .catch(error => {
                 console.error('Error occurred:', error);
             });
-
-        self.initClickEvent();
-    },
-    initClickEvent : function(){
-        const self = this;
-        $('#input_dropDownContainer').click(function(){
-            self.dropDown('input');
-        });
-
-        $('#output_dropDownContainer').click(function(){
-            self.dropDown('output');
-        });
-    },
-    getDeviceLiet : function () {
-        this.getMediaDevices.then(devices => {
-            self.audioInputs = devices.filter(device => device.kind === 'audioinput');
-            self.audioOutputs = devices.filter(device => device.kind === 'audiooutput');
-
-            console.log(self.audioInputs);
-            console.log(self.audioOutputs);
-        })
-            .catch(error => {
-                console.log(error, "error getting devices");
-                if (onError && typeof onError === 'function') {
-                    onError(error);
-                }
-            });
     },
     defaultDevice: function (device) {
         // Implement your default device logic here
@@ -90,7 +95,6 @@ const mediaDevice = {
         const self = this;
         Object.entries(participants).forEach(([key, value]) => {
             if (key !== name) {
-                console.log("change device :: " + JSON.stringify(value));
                 value.getAudioElement().setSinkId(device.deviceId);
                 self.setDisplayText('output', device.label);
             }
@@ -114,9 +118,7 @@ const mediaDevice = {
 
                 // 새 오디오 트랙으로 교체
                 if (audioSender) {
-                    audioSender.replaceTrack(newAudioTrack).then(() => {
-                        console.log('sucess to replace audio track');
-                    }).catch(error => {
+                    audioSender.replaceTrack(newAudioTrack).catch(error => {
                         console.error('fail to replace audio track', error);
                     });
                 } else {
@@ -129,13 +131,30 @@ const mediaDevice = {
 
     },
     dropDown : function(type) {
-        const displayTextWidth = $('#'+type+'_displayText').width();
-        if (type === 'output') {
-            // 너비를 dropDownPosition 에 맞게 설정
-            $('#output_dropDownPosition').width(displayTextWidth).toggle();
-        } else {
-            // 너비를 dropDownPosition 에 맞게 설정
-            $('#input_dropDownPosition').width(displayTextWidth).toggle();
-        }
+        const displayTextWidth = $('#' + type + '_displayText').width();
+        $('#' + type + '_dropDownPosition').width(displayTextWidth).toggle();
+    },
+    hideDropDownEvent: function() {
+        // // 드롭다운 메뉴 외부 클릭 감지
+        // $(document).click(function(event) {
+        //     // 클릭된 요소가 드롭다운 메뉴가 아니면 드롭다운을 숨깁니다.
+        //     if (!$(event.target).closest('#input_dropDownPosition, #output_dropDownPosition').length) {
+        //         // 드롭다운 메뉴 밖을 클릭했을 때
+        //         $('#input_dropDownPosition').hide();
+        //         $('#output_dropDownPosition').hide();
+        //     }
+        // });
+
+        $(document).click(function(event) {
+            // input 드롭다운 메뉴와 그 컨테이너가 클릭 대상이 아닌 경우, 드롭다운을 숨깁니다.
+            if (!$(event.target).closest('#input_dropDownContainer, #input_dropDownPosition').length) {
+                $('#input_dropDownPosition').hide();
+            }
+
+            // output 드롭다운 메뉴와 그 컨테이너가 클릭 대상이 아닌 경우, 드롭다운을 숨깁니다.
+            if (!$(event.target).closest('#output_dropDownContainer, #output_dropDownPosition').length) {
+                $('#output_dropDownPosition').hide();
+            }
+        });
     }
 }
