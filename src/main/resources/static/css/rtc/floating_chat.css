@@ -4,8 +4,8 @@
 }
 
 body {
-  background: skyblue;
   font: 12px/16px "Noto Sans", sans-serif;
+  background: #7b7c7c;
 }
 
 .floating-chat {
