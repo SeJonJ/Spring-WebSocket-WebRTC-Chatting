@@ -1,0 +1,98 @@
+
+#output_dropDownContainer {
+    position: relative; /* 상대적 위치 지정 */
+}
+
+#output_dropDownPosition {
+    /*position: absolute;*/
+    /*top: 5rem;*/
+    /*left: 0;*/
+    /*width: 100%;*/
+    /*overflow: hidden;*/
+    /*z-index: 1;*/
+    color: white;
+    position: absolute;
+    top: 100%; /* displayText 바로 아래 */
+    left: 0;
+    right: 0; /* 오른쪽 정렬을 위해 추가 */
+    display: none; /* 초기에는 숨김 */
+    width: auto; /* 너비를 자동으로 설정 */
+    overflow: hidden;
+    z-index: 1;
+    margin-top: 5px;
+}
+
+#output_dropDown {
+    border-radius: 0.5rem;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    background-color: #31343e;
+    animation: dropdown 0.4s ease;
+}
+
+#output_displayText {
+    cursor: pointer;
+    color: #e9e8d8;
+}
+
+/* input audio */
+#input_dropDownContainer {
+    position: relative; /* 상대적 위치 지정 */
+}
+
+#input_dropDownPosition {
+    /*position: absolute;*/
+    /*top: 5rem;*/
+    /*left: 0;*/
+    /*width: 100%;*/
+    /*overflow: hidden;*/
+    /*z-index: 1;*/
+    color: white;
+    position: absolute;
+    top: 100%; /* displayText 바로 아래 */
+    left: 0;
+    right: 0; /* 오른쪽 정렬을 위해 추가 */
+    display: none; /* 초기에는 숨김 */
+    width: auto; /* 너비를 자동으로 설정 */
+    overflow: hidden;
+    z-index: 1;
+    margin-top: 5px;
+}
+
+#input_dropDown {
+    border-radius: 0.5rem;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    background-color: #31343e;
+    animation: dropdown 0.4s ease;
+}
+
+#input_displayText {
+    cursor: pointer;
+    color: #e9e8d8;
+}
+
+@keyframes dropdown {
+    0% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.dropDownItem {
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: pointer;
+}
+
+.dropDownItem:hover {
+    background-color: rgb(0, 0, 50);
+}
+
+#bottomArrow{
+    margin-left:5px;
+}
+
+img {
+    cursor: pointer;
+}

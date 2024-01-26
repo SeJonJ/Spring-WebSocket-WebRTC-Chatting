@@ -27,12 +27,14 @@ let turnUrl = null;
 let turnUser = null;
 let turnPwd = null;
 
+let origGetUserMedia;
+
 // websocket 연결 확인 후 register() 실행
 var ws = new WebSocket('wss://' + locationHost + '/signal');
 ws.onopen = () => {
     initTurnServer();
-    initDataChannel();
     register();
+    initDataChannel();
 }
 
 var initTurnServer = function(){
@@ -86,12 +88,14 @@ navigator.mediaDevices.getUserMedia(constraints)
 // navigator.mediaDevices와 그 하위의 getUserMedia 메서드가 존재하는지 확인합니다.
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     // 원래의 getUserMedia 메서드를 저장합니다.
-    var origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    origGetUserMedia = navigator.mediaDevices.getUserMedia;
+    let customGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
 
     // getUserMedia 메서드를 덮어씁니다.
     navigator.mediaDevices.getUserMedia = function (cs) {
         // 원래의 getUserMedia 메서드를 호출합니다.
-        return origGetUserMedia(cs).catch(function (error) {
+        return customGetUserMedia(cs).catch(function (error) {
+            debugger
             // 비디오 요청이 실패한 경우
             if (cs.video) {
                 console.warn("Video error occurred, using dummy video instead.", error);
@@ -251,6 +255,7 @@ function onExistingParticipants(msg) {
                 }
 
                 this.generateOffer(participant.offerToReceiveVideo.bind(participant));
+                mediaDevice.init(); // video 와 audio 장비를 모두 가져온 후 mediaDvice 장비 영역 세팅
             });
 
         msg.data.forEach(receiveVideo);
@@ -449,10 +454,10 @@ async function startScreenShare() {
     participant.setLocalSteam(video.srcObject);
     video.srcObject = shareView; // 본인의 화면에 화면 공유 화면 표시
 
-    await participant.rtcPeer.peerConnection.getSenders().forEach(async sender => {
+    await participant.rtcPeer.peerConnection.getSenders().forEach(sender => {
         // 원격 참가자에게도 화면 공유 화면을 전송하도록 RTCRtpSender.replaceTrack() 함수 호출
         if (sender.track.kind === 'video') {
-            await sender.replaceTrack(shareView.getVideoTracks()[0]);
+            sender.replaceTrack(shareView.getVideoTracks()[0]);
         }
     });
 
@@ -496,11 +501,13 @@ async function screenShare() {
 
     if (isScreenShare) { // 이미 화면 공유 중인 경우
         await stopScreenShare(); // 화면 공유 중지
-        screenShareBtn.val("Share Screen"); // 버튼 텍스트 초기화
+        // screenShareBtn.val("Share Screen"); // 버튼 텍스트 초기화
         screenShareBtn.data("flag", false);
+        screenShareBtn.attr("src", "/images/webrtc/screen-share-on.svg")
     } else { // 화면 공유 중이 아닌 경우
         await startScreenShare(); // 화면 공유 시작
-        screenShareBtn.val("Stop Sharing"); // 버튼 텍스트 변경
+        // screenShareBtn.val("Stop Sharing"); // 버튼 텍스트 변경
         screenShareBtn.data("flag", true);
+        screenShareBtn.attr("src", "/images/webrtc/screen-share-off.svg")
     }
 }

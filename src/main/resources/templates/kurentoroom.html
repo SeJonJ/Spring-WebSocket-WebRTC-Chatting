@@ -15,42 +15,76 @@
 
     <link rel="styleSheet" href="/css/rtc/kurentostyle.css" type="text/css" media="screen">
     <link rel="styleSheet" href="/css/rtc/floating_chat.css" type="text/css" media="screen">
+    <link rel="styleSheet" href="/css/rtc/media_device.css" type="text/css" media="screen">
 </head>
-<script>
-</script>
 <style>
 </style>
 <body>
+<input type="hidden" id="roomId" th:value="${roomId}">
+<input type="hidden" id="uuid" th:value="${uuid}">
+<input type="hidden" id="roomName" th:value="${roomName}">
 <div id="container">
     <div id="wrapper">
-        <div id="room">
-            <input type="hidden" id="roomId" th:value="${roomId}">
-            <input type="hidden" id="uuid" th:value="${uuid}">
-            <input type="hidden" id="roomName" th:value="${roomName}">
-
+        <div id="room" style="margin-top:25px">
+            <div class="justify-content-around mb-3">
+                <h2 class="row justify-content-md-center" id="room-header"></h2>
+                <div class="row justify-content-md-center">
+                    <img class="col-md-1" src="/images/webrtc/screen-share-on.svg" width="24px" height="24px" alt="" id="screenShareBtn"
+                         data-flag="false" onclick="screenShare()">
+                    <img src="/images/webrtc/video-on.svg" class="col-md-1 localVideoToggle" width="24px" height="24px" alt="" id="videoBtn" data-flag="true" >
+                    <img src="/images/webrtc/audio-speaker-on.svg" class="col-md-1 localAudioToggle" width="24px" height="24px" alt="" id="audioBtn" data-flag="true">
+                    <img src="/images/webrtc/setting.svg" class="col-md-1" width="24px" height="24px" id="userSetting" alt="userSetting"
+                         data-toggle="modal" data-target="#userSettingsModal">
+                </div>
+            </div>
             <div class="col-lg-12 mb-3">
                 <div class="d-flex justify-content-around mb-3">
-                    <div class="mr-2" data-toggle="buttons">
-                        <input type="button" class="btn btn-outline-success" id="screenShareBtn" value="share Off"
-                               data-flag="false" onclick="screenShare()">
-                        <input type="button" class="btn btn-outline-success localVideoToggle" id="videoBtn"
-                               value="video Off"
-                               data-flag="true">
-                        <input type="button" class="btn btn-outline-success localAudioToggle" id="audioBtn"
-                               value="audio Off"
-                               data-flag="true">
+                    <div class="d-flex justify-content-around mb-3" id="output_dropDownContainer">
+                        <img src="/images/webrtc/speaker.svg" width="24px" height="24px">
+                        <span id="output_displayText"></span>
+                        <div id="bottomArrow">
+                            <svg fill="#000000" height="15px" width="15px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                 viewBox="0 0 512 512" xml:space="preserve">
+                                 <g>
+                                     <path d="M256,0C114.618,0,0,114.618,0,256s114.618,256,256,256s256-114.618,256-256S397.382,0,256,0z M256,469.333
+                                                c-117.818,0-213.333-95.515-213.333-213.333S138.182,42.667,256,42.667S469.333,138.182,469.333,256S373.818,469.333,256,469.333
+                                                z"/>
+                                     <path d="M347.582,198.248L256,289.83l-91.582-91.582c-8.331-8.331-21.839-8.331-30.17,0c-8.331,8.331-8.331,21.839,0,30.17
+                                                l106.667,106.667c8.331,8.331,21.839,8.331,30.17,0l106.667-106.667c8.331-8.331,8.331-21.839,0-30.17
+                                                C369.42,189.917,355.913,189.917,347.582,198.248z"/>
+                                 </g>
+                            </svg>
+                        </div>
+                        <div id="output_dropDownPosition" style="display: none;">
+                            <div id="output_dropDown">
+                                <!-- Device items will be added here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-around mb-3" id="input_dropDownContainer">
+                        <img src="/images/webrtc/headphone.svg" width="24px" height="24px">
+                        <span id="input_displayText"></span>
+                        <div id="bottomArrow">
+                            <svg fill="#000000" height="15px" width="15px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                 viewBox="0 0 512 512" xml:space="preserve">
+                                 <g>
+                                     <path d="M256,0C114.618,0,0,114.618,0,256s114.618,256,256,256s256-114.618,256-256S397.382,0,256,0z M256,469.333
+                                                c-117.818,0-213.333-95.515-213.333-213.333S138.182,42.667,256,42.667S469.333,138.182,469.333,256S373.818,469.333,256,469.333
+                                                z"/>
+                                     <path d="M347.582,198.248L256,289.83l-91.582-91.582c-8.331-8.331-21.839-8.331-30.17,0c-8.331,8.331-8.331,21.839,0,30.17
+                                                l106.667,106.667c8.331,8.331,21.839,8.331,30.17,0l106.667-106.667c8.331-8.331,8.331-21.839,0-30.17
+                                                C369.42,189.917,355.913,189.917,347.582,198.248z"/>
+                                 </g>
+                            </svg>
+                        </div>
+                        <div id="input_dropDownPosition" style="display: none;">
+                            <div id="input_dropDown">
+                                <!-- Device items will be added here dynamically -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <!-- "유저 설정" 모달 트리거 버튼 -->
-            <div class="settings-button d-flex justify-content-around mb-3">
-                <button type="button" class="btn btn-primary" id="userSetting" data-toggle="modal"
-                        data-target="#userSettingsModal">
-                    유저 설정
-                </button>
-            </div>
-
-            <h2 id="room-header"></h2>
             <div id="participants"></div>
             <input type="button" id="button-leave"
                    value="Leave room">
@@ -75,7 +109,8 @@
             <div class="footer">
                 <div class="absolute bottom-2 md:bottom-3 left-2 md:left-4">
                     <div class="flex">
-                        <button class="btn relative p-0 text-black dark:text-white" id="uploadFile" aria-label="Attach files">
+                        <button class="btn relative p-0 text-black dark:text-white" id="uploadFile"
+                                aria-label="Attach files">
                             <div class="flex w-full gap-2 items-center justify-center">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                      xmlns="http://www.w3.org/2000/svg">
@@ -85,7 +120,7 @@
                                 </svg>
                             </div>
                         </button>
-                        <input type="file" id="file" style="display: none;" />
+                        <input type="file" id="file" style="display: none;"/>
                     </div>
                 </div>
                 <div class="text-box" contenteditable="true" disabled="true"></div>
@@ -102,6 +137,7 @@
 <script src="/js/rtc/dataChannel.js"></script>
 <script src="/js/rtc/dataChannelChatting.js"></script>
 <script src="/js/rtc/dataChannelFileUtil.js"></script>
+<script src="/js/rtc/mediaDevice.js"></script>
 </body>
 </html>
 

@@ -36,9 +36,9 @@ function Participant(name) {
 	let container = document.createElement('div');
 
 	let isMainParticipant = function(){
-		return ((document.getElementsByClassName(PARTICIPANT_MAIN_CLASS)).length === 0);
+		return (($("#"+PARTICIPANT_MAIN_CLASS)).length === 0);
 	}
-	container.className = isMainParticipant ?  PARTICIPANT_MAIN_CLASS : PARTICIPANT_CLASS;
+	container.className = isMainParticipant() ?  PARTICIPANT_MAIN_CLASS : PARTICIPANT_CLASS;
 	container.id = name;
 
 	let span = document.createElement('span');
@@ -192,13 +192,14 @@ $(".localVideoToggle").on("click", function(){
 
 	if (isVideo) { // 비디오가 사용중이라면 비디오 off
 		videoTrack.enabled = false;
-		videoBtn.val("Video On");
+		// videoBtn.val("Video On");
 		videoBtn.data("flag", false);
-
+		videoBtn.attr("src", "/images/webrtc/video-off.svg")
 	} else {
 		videoTrack.enabled = true;
-		videoBtn.val("Video Off");
+		// videoBtn.val("Video Off");
 		videoBtn.data("flag", true);
+		videoBtn.attr("src", "/images/webrtc/video-on.svg")
 	}
 });
 
@@ -210,12 +211,14 @@ $(".localAudioToggle").on("click", function(){
 
 	if (useAudio) { // 오디오가 사용중이라면 오디오 off
 		audioTrack.enabled = false;
-		audioBtn.val("Audio On");
+		// audioBtn.val("Audio On");
 		audioBtn.data("flag", false);
+		audioBtn.attr("src", "/images/webrtc/audio-speaker-off.svg")
 	} else {
 		audioTrack.enabled = true;
-		audioBtn.val("Audio Off");
+		// audioBtn.val("Audio Off");
 		audioBtn.data("flag", true);
+		audioBtn.attr("src", "/images/webrtc/audio-speaker-on.svg")
 	}
 });
 
@@ -246,6 +249,9 @@ $('#userSetting').on('click', function (e) {
 			let videoButton = $('#videoBtn').clone(true).attr('id', videoButtonId);
 			let audioButton = $('#audioBtn').clone(true).attr('id', audioButtonId);
 
+			videoButton.removeClass('col-md-1');
+			audioButton.removeClass('col-md-1');
+
 			listItem.append(videoButton, audioButton, volumeSlider);
 		} else { // 다른 유저의 video, audio 설정
 			listItem.text(name);
@@ -254,43 +260,50 @@ $('#userSetting').on('click', function (e) {
 			let remoteVideoButton = $('#videoBtn').clone().attr('id', videoButtonId);
 			// localVideoToggle class 삭제
 			remoteVideoButton.removeClass('localVideoToggle');
+			// col-md-1 삭제
+			remoteVideoButton.removeClass('col-md-1')
 			// 클릭 이벤트 할당
 			remoteVideoButton.click(function(){
-				let useRemoteVideo = remoteVideoButton.data("flag")
+				let useRemoteVideo = remoteVideoButton.data('flag')
 				// 비디오 트랙만 가져오기
 				let videoTrack = participant.rtcPeer.getRemoteStream().getTracks().filter(track => track.kind === 'video')[0];
 
 				if (useRemoteVideo) { // 비디오가 사용중이라면 비디오 off : enabled = false
 					videoTrack.enabled = false;
-					remoteVideoButton.val("Video On");
-					remoteVideoButton.data("flag", false);
-
+					// remoteVideoButton.val("Video On");
+					remoteVideoButton.data('flag', false);
+					remoteVideoButton.attr('src', '/images/webrtc/video-off.svg')
 				} else {
 					videoTrack.enabled = true;
-					remoteVideoButton.val("Video Off");
-					remoteVideoButton.data("flag", true);
+					// remoteVideoButton.val("Video Off");
+					remoteVideoButton.data('flag', true);
+					remoteVideoButton.attr('src', '/images/webrtc/video-on.svg')
 				}
 			})
 
 			// 다른 참여자(유저)의 오디오 컨트롤 버튼 clone 및 이벤트 할당
 			let remoteAudioButton = $('#audioBtn').clone().attr('id', audioButtonId);
 			// localAudioToggle class 삭제
-			remoteAudioButton.removeClass('localAudioToggle')
+			remoteAudioButton.removeClass('localAudioToggle');
+			// col-md-1 삭제
+			remoteAudioButton.removeClass('col-md-1');
 			// 클릭 이벤트 할당
 			remoteAudioButton.click(function(){
-				let useRemoteVideo = remoteAudioButton.data("flag")
+				let useRemoteVideo = remoteAudioButton.data('flag')
 				// 오디오 트랙만 가져오기
 				let audioTrack = participant.rtcPeer.getRemoteStream().getTracks().filter(track => track.kind === 'audio')[0];
 
 				if (useRemoteVideo) { // 오디오가 사용중이라면 오디오 off : enabled = false
 					audioTrack.enabled = false;
-					remoteAudioButton.val("Audio On");
-					remoteAudioButton.data("flag", false);
-
+					// remoteAudioButton.val("Audio On");
+					remoteAudioButton.data('flag', false);
+					remoteAudioButton.attr('src', '/images/webrtc/audio-speaker-off.svg')
 				} else {
 					audioTrack.enabled = true;
-					remoteAudioButton.val("Audio Off");
-					remoteAudioButton.data("flag", true);
+					// remoteAudioButton.val("Audio Off");
+					remoteAudioButton.data('flag', true);
+					remoteAudioButton.attr('src', '/images/webrtc/audio-speaker-on.svg')
+
 				}
 			})
 
