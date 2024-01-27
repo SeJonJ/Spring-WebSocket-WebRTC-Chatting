@@ -49,6 +49,7 @@
     - 양방향 화면 공유
   - DataChannel
     - DataChannel 을 사용한 채팅 기능 구현
+  - 화상채팅 시 스피커/마이크 장비 선택 기능
 4) 방 관리를 위한 BatchJob 및 RestfulAPI 개발
 5) ChatForYou 모니터링 : 성능 모니터링 및 black list 제한
    - 성능 모니터링을 위한 prometheus 및 grafana 와 연동
