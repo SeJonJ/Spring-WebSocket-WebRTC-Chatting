@@ -94,10 +94,10 @@ public interface RedisService {
     void deleteRoomRecoveryMetadata(String roomId);
 
     /**
-     * 중단된 방 녹화의 부분 파일 마커를 TTL과 함께 저장한다.
+     * 중단된 방 녹화의 부분 파일 마커를 저장한다. TTL은 구현체가 own 하는 설정값을 사용한다.
      * recordingInfo 가 null 로 정리되기 전에 호출해 파일 식별 정보를 부분 파일 정리 작업용으로 보존한다.
      */
-    void saveRecordingPartialMarker(RecordingPartialMarker marker, long ttlSeconds);
+    void saveRecordingPartialMarker(RecordingPartialMarker marker);
 
     /**
      * 방 부분 녹화 마커를 master Redis에서 조회한다. 없으면 null.

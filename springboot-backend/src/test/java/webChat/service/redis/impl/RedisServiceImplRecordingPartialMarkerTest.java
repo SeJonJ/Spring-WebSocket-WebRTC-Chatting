@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.test.util.ReflectionTestUtils;
 import webChat.model.record.RecordingPartialMarker;
 
 import java.util.concurrent.TimeUnit;
@@ -35,6 +36,7 @@ class RedisServiceImplRecordingPartialMarkerTest {
 
     private static final String ROOM_ID = "room-qa-001";
     private static final String EXPECTED_KEY = "room:recording:partial:" + ROOM_ID;
+    private static final long DEFAULT_TTL_SECONDS = 21_600L;
 
     @Mock
     private RedisTemplate<String, Object> masterTemplate;
@@ -56,6 +58,7 @@ class RedisServiceImplRecordingPartialMarkerTest {
     @BeforeEach
     void setUp() {
         sut = new RedisServiceImpl(masterTemplate, slaveTemplate, objectMapper, rediSearchClient);
+        ReflectionTestUtils.setField(sut, "partialMarkerTtlSeconds", DEFAULT_TTL_SECONDS);
         lenient().when(masterTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
@@ -68,10 +71,10 @@ class RedisServiceImplRecordingPartialMarkerTest {
         RecordingPartialMarker marker = fullMarker();
 
         // when
-        sut.saveRecordingPartialMarker(marker, 86_400L);
+        sut.saveRecordingPartialMarker(marker);
 
         // then: masterTemplate.opsForValue().set(key, marker, ttl, SECONDS) 호출
-        verify(valueOperations).set(EXPECTED_KEY, marker, 86_400L, TimeUnit.SECONDS);
+        verify(valueOperations).set(EXPECTED_KEY, marker, DEFAULT_TTL_SECONDS, TimeUnit.SECONDS);
     }
 
     @Test
@@ -137,7 +140,7 @@ class RedisServiceImplRecordingPartialMarkerTest {
         assertThat(first.isNotified()).isFalse();
 
         RecordingPartialMarker marked = first.markNotified();
-        sut.saveRecordingPartialMarker(marked, 86_400L);
+        sut.saveRecordingPartialMarker(marked);
 
         // 2차 조회
         RecordingPartialMarker second = sut.getRecordingPartialMarker(ROOM_ID);
@@ -147,7 +150,7 @@ class RedisServiceImplRecordingPartialMarkerTest {
         // 재저장 시 notified=true 객체가 set된 것 검증
         ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
         verify(valueOperations, org.mockito.Mockito.atLeast(1))
-                .set(eq(EXPECTED_KEY), captor.capture(), eq(86_400L), eq(TimeUnit.SECONDS));
+                .set(eq(EXPECTED_KEY), captor.capture(), eq(DEFAULT_TTL_SECONDS), eq(TimeUnit.SECONDS));
         RecordingPartialMarker savedObj = (RecordingPartialMarker) captor.getValue();
         assertThat(savedObj.isNotified()).isTrue();
     }
@@ -161,7 +164,7 @@ class RedisServiceImplRecordingPartialMarkerTest {
         RecordingPartialMarker marker = fullMarker();
 
         // when
-        sut.saveRecordingPartialMarker(marker, 86_400L);
+        sut.saveRecordingPartialMarker(marker);
 
         // then: room:recovery: 가 아닌 room:recording:partial: prefix 사용
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
@@ -193,11 +196,12 @@ class RedisServiceImplRecordingPartialMarkerTest {
     @Test
     @DisplayName("saveRecordingPartialMarker_TTL을SECONDS단위로저장한다")
     void saveRecordingPartialMarker_ttlUnitIsSeconds() {
-        // given
+        // given: 필드에 주입된 TTL이 그대로 SECONDS 단위로 전달되는지 다른 값으로 검증
         RecordingPartialMarker marker = fullMarker();
+        ReflectionTestUtils.setField(sut, "partialMarkerTtlSeconds", 3_600L);
 
         // when
-        sut.saveRecordingPartialMarker(marker, 3_600L);
+        sut.saveRecordingPartialMarker(marker);
 
         // then: SECONDS 단위 확인
         verify(valueOperations).set(eq(EXPECTED_KEY), eq(marker), eq(3_600L), eq(TimeUnit.SECONDS));

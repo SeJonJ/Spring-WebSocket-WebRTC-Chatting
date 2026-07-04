@@ -9,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import webChat.model.chat.ChatType;
@@ -24,7 +23,6 @@ import webChat.service.redis.RedisService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
@@ -106,7 +104,7 @@ class KurentoHandlerJoinRoomRecordingBranchTest {
 
         // notified=true 로 마커 재저장
         ArgumentCaptor<RecordingPartialMarker> captor = ArgumentCaptor.forClass(RecordingPartialMarker.class);
-        verify(redisService).saveRecordingPartialMarker(captor.capture(), anyLong());
+        verify(redisService).saveRecordingPartialMarker(captor.capture());
         assertThat(captor.getValue().isNotified()).isTrue();
     }
 
@@ -133,7 +131,7 @@ class KurentoHandlerJoinRoomRecordingBranchTest {
 
         // then: 안내 없음, 재저장 없음
         verify(kurentoMessageSender, never()).sendToUser(eq(user), any());
-        verify(redisService, never()).saveRecordingPartialMarker(any(), anyLong());
+        verify(redisService, never()).saveRecordingPartialMarker(any());
     }
 
     // ── 분기 3: marker null → 조용히 skip ───────────────────────────────────
@@ -153,7 +151,7 @@ class KurentoHandlerJoinRoomRecordingBranchTest {
 
         // then: 예외 없음, 안내 없음
         verify(kurentoMessageSender, never()).sendToUser(eq(user), any());
-        verify(redisService, never()).saveRecordingPartialMarker(any(), anyLong());
+        verify(redisService, never()).saveRecordingPartialMarker(any());
     }
 
     // ── 분기 4: isRecordingInProgress=true → else 미진입 ────────────────────
@@ -188,29 +186,6 @@ class KurentoHandlerJoinRoomRecordingBranchTest {
 
         // then: else 분기 미진입 → 마커 조회 없음
         verify(redisService, never()).getRecordingPartialMarker(any());
-    }
-
-    // ── 분기 6: TTL이 재저장 시에도 적용된다 ─────────────────────────────────
-
-    @Test
-    @DisplayName("joinRoom_notifiedTrue재저장시TTL이partialMarkerTtlSeconds로적용된다")
-    void joinRoom_notifiedResave_usesTtlSeconds() throws Exception {
-        // given
-        KurentoRoom room = freshRoom();
-        KurentoHandler handler = handlerForRoom(room);
-
-        RecordingPartialMarker marker = RecordingPartialMarker.builder()
-                .roomId(ROOM_ID)
-                .notified(false)
-                .build();
-        given(redisService.getRecordingPartialMarker(ROOM_ID)).willReturn(marker);
-        given(participantService.getBySessionId(session)).willReturn(user);
-
-        // when
-        handler.handleTextMessage(session, new TextMessage(JOIN_PAYLOAD));
-
-        // then: TTL = 86400 (기본값) 으로 재저장
-        verify(redisService).saveRecordingPartialMarker(any(), eq(86_400L));
     }
 
     // ── 동시 재입장 경합: 두 사용자가 동시에 notified=false 마커를 읽는 경우 ──
@@ -265,7 +240,7 @@ class KurentoHandlerJoinRoomRecordingBranchTest {
         // then: 최대 2회 안내 가능 (무해한 중복) — 저장된 마커의 roomId는 모두 room-1로 일치해야 한다
         ArgumentCaptor<RecordingPartialMarker> captor = ArgumentCaptor.forClass(RecordingPartialMarker.class);
         verify(redisService, org.mockito.Mockito.atLeast(1))
-                .saveRecordingPartialMarker(captor.capture(), anyLong());
+                .saveRecordingPartialMarker(captor.capture());
         captor.getAllValues().forEach(saved ->
                 assertThat(saved.getRoomId()).isEqualTo(ROOM_ID));
     }
@@ -325,7 +300,6 @@ class KurentoHandlerJoinRoomRecordingBranchTest {
                 recordingService,
                 kurentoMessageSender
         );
-        ReflectionTestUtils.setField(handler, "partialMarkerTtlSeconds", 86_400L);
         return handler;
     }
 }

@@ -13,7 +13,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.context.event.ContextClosedEvent;
-import org.springframework.test.util.ReflectionTestUtils;
 import webChat.model.record.RecordingPartialMarker;
 import webChat.model.redis.DataType;
 import webChat.model.room.KurentoRoom;
@@ -28,7 +27,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -68,7 +66,6 @@ class ShutdownConfigRecordingGateTest {
                         .markedRoomCount(0)
                         .roomIds(List.of())
                         .build());
-        ReflectionTestUtils.setField(shutdownConfig, "partialMarkerTtlSeconds", 86_400L);
     }
 
     // ── Round 1 P0 회귀 가드 ──────────────────────────────────────────────────
@@ -85,7 +82,7 @@ class ShutdownConfigRecordingGateTest {
 
         // then
         ArgumentCaptor<RecordingPartialMarker> markerCaptor = ArgumentCaptor.forClass(RecordingPartialMarker.class);
-        verify(redisService).saveRecordingPartialMarker(markerCaptor.capture(), anyLong());
+        verify(redisService).saveRecordingPartialMarker(markerCaptor.capture());
         RecordingPartialMarker saved = markerCaptor.getValue();
         assertThat(saved.getRoomId()).isEqualTo("room-1");
         assertThat(saved.isNotified()).isFalse();
@@ -108,7 +105,7 @@ class ShutdownConfigRecordingGateTest {
         shutdownConfig.onApplicationEvent(closeEvent());
 
         // then: marker 기록·reset 미호출 — hasRecordedOnce 보존으로 재녹화 차단 유지
-        verify(redisService, never()).saveRecordingPartialMarker(any(), anyLong());
+        verify(redisService, never()).saveRecordingPartialMarker(any());
         assertThat(room.isHasRecordedOnce())
                 .as("정상 완료 방의 hasRecordedOnce 는 reset 되지 않아야 한다")
                 .isEqualTo(originalHasRecordedOnce);
@@ -126,7 +123,7 @@ class ShutdownConfigRecordingGateTest {
         shutdownConfig.onApplicationEvent(closeEvent());
 
         // then
-        verify(redisService, never()).saveRecordingPartialMarker(any(), anyLong());
+        verify(redisService, never()).saveRecordingPartialMarker(any());
         assertThat(room.isHasRecordedOnce()).isFalse();
     }
 
@@ -141,7 +138,7 @@ class ShutdownConfigRecordingGateTest {
         shutdownConfig.onApplicationEvent(closeEvent());
 
         // then: NPE 없이 marker 기록 + reset
-        verify(redisService).saveRecordingPartialMarker(any(RecordingPartialMarker.class), anyLong());
+        verify(redisService).saveRecordingPartialMarker(any(RecordingPartialMarker.class));
         assertThat(room.isRecordingInProgress()).isFalse();
     }
 
@@ -161,7 +158,7 @@ class ShutdownConfigRecordingGateTest {
         shutdownConfig.onApplicationEvent(closeEvent());
 
         // then
-        verify(redisService).saveRecordingPartialMarker(captor.capture(), anyLong());
+        verify(redisService).saveRecordingPartialMarker(captor.capture());
         // marker가 reset 전에 생성되었으므로 recordingId 같은 파일 식별 정보가 남아있다
         assertThat(captor.getValue().getRecordingId()).isNotNull();
     }
@@ -187,7 +184,7 @@ class ShutdownConfigRecordingGateTest {
         shutdownConfig.onApplicationEvent(closeEvent());
 
         // then: in-progress 방만 marker 기록·reset
-        verify(redisService).saveRecordingPartialMarker(any(RecordingPartialMarker.class), anyLong());
+        verify(redisService).saveRecordingPartialMarker(any(RecordingPartialMarker.class));
         assertThat(inProgressRoom.isRecordingInProgress()).isFalse();
 
         // 정상 완료 방: hasRecordedOnce 보존

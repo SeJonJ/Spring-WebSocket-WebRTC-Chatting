@@ -45,10 +45,6 @@ public class ChatRoomRecoveryServiceImpl implements ChatRoomRecoveryService {
     @Value("${recovery.room.ttl-seconds:180}")
     private long recoveryTtlSeconds;
 
-    // 중단 부분 녹화 마커(room:recording:partial:{roomId})의 TTL(초).
-    @Value("${recording.partial.marker.ttl-seconds:21600}")
-    private long partialMarkerTtlSeconds;
-
     private final RedisService redisService;
     private final RoutingInstanceProvider instanceProvider;
     private final RoutingService routingService;
@@ -152,8 +148,7 @@ public class ChatRoomRecoveryServiceImpl implements ChatRoomRecoveryService {
             // 순서 불변: marker 를 먼저 기록해야 reset 으로 사라지는 파일 식별 정보를 보존한다.
             // 정리된 masterRoom 은 아래 updateRecoveredRoomRoutingAndMetadata 가 Redis 에 영속한다.
             if (masterRoom instanceof KurentoRoom recoveredRoom && recoveredRoom.isRecordingInProgress()) {
-                redisService.saveRecordingPartialMarker(
-                        RecordingPartialMarker.fromRoom(recoveredRoom), partialMarkerTtlSeconds);
+                redisService.saveRecordingPartialMarker(RecordingPartialMarker.fromRoom(recoveredRoom));
                 recoveredRoom.resetRecordingState();
             }
 

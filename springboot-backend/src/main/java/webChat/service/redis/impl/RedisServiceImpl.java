@@ -17,6 +17,7 @@ import webChat.exception.ChatForYouException;
 import webChat.exception.ErrorCode;
 import org.redisson.api.SortOrder;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.*;
 import org.springframework.stereotype.Component;
@@ -55,6 +56,12 @@ public class RedisServiceImpl implements RedisService {
     private final long REDIS_TIMEOUT = 1L;
 
     private static final long INSTANCE_MAPPING_TTL = 86400L; // 24시간
+
+    // 중단 부분 녹화 마커(room:recording:partial:{roomId})의 TTL(초).
+    // 이 값을 사용하는 모든 호출자(ShutdownConfig/ChatRoomRecoveryServiceImpl/KurentoHandler)가 각자
+    // @Value로 중복 주입받으면 값이 어긋날 수 있어, 저장을 own 하는 이 클래스로 단일화한다.
+    @Value("${recording.partial.marker.ttl-seconds:21600}")
+    private long partialMarkerTtlSeconds;
 
     public RedisServiceImpl(
             @Qualifier("masterRedisTemplate") RedisTemplate<String, Object> masterTemplate,
@@ -532,11 +539,11 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public void saveRecordingPartialMarker(RecordingPartialMarker marker, long ttlSeconds) {
+    public void saveRecordingPartialMarker(RecordingPartialMarker marker) {
         masterTemplate.opsForValue().set(
                 RECORDING_PARTIAL_PREFIX.getPrefix() + marker.getRoomId(),
                 marker,
-                ttlSeconds,
+                partialMarkerTtlSeconds,
                 TimeUnit.SECONDS
         );
     }

@@ -63,7 +63,6 @@ class RecoveryServiceRecordingGateTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(sut, "partialMarkerTtlSeconds", 86_400L);
         ReflectionTestUtils.setField(sut, "recoveryTtlSeconds", 180L);
         given(instanceProvider.getInstanceId()).willReturn(NEW_INSTANCE);
         given(redisService.getRoomRecoveryMetadata(ROOM_ID)).willReturn(validMetadata());
@@ -85,7 +84,7 @@ class RecoveryServiceRecordingGateTest {
         sut.recoverRoom(chatRoom(OLD_INSTANCE), response);
 
         // then: marker 재기록 없음 — graceful cleanup의 notified 값 보존
-        verify(redisService, never()).saveRecordingPartialMarker(any(), anyLong());
+        verify(redisService, never()).saveRecordingPartialMarker(any());
         // reset도 호출되지 않으므로 state 변화 없음
         assertThat(masterRoom.isRecordingInProgress()).isFalse();
         assertThat(masterRoom.isHasRecordedOnce()).isFalse();
@@ -106,7 +105,7 @@ class RecoveryServiceRecordingGateTest {
 
         // then: claim이 marker 기록
         ArgumentCaptor<RecordingPartialMarker> captor = ArgumentCaptor.forClass(RecordingPartialMarker.class);
-        verify(redisService).saveRecordingPartialMarker(captor.capture(), eq(86_400L));
+        verify(redisService).saveRecordingPartialMarker(captor.capture());
         RecordingPartialMarker saved = captor.getValue();
         assertThat(saved.getRoomId()).isEqualTo(ROOM_ID);
         assertThat(saved.isNotified()).isFalse();
@@ -131,7 +130,7 @@ class RecoveryServiceRecordingGateTest {
         sut.recoverRoom(chatRoom(OLD_INSTANCE), response);
 
         // then: hasRecordedOnce 보존 — 재녹화 차단(RECORDING_FILE_EXISTS) 유지
-        verify(redisService, never()).saveRecordingPartialMarker(any(), anyLong());
+        verify(redisService, never()).saveRecordingPartialMarker(any());
         assertThat(masterRoom.isHasRecordedOnce())
                 .as("정상 완료 방의 hasRecordedOnce 는 claim 경로를 지나도 변하지 않아야 한다")
                 .isTrue();
@@ -168,7 +167,7 @@ class RecoveryServiceRecordingGateTest {
 
         // then: marker 기록됨 (파일 식별 필드는 null 허용)
         ArgumentCaptor<RecordingPartialMarker> captor = ArgumentCaptor.forClass(RecordingPartialMarker.class);
-        verify(redisService).saveRecordingPartialMarker(captor.capture(), anyLong());
+        verify(redisService).saveRecordingPartialMarker(captor.capture());
         RecordingPartialMarker saved = captor.getValue();
         assertThat(saved.getRoomId()).isEqualTo(ROOM_ID);
         assertThat(saved.getRecordingId()).isNull();
@@ -192,7 +191,7 @@ class RecoveryServiceRecordingGateTest {
         sut.recoverRoom(chatRoom(OLD_INSTANCE), response);
 
         // then
-        verify(redisService).saveRecordingPartialMarker(captor.capture(), anyLong());
+        verify(redisService).saveRecordingPartialMarker(captor.capture());
         assertThat(captor.getValue().getRecordingId())
                 .as("marker는 resetRecordingState 전에 fromRoom()으로 생성되어야 파일 식별 정보가 존재한다")
                 .isNotNull();
@@ -215,7 +214,7 @@ class RecoveryServiceRecordingGateTest {
         sut.recoverRoom(chatRoom(OLD_INSTANCE), response);
 
         // then: instanceof 가드가 걸려 marker 기록 없음
-        verify(redisService, never()).saveRecordingPartialMarker(any(), anyLong());
+        verify(redisService, never()).saveRecordingPartialMarker(any());
     }
 
     // ── 헬퍼 ─────────────────────────────────────────────────────────────────

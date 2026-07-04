@@ -6,7 +6,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.KurentoClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextClosedEvent;
@@ -43,10 +42,6 @@ public class ShutdownConfig implements ApplicationListener<ContextClosedEvent> {
     private final InstanceProvider instanceProvider;
     private final ChatRoomRecoveryService chatRoomRecoveryService;
     private final AtomicBoolean cleanupStarted = new AtomicBoolean(false);
-
-    // 중단 부분 녹화 마커(room:recording:partial:{roomId})의 TTL(초).
-    @Value("${recording.partial.marker.ttl-seconds:21600}")
-    private long partialMarkerTtlSeconds;
 
     @PostConstruct
     public void init() {
@@ -111,8 +106,7 @@ public class ShutdownConfig implements ApplicationListener<ContextClosedEvent> {
             // 풀려 동일 방 재녹화 차단이 사라지므로, marker 기록과 reset 을 같은 in-progress 게이트 안에 함께 둔다.
             // 순서 불변: marker 를 먼저 기록해야 reset 으로 사라지는 파일 식별 정보를 보존한다.
             if (kurentoRoom.isRecordingInProgress()) {
-                redisService.saveRecordingPartialMarker(
-                        RecordingPartialMarker.fromRoom(kurentoRoom), partialMarkerTtlSeconds);
+                redisService.saveRecordingPartialMarker(RecordingPartialMarker.fromRoom(kurentoRoom));
                 kurentoRoom.resetRecordingState();
             }
 

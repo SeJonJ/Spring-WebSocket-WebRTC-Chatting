@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.kurento.client.IceCandidate;
 import org.kurento.client.KurentoClient;
 import org.kurento.client.MediaPipeline;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -72,10 +71,6 @@ public class KurentoHandler extends TextWebSocketHandler {
     // 고정 크기 Striped 풀이라 방 생성/삭제와 무관하게 lock 객체가 누적되지 않는다(무중단 운영 누수 차단).
     // 서로 다른 방은 다른 stripe 로 분산되어 병렬을 유지한다.
     private final Striped<Lock> roomLocks = Striped.lock(256);
-
-    // 중단 부분 녹화 마커(room:recording:partial:{roomId})의 TTL(초). notified=true 재저장 시 refresh 한다.
-    @Value("${recording.partial.marker.ttl-seconds:21600}")
-    private long partialMarkerTtlSeconds;
 
     /**
      * WebSocket 텍스트 메시지를 수신하고 이벤트 유형에 따라 적절한 처리 메서드로 분기한다.
@@ -386,7 +381,7 @@ public class KurentoHandler extends TextWebSocketHandler {
             return;
         }
         kurentoMessageSender.sendToUser(user, KurentoMessageBuilder.recordingInterrupted());
-        redisService.saveRecordingPartialMarker(marker.markNotified(), partialMarkerTtlSeconds);
+        redisService.saveRecordingPartialMarker(marker.markNotified());
     }
 
     /**
