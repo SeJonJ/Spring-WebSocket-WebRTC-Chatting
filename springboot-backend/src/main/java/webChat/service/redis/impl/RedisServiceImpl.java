@@ -560,6 +560,51 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
+    public boolean deleteRecordingPartialMarkerIfRecordingIdMatches(String roomId, String recordingId) {
+        String key = RECORDING_PARTIAL_PREFIX.getPrefix() + roomId;
+        Boolean deleted = masterTemplate.execute(new SessionCallback<Boolean>() {
+            @Override
+            public Boolean execute(@NotNull RedisOperations operations) {
+                operations.watch(key);
+                Object value = operations.opsForValue().get(key);
+                if (!(value instanceof RecordingPartialMarker marker)
+                        || !Objects.equals(marker.getRecordingId(), recordingId)) {
+                    operations.unwatch();
+                    return false;
+                }
+
+                operations.multi();
+                operations.delete(key);
+                List<Object> results = operations.exec();
+                return results != null && !results.isEmpty() && Boolean.TRUE.equals(results.get(0));
+            }
+        });
+        return Boolean.TRUE.equals(deleted);
+    }
+
+    @Override
+    public List<RecordingPartialMarker> getAllRecordingPartialMarkers() {
+        String pattern = RECORDING_PARTIAL_PREFIX.getPrefix() + "*";
+        List<RecordingPartialMarker> markers = new ArrayList<>();
+        ScanOptions options = ScanOptions.scanOptions().match(pattern).count(100).build();
+
+        try (Cursor<byte[]> cursor = slaveTemplate.getConnectionFactory().getConnection().scan(options)) {
+            while (cursor.hasNext()) {
+                String key = new String(cursor.next(), StandardCharsets.UTF_8);
+                // 값 조회는 기존 마커 read(getRecordingPartialMarker)와 동일하게 master 를 사용해 일관성을 유지
+                Object value = masterTemplate.opsForValue().get(key);
+                if (value instanceof RecordingPartialMarker marker) {
+                    markers.add(marker);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error scanning recording partial markers: ", e);
+            throw new ChatForYouException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        return markers;
+    }
+
+    @Override
     public ChatRoom getChatRoomFromMaster(String roomId) {
         return (ChatRoom) masterTemplate.opsForHash().get(makeRedisKey(roomId), DataType.CHATROOM.getType());
     }

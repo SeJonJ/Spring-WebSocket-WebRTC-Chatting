@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 import webChat.model.record.RecordingPartialMarker;
@@ -119,6 +120,32 @@ class RedisServiceImplRecordingPartialMarkerTest {
 
         // then
         verify(masterTemplate).delete(EXPECTED_KEY);
+    }
+
+    @Test
+    @DisplayName("deleteRecordingPartialMarkerIfRecordingIdMatches_조건부삭제콜백결과가true이면true반환")
+    void deleteRecordingPartialMarkerIfRecordingIdMatches_callbackTrue_returnsTrue() {
+        // given
+        given(masterTemplate.execute(any(SessionCallback.class))).willReturn(true);
+
+        // when
+        boolean result = sut.deleteRecordingPartialMarkerIfRecordingIdMatches(ROOM_ID, "rec-qa-001");
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("deleteRecordingPartialMarkerIfRecordingIdMatches_조건부삭제콜백결과가false이면false반환")
+    void deleteRecordingPartialMarkerIfRecordingIdMatches_callbackFalse_returnsFalse() {
+        // given
+        given(masterTemplate.execute(any(SessionCallback.class))).willReturn(false);
+
+        // when
+        boolean result = sut.deleteRecordingPartialMarkerIfRecordingIdMatches(ROOM_ID, "rec-other");
+
+        // then
+        assertThat(result).isFalse();
     }
 
     // ── notified 플래그 round-trip ────────────────────────────────────────────

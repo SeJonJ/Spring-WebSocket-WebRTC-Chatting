@@ -2,6 +2,7 @@ package webChat.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import webChat.model.record.RecordingPartialMarker;
 
 /**
  * 다운로드 히스토리 로그
@@ -59,7 +60,7 @@ public class DownloadLog {
 
     @Getter
     public enum DownloadStatus {
-        SUCCESS, FAIL, PENDING
+        SUCCESS, FAIL, PENDING, SYSTEM_AUTO_DELETED
     }
 
     @Column(updatable = false)
@@ -87,6 +88,25 @@ public class DownloadLog {
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
                 .status(status)
+                .build();
+    }
+
+    /**
+     * 시스템 배치가 partial 녹화 파일을 자동 삭제한 사실을 기록하는 감사 로그를 만든다.
+     * of() 는 filePath.split 로 targetId 를 파생하고 filePath null 시 NPE 라, 마커의 recordingId 를 targetId 로 직접 사용한다.
+     */
+    public static DownloadLog ofSystemAutoDeleted(RecordingPartialMarker marker) {
+        return DownloadLog.builder()
+                .userIdx(null)
+                .email(marker.getRecordingUserId())
+                .roomId(marker.getRoomId())
+                .targetType(DownloadType.RECORDING)
+                .targetId(marker.getRecordingId())
+                .fileName(marker.getFileName())
+                .filePath(marker.getFilePath())
+                .ipAddress(null)
+                .userAgent(null)
+                .status(DownloadStatus.SYSTEM_AUTO_DELETED)
                 .build();
     }
 }
