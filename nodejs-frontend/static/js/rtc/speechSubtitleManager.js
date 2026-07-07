@@ -422,7 +422,7 @@ class SpeechRecognitionManager {
      * 사용자 친화적 에러 메시지 표시
      */
     showUserFriendlyError(message) {
-        // kurento-service.js의 showToast 함수 사용
+        // 전역 showToast(kurento-screen-share.js 정의) 사용, 없으면 alert 폴백
         if (typeof showToast === 'function') {
             showToast(message, 'error', 5000);
         } else {
