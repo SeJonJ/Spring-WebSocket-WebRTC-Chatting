@@ -112,6 +112,23 @@ const ParticipantUtils = {
 		this.toggleVolumeSlider(userId, enabled);
 	},
 
+	syncRecordingMixerVolume: function(userId, volume, contextLabel) {
+		if (recording?.isRecordingInProgress && recording?.audioMixer?.gainNodes?.has(userId)) {
+			recording.audioMixer.setVolume(userId, volume);
+			console.log(`AudioMixer 볼륨 조절${contextLabel ? ' (' + contextLabel + ')' : ''}: ${userId} = ${volume}`);
+		}
+	},
+
+	syncRecordingMixerMuted: function(userId, muted, contextLabel) {
+		if (recording?.isRecordingInProgress && recording?.audioMixer) {
+			if (userId !== 'local' && !recording.audioMixer.gainNodes?.has(userId)) {
+				return;
+			}
+			recording.audioMixer.setMuted(userId, muted);
+			console.log(`AudioMixer ${contextLabel} 오디오 ${muted ? '뮤트' : '언뮤트'}${userId !== 'local' ? ': ' + userId : ''}`);
+		}
+	},
+
 	/**
 	 * 로컬 사용자 ID를 가져옵니다
 	 * @return {string} 로컬 사용자 ID
@@ -161,13 +178,7 @@ const ParticipantUtils = {
 			ParticipantUtils.updateAudioState(targetUserId, true, volumeLevel);
 			participants[targetUserId].setVolume(volumeLevel);
 
-			// 녹화 중이면 AudioMixer도 동기화
-			if (recording?.isRecordingInProgress) {
-				if (recording?.audioMixer?.gainNodes?.has(targetUserId)) {
-					recording.audioMixer.setVolume(targetUserId, volumeLevel);
-					console.log(`AudioMixer 볼륨 조절: ${targetUserId} = ${volumeLevel}`);
-				}
-			}
+			ParticipantUtils.syncRecordingMixerVolume(targetUserId, volumeLevel);
 
 			// 모달 내 슬라이더와 동기화
 			const modalSlider = document.querySelector('#participantsList #volumeControl_' + targetUserId);
@@ -251,8 +262,9 @@ function Participant(userId, nickName, roomId) {
 	video.autoplay = true;
 	video.playsInline = true; // iOS에서 전체화면 방지
 
-	// 로컬 사용자는 에코 방지를 위해 비디오 음소거, 원격은 음소거 해제
-	video.muted = isMainParticipant(); // 로컬만 음소거
+	// 원격 오디오는 paired audio element가 단독으로 재생한다.
+	// video element는 비디오 표시 전용이므로 항상 muted로 유지한다.
+	video.muted = true;
 
 	// 비디오 요소 스타일 설정 (표시 보장)
 	video.style.width = '100%';
@@ -269,13 +281,12 @@ function Participant(userId, nickName, roomId) {
 	// 원격 참가자는 초기 볼륨 0.5로 설정 - kurento-service.js에서 1.0으로 덮어쓰임
 	// 로컬 사용자는 에코 방지를 위해 0 유지
 	if (!isMainParticipant()) {
-		audio.volume = 0.5;
-		video.volume = 0.5;
-		// 원격 오디오는 자동재생 정책을 위해 초기에는 muted=false 유지
-		// onaddstream 핸들러에서 srcObject 할당 후 음소거 해제
-	} else {
-		// 로컬 사용자는 에코 방지
-		audio.volume = 0;
+			audio.volume = 0.5;
+			video.volume = 0;
+			// 원격 오디오는 onaddstream 핸들러에서 audio element만 음소거 해제한다.
+		} else {
+			// 로컬 사용자는 에코 방지
+			audio.volume = 0;
 		video.volume = 0;
 	}
 
@@ -434,7 +445,7 @@ function Participant(userId, nickName, roomId) {
 		let videoElement = this.getVideoElement();
 		if (audioElement && videoElement) {
 			audioElement.volume = volumeLevel;
-			videoElement.volume = volumeLevel;
+			videoElement.volume = 0;
 		}
 	};
 
@@ -541,13 +552,7 @@ $('#userSetting').on('click', function (e) {
 			ParticipantUtils.updateAudioState(targetUserId, true, volumeLevel);
 			participants[targetUserId].setVolume(volumeLevel);
 
-			// 녹화 중이면 AudioMixer도 동기화
-			if (recording?.isRecordingInProgress) {
-				if (recording?.audioMixer?.gainNodes?.has(targetUserId)) {
-					recording.audioMixer.setVolume(targetUserId, volumeLevel);
-					console.log(`AudioMixer 볼륨 조절 (모달): ${targetUserId} = ${volumeLevel}`);
-				}
-			}
+			ParticipantUtils.syncRecordingMixerVolume(targetUserId, volumeLevel, '모달');
 
 			// 메인 화면의 볼륨 슬라이더와 동기화
 			let mainVolumeSlider = document.getElementById('volumeControl_' + targetUserId);
@@ -584,22 +589,14 @@ $('#userSetting').on('click', function (e) {
 					$(this).data('flag', false);
 					$(this).attr('src', '/images/webrtc/audio-speaker-off.svg');
 
-					// 녹화 중이면 AudioMixer도 뮤트
-					if (recording?.isRecordingInProgress) {
-						recording?.audioMixer?.setMuted('local', true);
-						console.log('AudioMixer 로컬 오디오 뮤트');
-					}
+					ParticipantUtils.syncRecordingMixerMuted('local', true, '로컬');
 				} else {
 					audioTrack.enabled = true;
 					ParticipantUtils.updateAudioState(userId, true);
 					$(this).data('flag', true);
 					$(this).attr('src', '/images/webrtc/audio-speaker-on.svg');
 
-					// 녹화 중이면 AudioMixer도 언뮤트
-					if (recording?.isRecordingInProgress) {
-						recording?.audioMixer?.setMuted('local', false);
-						console.log('AudioMixer 로컬 오디오 언뮤트');
-					}
+					ParticipantUtils.syncRecordingMixerMuted('local', false, '로컬');
 				}
 
 				// 메인 화면 버튼과 볼륨 슬라이더 동기화
@@ -662,11 +659,7 @@ $('#userSetting').on('click', function (e) {
 					remoteAudioButton.data('flag', false);
 					remoteAudioButton.attr('src', '/images/webrtc/audio-speaker-off.svg');
 
-					// Bug #3 수정: 녹화 중이면 AudioMixer도 뮤트
-					if (recording?.isRecordingInProgress && recording?.audioMixer?.gainNodes?.has(userId)) {
-						recording.audioMixer.setMuted(userId, true);
-						console.log(`AudioMixer 원격 오디오 뮤트: ${userId}`);
-					}
+					ParticipantUtils.syncRecordingMixerMuted(userId, true, '원격');
 
 					// 볼륨 슬라이더 비활성화
 					volumeSlider[0].disabled = true;
@@ -677,11 +670,7 @@ $('#userSetting').on('click', function (e) {
 					remoteAudioButton.data('flag', true);
 					remoteAudioButton.attr('src', '/images/webrtc/audio-speaker-on.svg');
 
-					// Bug #3 수정: 녹화 중이면 AudioMixer도 언뮤트
-					if (recording?.isRecordingInProgress && recording?.audioMixer?.gainNodes?.has(userId)) {
-						recording.audioMixer.setMuted(userId, false);
-						console.log(`AudioMixer 원격 오디오 언뮤트: ${userId}`);
-					}
+					ParticipantUtils.syncRecordingMixerMuted(userId, false, '원격');
 
 					// 볼륨 슬라이더 활성화
 					volumeSlider[0].disabled = false;
