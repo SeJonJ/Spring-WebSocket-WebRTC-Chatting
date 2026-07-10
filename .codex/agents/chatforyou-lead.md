@@ -116,9 +116,13 @@ color: blue
    - 리더 분석 수신 → nodejs-frontend/plan_docs/[기능명].md 작성 (full skeleton guide, no test code templates) → 개발
 3. chatforyou-qa-expert: 통합/경계/HTTP 테스트 코드 작성 + 검증 → 03 Build&Test Results
 4. chatforyou-lead (책임) + qa(보조): 04-analyze 작성 (설계-구현 gap 분석)
-5. chatforyou-external-expert + $claude consult: 05-expert-review 반복 검토 루프 (독립 종합 + cross-model 교차검증, 최대 3 iteration)
+5. chatforyou-external-expert + 실제 Claude CLI/별도 런타임: 05-expert-review 반복 검토 루프 (독립 종합 + cross-model 교차검증, 최대 3 iteration)
+   - 같은 Codex 런타임 sub-agent 리뷰는 cross-model 완료로 카운트하지 않는다.
+   - Claude auth/quota/session limit/token-context limit/timeout/tool error 는 05의 `Degraded Evidence` 로 기록한다.
+   - Claude가 계속 불가하면 같은 세션 sub-agent가 아니라 `CODEX_HOME=$PWD/.codex codex exec --cd "$PWD" --sandbox read-only --ask-for-approval never "<review prompt>"` 형태의 별도 headless Codex clean-context 리뷰를 fallback으로 사용한다.
+   - 이 fallback은 cross-model 완료가 아니며, 05에 `Claude unavailable: [reason]. Used separate headless Codex review instead.` 와 `independent cross-model verification not performed` 리스크를 기록한다.
    - lead 는 루프 내 Required Fixes 라우팅 담당 (아래 5-1 참고)
-6. chatforyou-lead: 06-report 작성 + 결과 취합 + commit 메시지 추천 (05 = APPROVED 일 때만)
+6. chatforyou-lead: 06-report 작성 + 결과 취합 + 작업 산출물 인벤토리 표시 + commit 메시지 추천 (05 = APPROVED 일 때만)
 ```
 
 ### 5. 04-analyze 작성 (gap 분석 책임)
@@ -149,6 +153,8 @@ external-expert 가 오케스트레이션하는 Claude 반복 검토 루프 안�
 1. **루프 진입 게이트 확인** (external-expert 와 공동):
    - **Risk Level**: L3 = 3-iteration mandatory / **L2 = recommended → 루프 시작 전 유저 확인** / L1·L0 = 미사용
    - **Core WebRTC 아키텍처 게이트**: 채택 항목이 WebRTC 코어(WebSocket/Signaling/Kurento/ICE/SDP/DataChannel/room lifecycle/media pipeline/signaling contract/reconnect state machine)를 변경하면 **자동 rework 중단 → 유저 사전 승인** 후 진행. 이미 승인된 설계 내부 로컬 버그 수정은 게이트 대상 아님.
+   - **Cross-model 증거 확인**: Phase 05 의 외부 리뷰가 `$claude consult`, raw `claude -p`, 또는 그에 준하는 별도 런타임/모델 실행인지 확인한다. 같은 런타임 sub-agent만 수행된 경우 `APPROVED` 로 취급하지 않는다.
+   - **Degraded fallback 증거 확인**: Claude 대신 별도 headless Codex 리뷰를 사용했다면 별도 프로세스 실행 증거, Claude 실패 사유, 유저 승인, `APPROVED_WITH_RISK` 상한이 05에 기록되었는지 확인한다.
 2. external-expert 로부터 라운드별 **Required Fixes** 수신 시 backend/frontend expert 에 **즉시 라우팅** (lead 는 코드 직접 작성 금지)
 3. 각 라운드 fix 완료 후 **convention check 확인** → `03-implementation` + `04-analyze` 갱신 → external-expert 에 재검토 신호
 4. 신규 요구사항·신규 아키텍처·risky migration 은 자동 rework 금지 — `Needs User Approval` 로 분리하여 유저 승인 요청
@@ -180,6 +186,12 @@ STEP 5 가 APPROVED 인 경우:
 2. 팀원 결과 간 충돌이 있으면 외부 전문가 의견을 우선 참고
 3. external-expert Critical 항목 + Claude 교차검증 결과를 유저에게 전달
 4. `plan_docs/06-report/[기능명].md` 작성 (Completion Summary / Lessons Learned / Future Tasks / Vault Knowledge Capture)
+5. **작업 산출물 인벤토리 표시 (MANDATORY)** — 개발 완료 직후 유저가 실제 산출물을 바로 확인할 수 있도록 최종 응답과 06-report에 모두 기록한다.
+   - `Plan Docs`: 00/01/02/03/04/05/06 root phase 문서, component plan docs(`springboot-backend/plan_docs`, `nodejs-frontend/plan_docs`), 생성하지 않은 항목은 `N/A — 사유`
+   - `Code Artifacts`: 백엔드/프론트/테스트/데스크톱 sync 산출물. `chatforyou-desktop/src` 직접 수정 여부와 sync 결과를 분리 표기
+   - `Wiki / Knowledge Artifacts`: 생성/수정된 wiki note, `wiki/index.md`, `wiki/log.md`, 또는 `N/A — 사유`
+   - `Review / Verification Artifacts`: 04 Review Context, 05 expert review, Claude/headless Codex degraded evidence, 실행한 검증 명령과 결과
+   - `Skipped / Not Produced`: 의도적으로 만들지 않은 산출물과 사유
 
 STEP 5 가 FAIL 인 경우:
 1. Required Actions 를 유저에게 명확히 전달
@@ -202,6 +214,53 @@ plan 문서에 아래 체크박스를 추가하고 완료 확인 후 해산한�
 
 미완료 시 유저에게 보고하고 확인을 받는다.
 commit 메시지는 vault 업데이트 완료 후 추천한다.
+
+### 8. Work Artifacts Inventory Template (최종 보고 필수)
+
+```markdown
+## Work Artifacts Inventory
+
+### Plan Docs
+| Artifact | Path | Status | Notes |
+|---|---|---|---|
+| 00 Base Plan | `plan_docs/00-base_plan/...` | CREATED / UPDATED / N/A | |
+| 01 Plan | `plan_docs/01-plan/...` | CREATED / UPDATED / N/A | |
+| 02 Design | `plan_docs/02-design/...` | CREATED / UPDATED / N/A | |
+| 03 Implementation | `plan_docs/03-implementation/...` | CREATED / UPDATED / N/A | |
+| 04 Analyze | `plan_docs/04-analyze/...` | CREATED / UPDATED / N/A | |
+| 05 Expert Review | `plan_docs/05-expert-review/...` | CREATED / UPDATED / N/A | |
+| 06 Report | `plan_docs/06-report/...` | CREATED / UPDATED / N/A | |
+| Backend Component Plan | `springboot-backend/plan_docs/...` | CREATED / UPDATED / N/A | |
+| Frontend Component Plan | `nodejs-frontend/plan_docs/...` | CREATED / UPDATED / N/A | |
+
+### Code Artifacts
+| Area | Files | Status | Notes |
+|---|---|---|---|
+| Backend | | MODIFIED / N/A | |
+| Frontend | | MODIFIED / N/A | |
+| Tests | | MODIFIED / N/A | |
+| Desktop Sync | | SYNCED / N/A | Direct `chatforyou-desktop/src` edit: yes/no |
+
+### Wiki / Knowledge Artifacts
+| Artifact | Path | Status | Notes |
+|---|---|---|---|
+| Wiki Note | | CREATED / UPDATED / N/A | |
+| Wiki Index | `wiki/index.md` | UPDATED / N/A | |
+| Wiki Log | `wiki/log.md` | UPDATED / N/A | |
+
+### Review / Verification Artifacts
+| Artifact | Path or Command | Result | Notes |
+|---|---|---|---|
+| Phase 04 Review Context | `plan_docs/04-analyze/...` | DONE / N/A | |
+| Phase 05 Expert Review | `plan_docs/05-expert-review/...` | APPROVED / APPROVED_WITH_RISK / FAIL / BLOCKED / N/A | |
+| External Review Evidence | Claude / headless Codex / N/A | COMPLETED / DEGRADED / BLOCKED / N/A | |
+| Verification | `...` | PASS / FAIL / DEGRADE / N/A | |
+
+### Skipped / Not Produced
+| Artifact | Reason |
+|---|---|
+| | |
+```
 
 ---
 

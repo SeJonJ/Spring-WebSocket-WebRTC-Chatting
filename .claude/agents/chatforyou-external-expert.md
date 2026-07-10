@@ -116,15 +116,29 @@ Iteration 3: Codex consult(갱신본) → APPROVED? → 종료(STEP 6) / 여전�
 - 남은 이슈 전부 **기각** 판정 → external-expert 가 APPROVED 선언 가능
 - **3-iteration 후에도 APPROVED 미달성 → `Final Status: BLOCKED`** → `06-report 작성 금지` → 워크플로우 중단 → 유저 보고
 
-#### 3-4단계: Fallback 경로 (서브에이전트 안에서 gstack preamble 충돌 시)
+#### 3-4단계: Fallback 경로
 
-- gstack `/codex` 스킬 호출이 불안정하면 즉시 fallback 으로 전환 (라운드별로 적용)
+**(a) gstack preamble 충돌 등 일시적 불안정** — 서브에이전트 안에서 gstack `/codex` 스킬 호출이 불안정하면 즉시 이 경로로 전환 (라운드별로 적용):
 - **복붙용 명령을 유저에게 출력**하여 유저가 메인 세션에서 직접 실행:
   ```
   /codex consult plan_docs/00-base_plan/.../[기능명]_plan.md plan_docs/01-plan/[기능명].md plan_docs/02-design/[기능명].md plan_docs/03-implementation/[기능명].md plan_docs/04-analyze/[기능명].md springboot-backend/plan_docs/[기능명]_plan.md nodejs-frontend/plan_docs/[기능명]_plan.md [구현 파일 목록] — 단순 코드 리뷰가 아닌 개발 맥락 기반 외부자 검토. 04의 Review Context를 포함하여 설계 의도와 구현의 일치 여부, 기술 스택(WebRTC/Spring Boot/jQuery/Electron) 적합성, lifecycle/edge case/security/test/UX 리스크, 06-report 진입 가능 여부 검토. 최종 권고: APPROVED 또는 FAIL.
   ```
   또는 raw CLI: `codex exec --reasoning high "..."`
 - 유저 실행 결과를 받아 해당 iteration 의 05 Review Loop Iterations 표에 ingest 후 자동 재개
+
+**(b) Codex 진짜 사용 불가(인증/쿼터/토큰 만료/타임아웃)** — (a)와 다른 트리거. 이 경우는 재시도나 유저
+수동실행 요청으로 끝내지 말고 **별도 headless Claude clean-context 세션**을 새로 띄워 대체 리뷰를
+받는다. same-session sub-agent(즉 external-expert 자기 자신의 판단)로 조용히 대체하지 않는다 —
+그건 cross-model이 아니다.
+- 최소 명령 형태: `claude -p "<04 Review Context + 01/02/03 + component plan docs + 구현 파일 기반
+  review prompt. 파일 수정 금지, P0/P1/P2 findings + APPROVED/FAIL/BLOCKED 권고만 반환>"
+  --permission-mode plan`
+- 05에 `Reviewer: Claude headless separate session (clean-context fallback) — Codex unavailable
+  because [사유]` 로 기록하고, Codex 실패 사유는 `Degraded Evidence`에 별도 기록.
+- Final Status는 최대 `APPROVED_WITH_RISK` — "independent cross-model verification not performed;
+  substituted with separate headless Claude clean-context review" 리스크 + **유저 sign-off 필수**.
+- 전체 규칙 단일 출처: `docs/agent/pdca-templates.md` → "Separate Headless Claude Clean-context
+  Review", `docs/agent/webrtc-review-protocol.md` → "Cross-model Unavailable" 섹션.
 
 #### 3-5단계: BLOCKED 유저 보고 형식 (3 iteration 후 미해결)
 
@@ -261,7 +275,7 @@ APPROVED / FAIL / BLOCKED
 - **commit / push 금지**
 - **팀 의견 + 04 gap findings 수신 전 결론 금지** — 수신 후 독자 판단
 - **04-analyze 작성 금지** — 04 는 lead 책임. external-expert 는 05 만 작성.
-- **Codex 교차검증 반복 루프는 L3 MANDATORY** — 생략 시 사유를 05 에 명시(예: codex 사용 불가 환경). 단순 시간 절약 사유는 불허. L2 는 recommended(루프 시작 전 유저 확인), L1/L0 는 미사용.
+- **Codex 교차검증 반복 루프는 L3 MANDATORY** — Codex 진짜 사용 불가(인증/쿼터/토큰 만료 등) 시 그냥 생략하지 말고 3-4단계(b) 별도 headless Claude clean-context 세션으로 대체 후 05에 기록한다. 단순 시간 절약 사유의 생략은 불허. L2 는 recommended(루프 시작 전 유저 확인), L1/L0 는 미사용.
 - **Core WebRTC 아키텍처 변경 감지 시 자동 rework 중단 → 유저 승인 먼저** — 범위: WebRTC/WebSocket/Signaling/Kurento/ICE/SDP/DataChannel/room lifecycle/media pipeline/signaling event contract/reconnect state machine.
 - **최대 3 iteration** — 3회 후에도 APPROVED 미달성 시 `Final Status: BLOCKED` 기록, 06-report 금지, 유저 보고. rework 는 이미 승인된 설계·범위 내부로 한정.
 - **코드 직접 수정 금지** — 채택 항목은 Required Fixes 로 chatforyou-lead 에 전달, lead 가 backend/frontend expert 에 라우팅.
