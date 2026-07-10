@@ -82,14 +82,21 @@ const screenShareConfig = {
     qualityAdjustInterval: null
 };
 
-// 네트워크 품질 감지
-function detectNetworkQuality() {
+function getScreenSharePeerConnection() {
     const participant = participants[userId];
     if (!participant || !participant.rtcPeer || !participant.rtcPeer.peerConnection) {
-        return Promise.resolve('medium');
+        return null;
+    }
+    return participant.rtcPeer.peerConnection;
+}
+
+function collectScreenShareStatsSnapshot() {
+    const peerConnection = getScreenSharePeerConnection();
+    if (!peerConnection) {
+        return Promise.resolve(null);
     }
 
-    return participant.rtcPeer.peerConnection.getStats()
+    return peerConnection.getStats()
         .then(function (stats) {
             let outboundRtp = null;
             let candidatePair = null;
@@ -102,48 +109,133 @@ function detectNetworkQuality() {
                 }
             });
 
-            if (!outboundRtp || !candidatePair) {
-                return 'medium';
-            }
+            return {
+                stats,
+                outboundRtp,
+                candidatePair,
+                timestamp: Date.now()
+            };
+        });
+}
 
-            const bitrate = outboundRtp.bytesSent * 8 / 1000;
-            const packetLoss = outboundRtp.packetsLost || 0;
-            const rtt = candidatePair.currentRoundTripTime * 1000 || 0;
-            const jitter = outboundRtp.jitter || 0;
+function calculateNetworkQualityFromSnapshot(snapshot) {
+    if (!snapshot || !snapshot.outboundRtp || !snapshot.candidatePair) {
+        return 'medium';
+    }
 
-            let qualityScore = 100;
-            if (bitrate > 2000) {
-                qualityScore += 0;
-            } else if (bitrate > 1000) {
-                qualityScore -= 15;
-            } else {
-                qualityScore -= 30;
-            }
+    const outboundRtp = snapshot.outboundRtp;
+    const candidatePair = snapshot.candidatePair;
+    const bitrate = outboundRtp.bytesSent * 8 / 1000;
+    const packetLoss = outboundRtp.packetsLost || 0;
+    const rtt = candidatePair.currentRoundTripTime * 1000 || 0;
+    const jitter = outboundRtp.jitter || 0;
 
-            qualityScore -= Math.min(packetLoss * 2, 40);
+    let qualityScore = 100;
+    if (bitrate > 2000) {
+        qualityScore += 0;
+    } else if (bitrate > 1000) {
+        qualityScore -= 15;
+    } else {
+        qualityScore -= 30;
+    }
 
-            if (rtt > 200) {
-                qualityScore -= 20;
-            } else if (rtt > 100) {
-                qualityScore -= 10;
-            }
+    qualityScore -= Math.min(packetLoss * 2, 40);
 
-            if (jitter > 0.05) {
-                qualityScore -= 10;
-            }
+    if (rtt > 200) {
+        qualityScore -= 20;
+    } else if (rtt > 100) {
+        qualityScore -= 10;
+    }
 
-            let quality;
-            if (qualityScore >= 80) {
-                quality = 'high';
-            } else if (qualityScore >= 50) {
-                quality = 'medium';
-            } else {
-                quality = 'low';
-            }
+    if (jitter > 0.05) {
+        qualityScore -= 10;
+    }
 
-            lastNetworkQuality = quality;
-            return quality;
-        })
+    let quality;
+    if (qualityScore >= 80) {
+        quality = 'high';
+    } else if (qualityScore >= 50) {
+        quality = 'medium';
+    } else {
+        quality = 'low';
+    }
+
+    lastNetworkQuality = quality;
+    return quality;
+}
+
+function selectOptimalQuality(networkQuality, deviceQuality) {
+    const qualityMatrix = {
+        'high_high': 'high',
+        'high_medium': 'medium',
+        'high_low': 'medium',
+        'medium_high': 'medium',
+        'medium_medium': 'medium',
+        'medium_low': 'low',
+        'low_high': 'low',
+        'low_medium': 'low',
+        'low_low': 'low'
+    };
+
+    const key = `${networkQuality}_${deviceQuality}`;
+    return qualityMatrix[key] || 'medium';
+}
+
+function updateDevicePerformanceFromSnapshot(snapshot) {
+    if (!snapshot || !snapshot.outboundRtp) {
+        return 'medium';
+    }
+
+    const outboundRtp = snapshot.outboundRtp;
+    const currentFrameRate = outboundRtp.framesPerSecond || 0;
+    const framesSent = outboundRtp.framesSent || 0;
+    const framesEncoded = outboundRtp.framesEncoded || 0;
+    const frameDropRate = framesSent > 0 ? ((framesEncoded - framesSent) / framesEncoded) * 100 : 0;
+    const encodeTime = outboundRtp.totalEncodeTime || 0;
+    const encodedFrames = outboundRtp.framesEncoded || 1;
+    const avgEncodeTime = (encodeTime * 1000) / encodedFrames;
+
+    devicePerformance.metrics.frameDropRate = frameDropRate;
+    devicePerformance.metrics.encodeTime = avgEncodeTime;
+    devicePerformance.metrics.lastUpdated = Date.now();
+
+    updatePerformanceHistory(currentFrameRate, avgEncodeTime, outboundRtp.bytesSent);
+    return calculatePerformanceGrade();
+}
+
+function updateScreenShareStatsFromSnapshot(snapshot) {
+    if (!shareView || !snapshot || !snapshot.outboundRtp) {
+        return;
+    }
+
+    const outboundRtp = snapshot.outboundRtp;
+    const now = snapshot.timestamp || Date.now();
+    const timeDiff = (now - screenShareConfig.stats.timestamp) / 1000;
+    if (timeDiff <= 0) {
+        return;
+    }
+
+    const bytesDiff = outboundRtp.bytesSent - (screenShareConfig.stats.bytesLastSent || 0);
+    screenShareConfig.stats.bitrate = (bytesDiff * 8) / (timeDiff * 1000);
+    screenShareConfig.stats.frameRate = outboundRtp.framesPerSecond || 0;
+    screenShareConfig.stats.packetsLost = outboundRtp.packetsLost || 0;
+    screenShareConfig.stats.bytesLastSent = outboundRtp.bytesSent;
+    screenShareConfig.stats.timestamp = now;
+
+    screenShareConfig.stats.framesEncoded = outboundRtp.framesEncoded || 0;
+    screenShareConfig.stats.framesSent = outboundRtp.framesSent || 0;
+    screenShareConfig.stats.encodeTime = outboundRtp.totalEncodeTime || 0;
+    screenShareConfig.stats.qualityLimitationReason = outboundRtp.qualityLimitationReason || 'none';
+
+    analyzeQualityLimitation(outboundRtp.qualityLimitationReason);
+    checkPerformanceWarnings();
+    updateStatsDisplay();
+}
+
+// 네트워크 품질 감지
+function detectNetworkQuality() {
+    return collectScreenShareStatsSnapshot()
+        .then(calculateNetworkQualityFromSnapshot)
         .catch(function (error) {
             console.warn('네트워크 품질 감지 실패:', error);
             return 'medium';
@@ -174,40 +266,8 @@ const devicePerformance = {
 
 // 디바이스 성능 감지
 function detectDevicePerformance() {
-    const participant = participants[userId];
-    if (!participant || !participant.rtcPeer) {
-        return Promise.resolve('medium');
-    }
-
-    return participant.rtcPeer.peerConnection.getStats()
-        .then(function (stats) {
-            let outboundRtp = null;
-
-            stats.forEach(function (report) {
-                if (report.type === 'outbound-rtp' && report.kind === 'video') {
-                    outboundRtp = report;
-                }
-            });
-
-            if (!outboundRtp) {
-                return 'medium';
-            }
-
-            const currentFrameRate = outboundRtp.framesPerSecond || 0;
-            const framesSent = outboundRtp.framesSent || 0;
-            const framesEncoded = outboundRtp.framesEncoded || 0;
-            const frameDropRate = framesSent > 0 ? ((framesEncoded - framesSent) / framesEncoded) * 100 : 0;
-            const encodeTime = outboundRtp.totalEncodeTime || 0;
-            const encodedFrames = outboundRtp.framesEncoded || 1;
-            const avgEncodeTime = (encodeTime * 1000) / encodedFrames;
-
-            devicePerformance.metrics.frameDropRate = frameDropRate;
-            devicePerformance.metrics.encodeTime = avgEncodeTime;
-            devicePerformance.metrics.lastUpdated = Date.now();
-
-            updatePerformanceHistory(currentFrameRate, avgEncodeTime, outboundRtp.bytesSent);
-            return calculatePerformanceGrade();
-        })
+    return collectScreenShareStatsSnapshot()
+        .then(updateDevicePerformanceFromSnapshot)
         .catch(function (error) {
             console.warn('디바이스 성능 감지 실패:', error);
             return 'medium';
@@ -280,27 +340,15 @@ function calculatePerformanceGrade() {
 }
 
 // 통합 품질 결정 (네트워크 + 디바이스)
-function determineOptimalQuality() {
-    return Promise.all([
-        detectNetworkQuality(),
-        detectDevicePerformance()
-    ]).then(function (qualities) {
-        const networkQuality = qualities[0];
-        const deviceQuality = qualities[1];
-        const qualityMatrix = {
-            'high_high': 'high',
-            'high_medium': 'medium',
-            'high_low': 'medium',
-            'medium_high': 'medium',
-            'medium_medium': 'medium',
-            'medium_low': 'low',
-            'low_high': 'low',
-            'low_medium': 'low',
-            'low_low': 'low'
-        };
+function determineOptimalQuality(snapshot) {
+    const qualityPromise = arguments.length > 0
+        ? Promise.resolve(snapshot)
+        : collectScreenShareStatsSnapshot();
 
-        const key = `${networkQuality}_${deviceQuality}`;
-        const optimalQuality = qualityMatrix[key] || 'medium';
+    return qualityPromise.then(function (statsSnapshot) {
+        const networkQuality = calculateNetworkQualityFromSnapshot(statsSnapshot);
+        const deviceQuality = updateDevicePerformanceFromSnapshot(statsSnapshot);
+        const optimalQuality = selectOptimalQuality(networkQuality, deviceQuality);
 
         console.log(`품질 결정: 네트워크(${networkQuality}) + 디바이스(${deviceQuality}) = ${optimalQuality}`);
         return optimalQuality;
@@ -308,12 +356,12 @@ function determineOptimalQuality() {
 }
 
 // 고급 화면 공유 품질 자동 조정
-function adjustScreenShareQuality() {
+function adjustScreenShareQuality(snapshot) {
     if (!shareView || !screenShareConfig.autoOptimize) {
         return Promise.resolve();
     }
 
-    return determineOptimalQuality()
+    return determineOptimalQuality(snapshot)
         .then(function (optimalQuality) {
             if (optimalQuality === screenShareConfig.currentQuality) {
                 return null;
@@ -425,47 +473,8 @@ function updateScreenShareStats() {
         return Promise.resolve();
     }
 
-    const participant = participants[userId];
-    if (!participant || !participant.rtcPeer) {
-        return Promise.resolve();
-    }
-
-    return participant.rtcPeer.peerConnection.getStats()
-        .then(function (stats) {
-            let outboundRtp = null;
-
-            stats.forEach(function (report) {
-                if (report.type === 'outbound-rtp' && report.kind === 'video') {
-                    outboundRtp = report;
-                }
-            });
-
-            if (!outboundRtp) {
-                return;
-            }
-
-            const now = Date.now();
-            const timeDiff = (now - screenShareConfig.stats.timestamp) / 1000;
-            if (timeDiff <= 0) {
-                return;
-            }
-
-            const bytesDiff = outboundRtp.bytesSent - (screenShareConfig.stats.bytesLastSent || 0);
-            screenShareConfig.stats.bitrate = (bytesDiff * 8) / (timeDiff * 1000);
-            screenShareConfig.stats.frameRate = outboundRtp.framesPerSecond || 0;
-            screenShareConfig.stats.packetsLost = outboundRtp.packetsLost || 0;
-            screenShareConfig.stats.bytesLastSent = outboundRtp.bytesSent;
-            screenShareConfig.stats.timestamp = now;
-
-            screenShareConfig.stats.framesEncoded = outboundRtp.framesEncoded || 0;
-            screenShareConfig.stats.framesSent = outboundRtp.framesSent || 0;
-            screenShareConfig.stats.encodeTime = outboundRtp.totalEncodeTime || 0;
-            screenShareConfig.stats.qualityLimitationReason = outboundRtp.qualityLimitationReason || 'none';
-
-            analyzeQualityLimitation(outboundRtp.qualityLimitationReason);
-            checkPerformanceWarnings();
-            updateStatsDisplay();
-        })
+    return collectScreenShareStatsSnapshot()
+        .then(updateScreenShareStatsFromSnapshot)
         .catch(function (error) {
             console.warn('화면 공유 통계 업데이트 실패:', error);
         });
@@ -742,9 +751,17 @@ function startScreenShareMonitoring() {
     
     // 통계 업데이트 및 품질 조정 (2초마다 - 더 빠른 반응성)
     screenShareConfig.qualityAdjustInterval = setInterval(function () {
-        updateScreenShareStats()
-            .then(function () {
-                return adjustScreenShareQuality();
+        const controls = document.getElementById('screenShareControls');
+        // 전체 패널이 닫힌 경우에만 중지한다. 미니멀 모드는 내부 섹션만 숨기므로 모니터링을 유지한다.
+        if (!controls || controls.style.display === 'none') {
+            pauseScreenShareMonitoring();
+            return;
+        }
+
+        collectScreenShareStatsSnapshot()
+            .then(function (snapshot) {
+                updateScreenShareStatsFromSnapshot(snapshot);
+                return adjustScreenShareQuality(snapshot);
             })
             .catch(function (error) {
                 console.warn('화면 공유 모니터링 루프 실패:', error);
@@ -762,13 +779,23 @@ function startScreenShareMonitoring() {
 
 // 화면 공유 모니터링 중지
 function stopScreenShareMonitoring() {
+    // UI 숨기기
+    hideScreenShareControls();
+}
+
+function pauseScreenShareMonitoring() {
     if (screenShareConfig.qualityAdjustInterval) {
         clearInterval(screenShareConfig.qualityAdjustInterval);
         screenShareConfig.qualityAdjustInterval = null;
     }
-    
-    // UI 숨기기
-    hideScreenShareControls();
+}
+
+function resumeScreenShareMonitoring() {
+    if (!shareView || screenShareConfig.qualityAdjustInterval) {
+        return;
+    }
+
+    startScreenShareMonitoring();
 }
 
 // 화면 공유 에러 표시
@@ -1868,6 +1895,7 @@ function showScreenShareControls() {
     }
     
     document.getElementById('screenShareControls').style.display = 'flex';
+    resumeScreenShareMonitoring();
 }
 
 // 패널을 드래그 가능하게 만들기
@@ -2197,14 +2225,21 @@ function toggleMinimalMode() {
 function oneClickOptimize() {
     showToast('최적화를 진행하고 있습니다...', 'info');
 
-    return Promise.all([
-        detectNetworkQuality(),
-        detectDevicePerformance(),
-        determineOptimalQuality()
-    ]).then(function (qualities) {
-        const networkQuality = qualities[0];
-        const deviceQuality = qualities[1];
-        const optimalQuality = qualities[2];
+    return collectScreenShareStatsSnapshot().then(function (snapshot) {
+        const networkQuality = calculateNetworkQualityFromSnapshot(snapshot);
+        const deviceQuality = updateDevicePerformanceFromSnapshot(snapshot);
+        const optimalQuality = selectOptimalQuality(networkQuality, deviceQuality);
+
+        console.log(`품질 결정: 네트워크(${networkQuality}) + 디바이스(${deviceQuality}) = ${optimalQuality}`);
+        return {
+            networkQuality,
+            deviceQuality,
+            optimalQuality
+        };
+    }).then(function (qualities) {
+        const networkQuality = qualities.networkQuality;
+        const deviceQuality = qualities.deviceQuality;
+        const optimalQuality = qualities.optimalQuality;
 
         const applyQualityChange = optimalQuality !== screenShareConfig.currentQuality
             ? changeScreenShareQuality(optimalQuality).then(function () {
@@ -2303,6 +2338,8 @@ function getToastTitle(type) {
 
 // 화면 공유 컨트롤 UI 숨기기 (오버라이드)
 function hideScreenShareControls() {
+    pauseScreenShareMonitoring();
+
     const controls = document.getElementById('screenShareControls');
     if (controls) {
         controls.style.display = 'none';
@@ -2322,4 +2359,3 @@ function hideScreenShareControls() {
         overlay.remove();
     });
 }
-

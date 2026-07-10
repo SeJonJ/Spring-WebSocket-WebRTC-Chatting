@@ -99,6 +99,17 @@ const recording = {
         audioBitsPerSecond: 128000   // 128 kbps
     },
 
+    syncSubtitleByRecording: function (isRecording, logMessage) {
+        if (typeof speechRecognitionUtils !== 'undefined' && speechRecognitionUtils.handlingSubtitleByRecording) {
+            if (logMessage) {
+                console.log(logMessage);
+            }
+            speechRecognitionUtils.handlingSubtitleByRecording(isRecording);
+        } else {
+            console.warn('[RECORDING] speechRecognitionUtils not available');
+        }
+    },
+
     /**
      * 초기화
      */
@@ -244,12 +255,7 @@ const recording = {
             dataChannel?.sendMessage?.('recordingStarted', 'recording');
 
             // 5. 자막 기능 비활성화
-            if (typeof speechRecognitionUtils !== 'undefined' && speechRecognitionUtils.handlingSubtitleByRecording) {
-                console.log('[RECORDING] Disabling subtitle function on recording start');
-                speechRecognitionUtils.handlingSubtitleByRecording(true);
-            } else {
-                console.warn('[RECORDING] speechRecognitionUtils not available');
-            }
+            self.syncSubtitleByRecording(true, '[RECORDING] Disabling subtitle function on recording start');
 
             console.log('녹화 시작 완료, hasRecordedOnce:', self.hasRecordedOnce);
             self.showToast('녹화를 시작합니다.');
@@ -456,12 +462,7 @@ const recording = {
             dataChannel?.sendMessage?.('recordingStopped', 'recording');
 
             // 5. 자막 기능 재활성화
-            if (speechRecognitionUtils?.handlingSubtitleByRecording) {
-                console.log('[RECORDING] Disabling subtitle function on recording stop');
-                speechRecognitionUtils.handlingSubtitleByRecording(false);
-            } else {
-                console.warn('[RECORDING] speechRecognitionUtils not available');
-            }
+            self.syncSubtitleByRecording(false, '[RECORDING] Disabling subtitle function on recording stop');
 
             console.log('녹화 중지 완료, hasRecordedOnce:', self.hasRecordedOnce);
             self.showToast('녹화를 중지했습니다.');
@@ -653,12 +654,7 @@ const recording = {
                 self.updateUI('disabled');
 
                 // 자막 기능 비활성화
-                if (typeof speechRecognitionUtils !== 'undefined' && speechRecognitionUtils.handlingSubtitleByRecording) {
-                    console.log('[RECORDING] Disabling subtitle function (other user recording)');
-                    speechRecognitionUtils.handlingSubtitleByRecording(true);
-                } else {
-                    console.warn('[RECORDING] speechRecognitionUtils not available');
-                }
+                self.syncSubtitleByRecording(true, '[RECORDING] Disabling subtitle function (other user recording)');
 
             } else if (eventType === 'recordingStopped') {
                 self.isOtherRecordingInProgress = false;
@@ -669,12 +665,7 @@ const recording = {
                 self.updateUI('permanentlyDisabled');
 
                 // 자막 기능 재활성화
-                if (typeof speechRecognitionUtils !== 'undefined' && speechRecognitionUtils.handlingSubtitleByRecording) {
-                    console.log('[RECORDING] Re-enabling subtitle function');
-                    speechRecognitionUtils.handlingSubtitleByRecording(false);
-                } else {
-                    console.warn('[RECORDING] speechRecognitionUtils not available');
-                }
+                self.syncSubtitleByRecording(false, '[RECORDING] Re-enabling subtitle function');
             }
         }
     },
@@ -760,9 +751,7 @@ const recording = {
         self.updateUI('permanentlyDisabled');
 
         // 자막 기능 처리
-        if (typeof speechRecognitionUtils !== 'undefined') {
-            speechRecognitionUtils.handlingSubtitleByRecording(false);
-        }
+        self.syncSubtitleByRecording(false);
     },
 
     /**
@@ -992,7 +981,7 @@ const recording = {
 
         // UI 업데이트(녹화 및 자막 버튼 비활성화)
         self.updateUI('disabled');
-        speechRecognitionUtils.handlingSubtitleByRecording(self.isRecordingInProgress);
+        self.syncSubtitleByRecording(self.isRecordingInProgress);
 
         // 토스트 알림
         self.showToast(parseMessage.message);
@@ -1015,9 +1004,7 @@ const recording = {
         self.stopAudioMixing();
 
         // 녹화로 인해 자막이 비활성화된 경우 복원
-        if (typeof speechRecognitionUtils !== 'undefined' && speechRecognitionUtils.handlingSubtitleByRecording) {
-            speechRecognitionUtils.handlingSubtitleByRecording(false);
-        }
+        self.syncSubtitleByRecording(false);
 
         // UI를 idle로 전환 — 재시작 가능 상태
         self.updateUI('idle');
@@ -1043,7 +1030,7 @@ const recording = {
 
         // UI 업데이트(녹화 및 자막 버튼 비활성화)
         self.updateUI('recording');
-        speechRecognitionUtils.handlingSubtitleByRecording(self.isRecordingInProgress);
+        self.syncSubtitleByRecording(self.isRecordingInProgress);
 
         // 토스트 알림
         if(name === nickName){

@@ -82,5 +82,5 @@ Restarted 2026-07-06: Phase 01–03 and the frontend component guide were delete
 - [x] Implementation evidence: `plan_docs/03-implementation/web_rtc_frontend_refactor.md`
 - [x] Frontend implementation guide: `nodejs-frontend/plan_docs/web_rtc_frontend_refactor_plan.md`
 - [x] Gap analysis: `plan_docs/04-analyze/web_rtc_frontend_refactor.md`
-- [ ] Expert review: `plan_docs/05-expert-review/web_rtc_frontend_refactor.md`
-- [ ] Final report: `plan_docs/06-report/web_rtc_frontend_refactor.md`
+- [x] Expert review: `plan_docs/05-expert-review/web_rtc_frontend_refactor.md` (closed as non-standard: 1-round exception review FAIL → doc-only fixes → user-approved closure without re-verification; see file for detail)
+- [x] Final report: `plan_docs/06-report/web_rtc_frontend_refactor.md`

@@ -1730,28 +1730,43 @@ function receiveVideo(sender) {
         if (videoTracks.length === 0) console.warn('[WebRTC:Stream] 비디오 트랙 없음');
 
         // 스트림 할당
-        // Video 요소: 전체 스트림 (비디오+오디오) - 비디오 표시용
-        video.srcObject = event.stream;
+        // Video 요소: 비디오 트랙만 포함한다. 원격 오디오는 audio element가 단독 재생한다.
+        if (videoTracks.length > 0) {
+            const videoOnlyStream = new MediaStream(videoTracks);
+            video.srcObject = videoOnlyStream;
+            console.log('[WebRTC:Stream] 비디오 전용 스트림 생성:', videoOnlyStream.id);
+        } else {
+            video.srcObject = null;
+        }
 
         // Audio 요소: 오디오 트랙만 포함한 별도 MediaStream - 오디오 재생용
         if (audioTracks.length > 0) {
             const audioOnlyStream = new MediaStream(audioTracks);
             audio.srcObject = audioOnlyStream;
             console.log('[WebRTC:Stream] 오디오 전용 스트림 생성:', audioOnlyStream.id);
+        } else {
+            audio.srcObject = null;
         }
 
         // muted 상태로 설정하여 자동재생 정책 우회 (muted 자동재생은 항상 허용)
         video.muted = true;
         audio.muted = true;
 
-        // 오디오 재생 함수 (비디오 재생 성공 후 호출)
+        // 오디오 재생 함수 (remote audio의 유일한 playback sink)
+        let audioPlaybackStarted = false;
         const playAudio = function() {
+            if (audioPlaybackStarted) {
+                return;
+            }
+
             if (audio && audio.srcObject) {
+                audioPlaybackStarted = true;
                 audio.play().then(function() {
                     console.log('[WebRTC:Play] 오디오 재생 시작됨');
                     audio.muted = false;
                     audio.volume = 0.5;
                 }).catch(function(error) {
+                    audioPlaybackStarted = false;
                     console.error('[WebRTC:Play] 오디오 재생 실패:', error);
                     audio.muted = false;
                 });
@@ -1764,14 +1779,18 @@ function receiveVideo(sender) {
 
             video.play().then(function() {
                 console.log('[WebRTC:Play] 비디오 재생 시작됨');
-                // 재생 성공 후 음소거 해제
-                video.muted = false;
-                video.volume = 0.5;
+                video.muted = true;
+                video.volume = 0;
                 playAudio();
             }).catch(function(error) {
                 console.error('[WebRTC:Play] 비디오 재생 실패:', error);
+                playAudio();
             });
         };
+
+        if (videoTracks.length === 0) {
+            playAudio();
+        }
 
         // 녹화 중이면 새 참가자의 오디오를 AudioMixer에 추가
         if (typeof recording !== 'undefined' && recording.isRecordingInProgress) {
@@ -1904,4 +1923,3 @@ function sendDataChannelMessage(message){
         console.warn("Data channel is not open. Cannot send message.");
     }
 }
-
