@@ -182,6 +182,21 @@ STEP 3 QA로 넘어가기 전에 아래 항목이 모두 충족되어야 한다:
 단발성 1회 검토가 아니라 **검토 → 분류 → 수정 → 재검토** 를 자동 반복하는 루프다.
 세부 정책의 단일 출처는 `docs/agent/pdca-templates.md` 의 External Consultant Protocol + Phase 05 Template.
 
+**외부 리뷰 신뢰성 원칙 (반드시 준수)**:
+- "외부 리뷰(External / Cross-model Review)"는 **별도 런타임·별도 모델**(예: `claude -p` CLI, Codex CLI)의
+  결과만을 뜻한다. 같은 세션·같은 런타임 안의 `chatforyou-*` sub-agent 결과는 **project sub-agent
+  review**로 별도 라벨링하며, 이 둘을 서로 대체 가능한 것으로 혼동하거나 하나를 다른 하나인 것처럼
+  05 문서에 적지 않는다.
+- 05 문서의 Review Loop Iterations 표는 각 라운드마다 `Review Type` 칸(`project-sub-agent` |
+  `true-external`)을 명시한다.
+- 외부 CLI 호출이 인증/쿼터/세션 한도(session limit)로 실패하면, 그 라운드를 조용히 생략하거나
+  project sub-agent 결과로 대체하지 않는다 — **"degraded evidence"**로 명시적으로 표기하고 실패
+  사유(예: `resets HH:MMxx (Asia/Seoul)`)를 그대로 05에 남긴다. 그 이전에 완주한 라운드는 유효하며,
+  미완주 라운드가 이전 결과를 무효화하지 않는다.
+- 외부 CLI 가용성 preflight는 `~/.claude/.credentials.json`·`ANTHROPIC_API_KEY` 뿐 아니라 로컬
+  세션 인증 경로 `~/.claude.json`도 인식해야 한다 — 이 경로만 있고 나머지 둘이 없어서 "사용 불가"로
+  오판하지 않는다.
+
 **루프 진입 게이트 (반드시 먼저 확인)**:
 - **결정론 검증 선행(필수)**: cross-model 루프 진입 전 `scripts/verify-changes.sh` 가 PASS(또는 L1 advisory) 여야 한다. 필수 검증 FAIL(exit 2) 상태면 추론 단계 진입 금지 — 먼저 03 으로 돌아가 수정한다. 깨진 코드에 리뷰 토큰을 쓰지 않는다. (`docs/agent/verification-protocol.md`)
 - **Risk Level 게이팅**: **L3** = 3-iteration 루프 mandatory + 자동 진행 / **L2** = recommended only → **루프 시작 전 유저 확인** / **L1·L0** = 루프 미사용
@@ -211,7 +226,8 @@ STEP 3 QA로 넘어가기 전에 아래 항목이 모두 충족되어야 한다:
 - 남은 이슈 전부 기각 → external-expert APPROVED 선언 가능
 - 3 iteration 후에도 APPROVED 미달성 → **BLOCKED** → 06 금지 → 유저 보고
 
-- fallback: 서브에이전트 안에서 gstack preamble 충돌 시, 라운드별 복붙용 `/codex consult` 명령을 유저에게 출력 → 유저 실행 결과를 해당 iteration 의 05 에 ingest 후 자동 재개
+- fallback(일시적 불안정): 서브에이전트 안에서 gstack preamble 충돌 시, 라운드별 복붙용 `/codex consult` 명령을 유저에게 출력 → 유저 실행 결과를 해당 iteration 의 05 에 ingest 후 자동 재개
+- fallback(Codex 진짜 사용 불가 — 인증/쿼터/토큰 만료/타임아웃): same-session sub-agent로 조용히 대체하지 말고 별도 headless Claude clean-context 세션(`claude -p ...`)으로 대체 리뷰 → 05에 `Reviewer: Claude headless separate session (clean-context fallback) — Codex unavailable because [사유]`로 기록, Final Status 최대 `APPROVED_WITH_RISK` + 유저 sign-off 필수. 상세: `chatforyou-external-expert.md` 3-4단계(b), `docs/agent/pdca-templates.md` "Separate Headless Claude Clean-context Review".
 
 `plan_docs/05-expert-review/[기능명].md` 작성:
 - 팀 결과물 요약 / 팀 의견 상충 분석
@@ -233,9 +249,17 @@ STEP 3 QA로 넘어가기 전에 아래 항목이 모두 충족되어야 한다:
 1. 전원 결과물 취합
 2. STEP 2 Exit Gate 충족 여부 확인 (구현 가이드 체크박스 + 컨벤션 검증 결과)
 3. 외부 전문가 Critical 항목 + Codex 교차검증 결과를 유저에게 전달
-4. PLAN 파일 체크리스트 완료 표시
+4. `00-base_plan` Document Mapping 체크박스를 **실제 파일 존재 여부 및 phase 종결 상태와 대조해서
+   갱신** — 파일이 있어도 비표준 종결(재검토 생략, human override 등)이면 그 사실을 체크박스 옆에
+   짧게 남긴다. 체크 안 된 항목을 둔 채로 완료 보고하지 않는다.
 5. `plan_docs/06-report/[기능명].md` 작성 (Completion Summary / Lessons Learned / Future Tasks / Vault Knowledge Capture)
-6. commit 메시지 추천 (실제 commit은 유저가 직접)
+6. **산출물 인벤토리**를 06-report에 표로 남기고, STEP 6 완료를 유저에게 보고하는 바로 그 대화
+   응답에도 동일한 표를 직접 출력한다 — 파일 안에만 적어두고 "완료했습니다"로 끝내지 않는다. 표는
+   최소한 다음을 포함: root `plan_docs/00~06-*/[기능명].md` 전체 경로, 컴포넌트
+   `nodejs-frontend/plan_docs/` 및/또는 `springboot-backend/plan_docs/` 가이드 경로, 이번 개발로
+   신규/갱신된 `wiki/` 문서 경로(BUG/TECH/SPEC 등). Vault Knowledge Capture가 트리거 대상인데
+   아직 반영 전이면 "누락"으로 표시하고 유저에게 진행 여부를 확인한다 — 조용히 생략하지 않는다.
+7. commit 메시지 추천 (실제 commit은 유저가 직접)
 
 ---
 
