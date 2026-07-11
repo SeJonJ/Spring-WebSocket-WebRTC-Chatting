@@ -10,8 +10,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.ValueOperations;
@@ -22,7 +22,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.lenient;
 
 /**
  * RedisServiceImpl.getAllRecordingPartialMarkers() SCAN 조회 테스트.
@@ -51,9 +50,6 @@ class RedisServiceImplRecordingPartialMarkerScanTest {
     private ValueOperations<String, Object> valueOperations;
 
     @Mock
-    private RedisConnectionFactory connectionFactory;
-
-    @Mock
     private RedisConnection connection;
 
     @Mock
@@ -64,9 +60,11 @@ class RedisServiceImplRecordingPartialMarkerScanTest {
     @BeforeEach
     void setUp() {
         sut = new RedisServiceImpl(masterTemplate, slaveTemplate, objectMapper, rediSearchClient);
-        lenient().when(slaveTemplate.getConnectionFactory()).thenReturn(connectionFactory);
-        lenient().when(connectionFactory.getConnection()).thenReturn(connection);
-        lenient().when(connection.scan(any(ScanOptions.class))).thenReturn(cursor);
+        given(slaveTemplate.execute(any(RedisCallback.class))).willAnswer(invocation -> {
+            RedisCallback<?> callback = invocation.getArgument(0);
+            return callback.doInRedis(connection);
+        });
+        given(connection.scan(any(ScanOptions.class))).willReturn(cursor);
     }
 
     private RecordingPartialMarker marker(String roomId, String recordingId) {

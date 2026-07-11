@@ -100,6 +100,33 @@ class RecordingPartialCleanupServiceTest {
     }
 
     @Test
+    @DisplayName("cleanupExpiredPartialRecordings_마커조건부삭제실패_스킵으로집계")
+    void cleanupExpiredPartialRecordings_conditionalMarkerDeleteFails_countsAsSkipped(@TempDir Path tempDir) throws IOException {
+        // given
+        setAgeThreshold();
+        File partialFile = tempDir.resolve("rec.mp4").toFile();
+        assertThat(partialFile.createNewFile()).isTrue();
+
+        long expiredMarkedAt = System.currentTimeMillis() - (AGE_SECONDS * 1000L) - 1000L;
+        RecordingPartialMarker marker = markerWith(expiredMarkedAt, partialFile.getAbsolutePath(), null);
+        given(redisService.getAllRecordingPartialMarkers()).willReturn(List.of(marker));
+        given(redisService.getRecordingPartialMarker("room-1")).willReturn(marker);
+        given(redisService.deleteRecordingPartialMarkerIfRecordingIdMatches("room-1", "rec-1"))
+                .willReturn(false);
+
+        // when
+        CleanupResult result = recordingPartialCleanupService.cleanupExpiredPartialRecordings();
+
+        // then
+        assertThat(result.deleted()).isZero();
+        assertThat(result.skipped()).isEqualTo(1);
+        assertThat(result.failed()).isZero();
+        assertThat(partialFile).doesNotExist();
+        verify(downloadLogService).saveDownloadLog(org.mockito.ArgumentMatchers.any());
+        verify(redisService).deleteRecordingPartialMarkerIfRecordingIdMatches("room-1", "rec-1");
+    }
+
+    @Test
     @DisplayName("cleanupExpiredPartialRecordings_임계값미만마커_스킵")
     void cleanupExpiredPartialRecordings_notExpiredMarker_skips() {
         // given

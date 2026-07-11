@@ -85,7 +85,7 @@ Reason:
 ### (OPEN-2) DownloadLog 신규 상태값 명칭 + 필드 매핑 — 확정: `SYSTEM_AUTO_DELETED`
 
 - 신규 `DownloadStatus` 값 = **`SYSTEM_AUTO_DELETED`** (확정). UPPER_SNAKE_CASE 컨벤션 준수.
-- 마커는 `recordingUserId`(String), `recordingNickName` 만 보유하고 `userIdx`(Long)/`email` 는 없다. 따라서 system-deletion 로그: `userIdx=null`, `email=null`(또는 recordingUserId 매핑), `roomId=marker.roomId`, `targetType=RECORDING`, `targetId=recordingId`, `fileName=marker.fileName`, `filePath=marker.filePath`(또는 minioFilePath), `status=SYSTEM_DELETED`. 구체 매핑은 백엔드 전문가 상세 설계 시 확정.
+- 마커는 `recordingUserId`(String), `recordingNickName` 만 보유하고 `userIdx`(Long)/`email` 는 없다. 따라서 system-deletion 로그: `userIdx=null`, `email=null`(또는 recordingUserId 매핑), `roomId=marker.roomId`, `targetType=RECORDING`, `targetId=recordingId`, `fileName=marker.fileName`, `filePath=marker.filePath`(또는 minioFilePath), `status=SYSTEM_AUTO_DELETED`. 구체 매핑은 백엔드 전문가 상세 설계 시 확정.
 
 ## 4. File Ownership (제안 — 유저 승인 후 확정)
 

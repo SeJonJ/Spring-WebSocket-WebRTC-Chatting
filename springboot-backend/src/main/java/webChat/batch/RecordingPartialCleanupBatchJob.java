@@ -22,7 +22,7 @@ public class RecordingPartialCleanupBatchJob {
      * 미배선 상태라도 각 정리 연산(로컬 삭제/MinIO 삭제/마커 삭제/로그 insert)이 idempotent 해
      * 다중 replica 동시 실행 시에도 데이터 손상 없이 안전하다.
      */
-    @Scheduled(cron = "0 0 * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "${recording.partial.cleanup.cron:0 0 * * * *}", zone = "Asia/Seoul")
     @SchedulerLock(
             name = "cleanupPartialRecordingLock",
             lockAtLeastFor = "30s", // 배선 시: 빨리 끝나도 최소 30초는 Lock 유지해 재진입 억제

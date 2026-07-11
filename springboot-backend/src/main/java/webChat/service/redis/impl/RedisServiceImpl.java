@@ -304,7 +304,10 @@ public class RedisServiceImpl implements RedisService {
                     (RedisCallback<Cursor<byte[]>>) connection -> connection.scan(scanOptions))) {
 
                 while (cursor.hasNext()) {
-                    keysToDelete.add(new String(cursor.next(), StandardCharsets.UTF_8).replace("\"", ""));
+                    String key = new String(cursor.next(), StandardCharsets.UTF_8).replace("\"", "");
+                    if (!key.startsWith(RECORDING_PARTIAL_PREFIX.getPrefix())) {
+                        keysToDelete.add(key);
+                    }
                 }
             } catch (Exception e) {
                 log.error("Error occurred while scanning and deleting keys", e);
@@ -576,32 +579,61 @@ public class RedisServiceImpl implements RedisService {
                 operations.multi();
                 operations.delete(key);
                 List<Object> results = operations.exec();
-                return results != null && !results.isEmpty() && Boolean.TRUE.equals(results.get(0));
+                return isSingleDeleteTransactionSuccessful(results, key);
             }
         });
         return Boolean.TRUE.equals(deleted);
     }
 
+    private boolean isSingleDeleteTransactionSuccessful(List<Object> results, String key) {
+        if (results == null || results.isEmpty()) {
+            log.warn("Unexpected empty Redis transaction result when deleting recording partial marker: key={}", key);
+            return false;
+        }
+        if (results.size() != 1) {
+            log.warn("Unexpected Redis transaction result size when deleting recording partial marker: key={}, size={}, results={}",
+                    key, results.size(), results);
+            return false;
+        }
+
+        Object deleteResult = results.get(0);
+        if (deleteResult instanceof Boolean booleanResult) {
+            return booleanResult;
+        }
+        if (deleteResult instanceof Long longResult) {
+            return longResult > 0;
+        }
+
+        log.warn("Unexpected Redis delete result when deleting recording partial marker: key={}, type={}, value={}",
+                key, deleteResult == null ? "null" : deleteResult.getClass().getName(), deleteResult);
+        return false;
+    }
+
     @Override
     public List<RecordingPartialMarker> getAllRecordingPartialMarkers() {
         String pattern = RECORDING_PARTIAL_PREFIX.getPrefix() + "*";
-        List<RecordingPartialMarker> markers = new ArrayList<>();
         ScanOptions options = ScanOptions.scanOptions().match(pattern).count(100).build();
 
-        try (Cursor<byte[]> cursor = slaveTemplate.getConnectionFactory().getConnection().scan(options)) {
-            while (cursor.hasNext()) {
-                String key = new String(cursor.next(), StandardCharsets.UTF_8);
-                // 값 조회는 기존 마커 read(getRecordingPartialMarker)와 동일하게 master 를 사용해 일관성을 유지
-                Object value = masterTemplate.opsForValue().get(key);
-                if (value instanceof RecordingPartialMarker marker) {
-                    markers.add(marker);
+        try {
+            List<RecordingPartialMarker> markers = slaveTemplate.execute((RedisCallback<List<RecordingPartialMarker>>) connection -> {
+                List<RecordingPartialMarker> scannedMarkers = new ArrayList<>();
+                try (Cursor<byte[]> cursor = connection.scan(options)) {
+                    while (cursor.hasNext()) {
+                        String key = new String(cursor.next(), StandardCharsets.UTF_8);
+                        // 값 조회는 기존 마커 read(getRecordingPartialMarker)와 동일하게 master 를 사용해 일관성을 유지
+                        Object value = masterTemplate.opsForValue().get(key);
+                        if (value instanceof RecordingPartialMarker marker) {
+                            scannedMarkers.add(marker);
+                        }
+                    }
                 }
-            }
+                return scannedMarkers;
+            });
+            return markers == null ? List.of() : markers;
         } catch (Exception e) {
             log.error("Error scanning recording partial markers: ", e);
             throw new ChatForYouException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        return markers;
     }
 
     @Override
