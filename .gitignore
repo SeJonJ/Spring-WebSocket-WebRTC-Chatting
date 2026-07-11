@@ -209,6 +209,7 @@ nodejs-frontend/.claude
 .codex/skills/.system
 .codex/config.toml
 .codex/*.sqlite*
+.codex/plugins/cache
 
 # 테스트 결과물
 test-results/
