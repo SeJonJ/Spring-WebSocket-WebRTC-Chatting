@@ -227,6 +227,7 @@ function Participant(userId, nickName, roomId) {
 	this.userId = userId;
 	this.nickName = nickName;
 	this.roomId = roomId;
+	this.speakingToken = null;
 
 	let rtcPeer = null;
 	let localStream = null; // 유저의 로컬 스트림
@@ -409,6 +410,15 @@ function Participant(userId, nickName, roomId) {
 					});
 				} catch (streamError) {
 					console.error('스트림 정리 중 에러:', streamError);
+				}
+			}
+
+			// 2.5 발화 감지 analyser 정리 (SpeakingDetector 미로드 시에도 통화 지속되도록 방어)
+			if (typeof SpeakingDetector !== 'undefined') {
+				try {
+					SpeakingDetector.detachSpeaking(this.userId, this.speakingToken);
+				} catch (speakingError) {
+					console.error('발화 감지 정리 중 에러:', speakingError);
 				}
 			}
 
@@ -650,11 +660,12 @@ $('#userSetting').on('click', function (e) {
 			// 클릭 이벤트 할당
 			remoteAudioButton.click(function(){
 				let useRemoteAudio = remoteAudioButton.data('flag')
-				// 오디오 트랙만 가져오기
-				let audioTrack = participant.rtcPeer.getRemoteStream().getTracks().filter(track => track.kind === 'audio')[0];
+				let audioElement = participant.getAudioElement();
 
-				if (useRemoteAudio) { // 오디오가 사용중이라면 오디오 off : enabled = false
-					audioTrack.enabled = false;
+				if (useRemoteAudio) {
+					if (audioElement) {
+						audioElement.muted = true;
+					}
 					ParticipantUtils.updateAudioState(userId, false);
 					remoteAudioButton.data('flag', false);
 					remoteAudioButton.attr('src', '/images/webrtc/audio-speaker-off.svg');
@@ -665,7 +676,9 @@ $('#userSetting').on('click', function (e) {
 					volumeSlider[0].disabled = true;
 					volumeSlider[0].style.opacity = '0.5';
 				} else {
-					audioTrack.enabled = true;
+					if (audioElement) {
+						audioElement.muted = false;
+					}
 					ParticipantUtils.updateAudioState(userId, true);
 					remoteAudioButton.data('flag', true);
 					remoteAudioButton.attr('src', '/images/webrtc/audio-speaker-on.svg');

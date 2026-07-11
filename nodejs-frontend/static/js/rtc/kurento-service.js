@@ -848,6 +848,15 @@ function teardownRoomSession(options) {
     });
     participants = {};
 
+    // teardownRoomSession은 정상 퇴장(leaveRoom)과 강제 세션 킥(onSessionReplaced) 양쪽의 단일 합류점이므로 여기서 정리한다.
+    if (typeof SpeakingDetector !== 'undefined') {
+        try {
+            SpeakingDetector.stopSpeaking();
+        } catch (speakingError) {
+            console.error('[SpeakingDetector] 전체 정리 중 에러:', speakingError);
+        }
+    }
+
     // 재연결 타이머 전체 정리 — 방 퇴장 시 5분 카운터 누수 방지
     pendingReconnectTimers.forEach(function(timerId) { clearTimeout(timerId); });
     pendingReconnectTimers.clear();
@@ -1602,6 +1611,11 @@ function onExistingParticipants(msg) {
         // 로컬 스트림 백업 (화면 공유 복원용)
         participant.setLocalStream(stream);
 
+        // 로컬 발화 감지 tap 부착 — 실패해도 WebRTC 입장 흐름은 계속되어야 한다.
+        if (typeof SpeakingDetector !== 'undefined') {
+            participant.speakingToken = SpeakingDetector.attachSpeaking(userId, stream, participant.getElement());
+        }
+
         const options = {
             localVideo: hasVideo ? video : null,
             localAudio: audio,
@@ -1744,6 +1758,11 @@ function receiveVideo(sender) {
             const audioOnlyStream = new MediaStream(audioTracks);
             audio.srcObject = audioOnlyStream;
             console.log('[WebRTC:Stream] 오디오 전용 스트림 생성:', audioOnlyStream.id);
+
+            // 원격 발화 감지 tap 부착 — 실패해도 원격 재생 흐름은 계속되어야 한다.
+            if (typeof SpeakingDetector !== 'undefined') {
+                participant.speakingToken = SpeakingDetector.attachSpeaking(sender.userId, audioOnlyStream, participant.getElement());
+            }
         } else {
             audio.srcObject = null;
         }
@@ -1763,12 +1782,12 @@ function receiveVideo(sender) {
                 audioPlaybackStarted = true;
                 audio.play().then(function() {
                     console.log('[WebRTC:Play] 오디오 재생 시작됨');
-                    audio.muted = false;
+                    audio.muted = !ParticipantUtils.getAudioState(sender.userId).enabled;
                     audio.volume = 0.5;
                 }).catch(function(error) {
                     audioPlaybackStarted = false;
                     console.error('[WebRTC:Play] 오디오 재생 실패:', error);
-                    audio.muted = false;
+                    audio.muted = !ParticipantUtils.getAudioState(sender.userId).enabled;
                 });
             }
         };

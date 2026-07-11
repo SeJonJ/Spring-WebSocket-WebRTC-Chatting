@@ -339,6 +339,12 @@ input[type=button]:active, input[type=submit]:active {
     object-fit: cover;
 }
 
+/* 발화 중 하이라이트 — 색상은 static/scss/_variables.scss 의 $color-primary(#9a4dff)와 동일값(rgb 154,77,255) */
+.participant.speaking {
+    box-shadow: 0 0 0 3px rgba(154, 77, 255, 0.9), 0 0 12px 4px rgba(154, 77, 255, 0.6);
+    transition: box-shadow 0.15s ease-out;
+}
+
 
 .animate {
     -webkit-animation-duration: 0.5s;
