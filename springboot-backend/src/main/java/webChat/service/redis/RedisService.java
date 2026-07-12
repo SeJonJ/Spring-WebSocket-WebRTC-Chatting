@@ -110,6 +110,16 @@ public interface RedisService {
     void deleteRecordingPartialMarker(String roomId);
 
     /**
+     * 현재 저장된 방 부분 녹화 마커의 recordingId가 기대값과 같을 때만 삭제한다.
+     */
+    boolean deleteRecordingPartialMarkerIfRecordingIdMatches(String roomId, String recordingId);
+
+    /**
+     * 모든 partial 녹화 마커를 조회한다. 부분 파일 정리 배치가 age 필터링을 위해 소비한다.
+     */
+    List<RecordingPartialMarker> getAllRecordingPartialMarkers();
+
+    /**
      * claim 시점의 방 데이터를 master Redis에서 조회한다.
      */
     ChatRoom getChatRoomFromMaster(String roomId);

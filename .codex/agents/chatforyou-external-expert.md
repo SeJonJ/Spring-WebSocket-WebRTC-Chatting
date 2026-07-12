@@ -59,6 +59,10 @@ color: orange
 | **프로젝트 적합성** | 기존 AGENT_GUIDE.md 컨벤션, 패턴과의 일관성 |
 | **통합 리스크** | 백엔드-프론트-테스트가 실제로 연결되었을 때의 위험 요소 |
 
+> **[누락 위험 렌즈 — 동시성 코드 필수 체크]** idempotency(같은 입력 재처리 안전성)와 TOCTOU(스캔 후 처리 시점 상태 변경 안전성)를 별도 질문으로 분리해 검토한다. 한쪽만 검증된 경우 "동시성 검증 완료"로 인정하지 않는다.
+>
+> 사례(2026-07 `bug_136_recording_partial_cleanup`): 같은 partial marker를 2회 처리하는 idempotency 테스트는 있었지만, 마커 스캔 후 같은 Redis key가 새 `recordingId`로 교체된 뒤 blind delete 하는 TOCTOU 경로가 누락될 수 있었다. cleanup/batch/Redis marker/TTL/lock 관련 리뷰에서는 "현재 값이 아직 내가 스캔한 값인가?"를 반드시 확인한다.
+
 ### 3단계: Claude 교차검증 반복 루프 (cross-model review-rework loop — MANDATORY for L3)
 
 Codex host 의 외부 모델은 Claude다. 단발성 1회 검토가 아니라, **검토 → 분류 → 수정 → 재검토** 를 자동 반복하는 루프다.

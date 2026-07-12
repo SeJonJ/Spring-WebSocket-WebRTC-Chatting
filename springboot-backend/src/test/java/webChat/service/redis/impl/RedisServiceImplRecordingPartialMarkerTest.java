@@ -10,10 +10,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.test.util.ReflectionTestUtils;
 import webChat.model.record.RecordingPartialMarker;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,6 +55,9 @@ class RedisServiceImplRecordingPartialMarkerTest {
 
     @Mock
     private ValueOperations<String, Object> valueOperations;
+
+    @Mock
+    private RedisOperations<String, Object> redisOperations;
 
     private RedisServiceImpl sut;
 
@@ -119,6 +125,72 @@ class RedisServiceImplRecordingPartialMarkerTest {
 
         // then
         verify(masterTemplate).delete(EXPECTED_KEY);
+    }
+
+    @Test
+    @DisplayName("deleteRecordingPartialMarkerIfRecordingIdMatches_조건부삭제콜백결과가true이면true반환")
+    void deleteRecordingPartialMarkerIfRecordingIdMatches_callbackTrue_returnsTrue() {
+        // given
+        given(masterTemplate.execute(any(SessionCallback.class))).willReturn(true);
+
+        // when
+        boolean result = sut.deleteRecordingPartialMarkerIfRecordingIdMatches(ROOM_ID, "rec-qa-001");
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("deleteRecordingPartialMarkerIfRecordingIdMatches_조건부삭제콜백결과가false이면false반환")
+    void deleteRecordingPartialMarkerIfRecordingIdMatches_callbackFalse_returnsFalse() {
+        // given
+        given(masterTemplate.execute(any(SessionCallback.class))).willReturn(false);
+
+        // when
+        boolean result = sut.deleteRecordingPartialMarkerIfRecordingIdMatches(ROOM_ID, "rec-other");
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("deleteRecordingPartialMarkerIfRecordingIdMatches_exec결과가Long1이면true반환")
+    void deleteRecordingPartialMarkerIfRecordingIdMatches_execLongOne_returnsTrue() {
+        // given
+        RecordingPartialMarker stored = fullMarker();
+        given(masterTemplate.execute(any(SessionCallback.class))).willAnswer(invocation -> {
+            SessionCallback<?> callback = invocation.getArgument(0);
+            return callback.execute(redisOperations);
+        });
+        given(redisOperations.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get(EXPECTED_KEY)).willReturn(stored);
+        given(redisOperations.exec()).willReturn(List.of(1L));
+
+        // when
+        boolean result = sut.deleteRecordingPartialMarkerIfRecordingIdMatches(ROOM_ID, "rec-qa-001");
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("deleteRecordingPartialMarkerIfRecordingIdMatches_exec결과타입이예상밖이면false반환")
+    void deleteRecordingPartialMarkerIfRecordingIdMatches_unexpectedExecResult_returnsFalse() {
+        // given
+        RecordingPartialMarker stored = fullMarker();
+        given(masterTemplate.execute(any(SessionCallback.class))).willAnswer(invocation -> {
+            SessionCallback<?> callback = invocation.getArgument(0);
+            return callback.execute(redisOperations);
+        });
+        given(redisOperations.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get(EXPECTED_KEY)).willReturn(stored);
+        given(redisOperations.exec()).willReturn(List.of("OK"));
+
+        // when
+        boolean result = sut.deleteRecordingPartialMarkerIfRecordingIdMatches(ROOM_ID, "rec-qa-001");
+
+        // then
+        assertThat(result).isFalse();
     }
 
     // ── notified 플래그 round-trip ────────────────────────────────────────────
