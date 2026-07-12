@@ -11,8 +11,14 @@ import webChat.service.monitoring.DownloadLogService;
 import webChat.service.redis.RedisService;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * 중단된 방 녹화의 partial 파일을 정리한다.
@@ -56,7 +62,7 @@ public class RecordingPartialCleanupService {
                             marker.getRoomId(), marker.getRecordingId());
                     continue;
                 }
-                deleteLocalFile(marker);
+                deleteLocalRecordingDirectory(marker);
                 deleteMinioObjectIfPresent(marker);
                 downloadLogService.saveDownloadLog(DownloadLog.ofSystemAutoDeleted(marker));
                 if (redisService.deleteRecordingPartialMarkerIfRecordingIdMatches(
@@ -82,23 +88,58 @@ public class RecordingPartialCleanupService {
                 && Objects.equals(currentMarker.getRecordingId(), marker.getRecordingId());
     }
 
-    // 로컬 PVC 파일 삭제. file:// 프리픽스 제거 후 삭제하며 경로 blank/파일 부재는 warn 후 계속한다.
-    private void deleteLocalFile(RecordingPartialMarker marker) {
+    // 로컬 PVC의 recordingId 디렉토리 삭제. roomId 디렉토리는 새 녹화와 충돌할 수 있어 삭제하지 않는다.
+    private void deleteLocalRecordingDirectory(RecordingPartialMarker marker) throws IOException {
         String fileFullPath = marker.getFileFullPath();
         if (fileFullPath == null || fileFullPath.isBlank()) {
             log.warn("partial 로컬 파일 경로 없음: roomId={}", marker.getRoomId());
             return;
         }
-        String cleanPath = fileFullPath.replace("file://", "");
-        File localFile = new File(cleanPath);
+        Path localFilePath = Path.of(fileFullPath.replace("file://", ""));
+        Path recordingDirectory = localFilePath.getParent();
+        if (recordingDirectory == null) {
+            log.warn("partial 로컬 파일 부모 디렉토리 없음: path={}", localFilePath);
+            return;
+        }
+
+        if (!Objects.equals(recordingDirectory.getFileName().toString(), marker.getRecordingId())) {
+            deleteLocalFileOnly(localFilePath);
+            return;
+        }
+
+        if (!Files.exists(recordingDirectory)) {
+            log.warn("partial 로컬 녹화 디렉토리 부재: path={}", recordingDirectory);
+            return;
+        }
+        deleteDirectoryRecursively(recordingDirectory);
+        log.info("partial 로컬 녹화 디렉토리 삭제: path={}", recordingDirectory);
+    }
+
+    private void deleteLocalFileOnly(Path localFilePath) throws IOException {
+        File localFile = localFilePath.toFile();
         if (!localFile.exists()) {
-            log.warn("partial 로컬 파일 부재: path={}", cleanPath);
+            log.warn("partial 로컬 파일 부재: path={}", localFilePath);
             return;
         }
         if (localFile.delete()) {
-            log.info("partial 로컬 파일 삭제: path={}", cleanPath);
+            log.info("partial 로컬 파일 삭제: path={}", localFilePath);
         } else {
-            log.warn("partial 로컬 파일 삭제 실패: path={}", cleanPath);
+            throw new IOException("partial 로컬 파일 삭제 실패: path=" + localFilePath);
+        }
+    }
+
+    private void deleteDirectoryRecursively(Path directory) throws IOException {
+        try (Stream<Path> paths = Files.walk(directory)) {
+            paths.sorted(Comparator.reverseOrder())
+                    .forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
         }
     }
 

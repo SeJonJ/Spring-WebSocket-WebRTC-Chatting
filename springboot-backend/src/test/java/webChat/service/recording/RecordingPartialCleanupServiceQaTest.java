@@ -13,6 +13,7 @@ import webChat.service.monitoring.DownloadLogService;
 import webChat.service.redis.RedisService;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -98,7 +99,9 @@ class RecordingPartialCleanupServiceQaTest {
         // given
         // fileFullPath = "file://" + 실제 임시파일 절대경로
         setUpService();
-        File partialFile = tempDir.resolve("rec-uri.mp4").toFile();
+        Path recordingDirectory = tempDir.resolve("room-s5").resolve("rec-room-s5");
+        Files.createDirectories(recordingDirectory);
+        File partialFile = recordingDirectory.resolve("rec-uri.mp4").toFile();
         assertThat(partialFile.createNewFile()).isTrue();
 
         String fileUriPath = "file://" + partialFile.getAbsolutePath();
@@ -114,9 +117,10 @@ class RecordingPartialCleanupServiceQaTest {
         CleanupResult result = recordingPartialCleanupService.cleanupExpiredPartialRecordings();
 
         // then
-        // file:// 프리픽스가 제거된 실제 경로로 파일이 삭제된다
+        // file:// 프리픽스가 제거된 실제 경로의 recordingId 디렉토리가 삭제된다
         assertThat(result.deleted()).isEqualTo(1);
         assertThat(partialFile).doesNotExist();
+        assertThat(recordingDirectory).doesNotExist();
     }
 
     @Test

@@ -17,6 +17,7 @@ import webChat.service.redis.RedisService;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -69,8 +70,12 @@ class RecordingPartialCleanupServiceTest {
     void cleanupExpiredPartialRecordings_expiredMarker_deletesFileLogsAndRemovesMarker(@TempDir Path tempDir) throws IOException {
         // given
         setAgeThreshold();
-        File partialFile = tempDir.resolve("rec.mp4").toFile();
+        Path recordingDirectory = tempDir.resolve("room-1").resolve("rec-1");
+        Files.createDirectories(recordingDirectory);
+        File partialFile = recordingDirectory.resolve("rec.mp4").toFile();
         assertThat(partialFile.createNewFile()).isTrue();
+        Path otherRecordingDirectory = tempDir.resolve("room-1").resolve("rec-other");
+        Files.createDirectories(otherRecordingDirectory);
 
         long expiredMarkedAt = System.currentTimeMillis() - (AGE_SECONDS * 1000L) - 1000L;
         RecordingPartialMarker marker = markerWith(expiredMarkedAt, partialFile.getAbsolutePath(), null);
@@ -87,6 +92,8 @@ class RecordingPartialCleanupServiceTest {
         assertThat(result.skipped()).isZero();
         assertThat(result.failed()).isZero();
         assertThat(partialFile).doesNotExist();
+        assertThat(recordingDirectory).doesNotExist();
+        assertThat(otherRecordingDirectory).exists();
 
         ArgumentCaptor<DownloadLog> logCaptor = ArgumentCaptor.forClass(DownloadLog.class);
         verify(downloadLogService).saveDownloadLog(logCaptor.capture());
@@ -104,7 +111,9 @@ class RecordingPartialCleanupServiceTest {
     void cleanupExpiredPartialRecordings_conditionalMarkerDeleteFails_countsAsSkipped(@TempDir Path tempDir) throws IOException {
         // given
         setAgeThreshold();
-        File partialFile = tempDir.resolve("rec.mp4").toFile();
+        Path recordingDirectory = tempDir.resolve("room-1").resolve("rec-1");
+        Files.createDirectories(recordingDirectory);
+        File partialFile = recordingDirectory.resolve("rec.mp4").toFile();
         assertThat(partialFile.createNewFile()).isTrue();
 
         long expiredMarkedAt = System.currentTimeMillis() - (AGE_SECONDS * 1000L) - 1000L;
@@ -122,6 +131,7 @@ class RecordingPartialCleanupServiceTest {
         assertThat(result.skipped()).isEqualTo(1);
         assertThat(result.failed()).isZero();
         assertThat(partialFile).doesNotExist();
+        assertThat(recordingDirectory).doesNotExist();
         verify(downloadLogService).saveDownloadLog(org.mockito.ArgumentMatchers.any());
         verify(redisService).deleteRecordingPartialMarkerIfRecordingIdMatches("room-1", "rec-1");
     }
@@ -168,7 +178,9 @@ class RecordingPartialCleanupServiceTest {
     void cleanupExpiredPartialRecordings_minioPathPresent_callsMinioDelete(@TempDir Path tempDir) throws IOException {
         // given
         setAgeThreshold();
-        File partialFile = tempDir.resolve("rec.mp4").toFile();
+        Path recordingDirectory = tempDir.resolve("room-1").resolve("rec-1");
+        Files.createDirectories(recordingDirectory);
+        File partialFile = recordingDirectory.resolve("rec.mp4").toFile();
         assertThat(partialFile.createNewFile()).isTrue();
 
         long expiredMarkedAt = System.currentTimeMillis() - (AGE_SECONDS * 1000L) - 1000L;
@@ -184,6 +196,7 @@ class RecordingPartialCleanupServiceTest {
 
         // then
         assertThat(result.deleted()).isEqualTo(1);
+        assertThat(recordingDirectory).doesNotExist();
         verify(recordingFileService).deleteFileDir(eq(minioFilePath));
     }
 }
