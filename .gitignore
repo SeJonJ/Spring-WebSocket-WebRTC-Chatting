@@ -245,3 +245,4 @@ nodejs-frontend/plan_docs/*
 # 로컬 워크트리
 # ========================================
 .claude/worktrees/
+.gstack/
