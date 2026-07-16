@@ -1,0 +1,166 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SAGE project-profile (compiled)",
+  "description": "project-profile.yaml→json 구조검증. 외부검토 R2/P0-2: risk/pdca 의 additionalProperties:false 가 'l3_filename_globs→l3_filename_glob' 류 오타(게이트 침묵 비활성)를 적발. 타입은 느슨(빈 프로파일/부분 작성 허용), 미지정 키만 차단.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "project": {
+      "type": "object",
+      "description": "prefix 는 codex 전역 skill 네임스페이스($CODEX_HOME/skills/<prefix>-<id>)에 쓰이므로 경로 안전 토큰만 허용(경로 탈출 방지). 그 외 키는 느슨.",
+      "properties": {
+        "prefix": { "type": "string", "pattern": "^[A-Za-z0-9_-]*$" }
+      }
+    },
+    "options": { "type": "object" },
+    "paths": { "type": "object" },
+    "components": { "type": "array" },
+    "extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "interpretive 자산 추출 시그널(선택). config: module:VAR | repo-상대 *.json — input_scope_patterns/signal_rules 등 프로젝트 고유 ExtractConfig 를 sage generate --kind agent/skill 에 주입. 닫힌 섹션(오타 적발).",
+      "properties": {
+        "config": { "type": "string" }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "pre-implementation-gate 위험 분류 입력. 알 수 없는 키 = 오타로 간주(게이트 침묵 비활성 방지).",
+      "properties": {
+        "l0_pass_globs": { "type": "array" },
+        "l1_path_globs": { "type": "array" },
+        "l2_path_globs": { "type": "array" },
+        "l3_filename_globs": { "type": "array" },
+        "l2_content_keywords": { "type": "array" },
+        "l3_content_keywords": { "type": "array" },
+        "content_l3_enforce": { "enum": ["warn", "block"] },
+        "domains": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "risk_level", "path_globs", "content_keywords", "protocol_pointer"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+              "risk_level": { "enum": ["L1", "L2", "L3"] },
+              "path_globs": { "type": "array", "items": { "type": "string" } },
+              "content_keywords": { "type": "array", "items": { "type": "string" } },
+              "protocol_pointer": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "generic_tokens": { "type": "array" },
+        "review_patterns": { "type": "array" },
+        "desktop_block_glob": { "type": "string" },
+        "desktop_block_hint": { "type": "string" },
+        "plan_glob": { "type": "string" },
+        "l3_review_strategy": { "type": "string" }
+        ,"l3_review_glob": { "type": "string" }
+      }
+    },
+    "file_type_map": { "type": "array" },
+    "skip_untyped": { "type": "boolean" },
+    "phase4_trigger_glob": { "type": "string" },
+    "suffixes": { "type": "array" },
+    "checklist_scan_targets": { "type": "array" },
+    "compliance": { "type": "object" },
+    "output_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "EH-2: stop 리포트 Output Contract 섹션 마커(codex-only). markers 빈값=중립 기본.",
+      "properties": {
+        "markers": { "type": "object" }
+      }
+    },
+    "pdca": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "PDCA phase 의무구조. 알 수 없는 키 = 오타로 간주(phase 강제 침묵 약화 방지).",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "phases": { "type": "array" },
+        "pre_implementation_required": { "type": "object" },
+        "report_phase": { "type": "string" },
+        "approve_phase": { "type": "string" },
+        "approve_marker": { "type": "string" },
+        "review_loop": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Loop A: Phase 05 적대적 review-rework 설정(찾기→반박→분류→수정→종료). 빈 lenses/0 예산 등 '유효 YAML 이지만 루프 침묵' 은 profile_validate 가 fail-closed(R2/P0-2 패턴). 판단 본문은 sage-review 스킬이 host 에서 실행 — 여긴 횟수·예산·종료 게이트만(결정론).",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "lenses": { "type": "array", "items": { "type": "string" } },
+            "refuters": { "type": "integer", "minimum": 1 },
+            "refute_threshold": { "type": "string" },
+            "max_iterations": { "type": "object" },
+            "dry_rounds": { "type": "integer", "minimum": 1 },
+            "budget_tokens": { "type": "object" },
+            "cross_model": { "oneOf": [ { "type": "boolean" }, { "enum": ["from_options.cross_model"] } ] },
+            "severity_block": { "type": "array", "items": { "enum": ["P0", "P1", "P2", "P3"] } },
+            "architecture_escalation": { "oneOf": [ { "type": "boolean" }, { "enum": ["from_risk.l3"] } ] },
+            "termination_enforce": { "enum": ["advisory", "enforce"] },
+            "report_gate_enforce": { "enum": ["off", "advisory", "enforce"] }
+          }
+        },
+        "retro": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Loop C(sage retro --check) 실행 여부를 Stop 훅이 사후 확인하는 9-C v1 게이트. 06←05 훅은 못 쓴다(06 이 retro 보다 먼저 쓰임) — 강제 지점은 세션 종료. enforce 라도 Stop 훅 플랫폼 제약(stop_hook_active)상 block 은 세션당 최대 1회.",
+          "properties": {
+            "report_gate_enforce": { "enum": ["off", "advisory", "enforce"] }
+          }
+        }
+      }
+    },
+    "conventions": { "type": "array" },
+    "verification": {
+      "type": "object",
+      "description": "결정론 검증 + acceptance evidence 게이트. verification 자체는 확장 허용, acceptance 는 닫힌 섹션.",
+      "properties": {
+        "acceptance": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "사용자 요구사항별 수용증거. 01 matrix → 04 PASS/FAIL/NOT TESTED → 05/06 gate.",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "require_for_risk": {
+              "type": "array",
+              "items": { "enum": ["L1", "L2", "L3"] }
+            },
+            "statuses": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "unresolved_statuses": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "report_gate_enforce": { "enum": ["off", "advisory", "enforce"] }
+          }
+        }
+      }
+    },
+    "runtime": { "type": "object" },
+    "team": { "type": "object" },
+    "cross_model": {
+      "type": "object",
+      "properties": {
+        "effort": { "enum": ["minimal", "low", "medium", "high", "xhigh", "max"] }
+      }
+    },
+    "capabilities": { "type": "object" },
+    "hooks": { "type": "object" },
+    "codegraph": { "type": "object" },
+    "knowledge_capture": { "type": "object" },
+    "context_management": { "type": "object" },
+    "mcp": {
+      "type": "object",
+      "description": "MCP 자산(4번째 kind) enable 토글. payload 아님 — payload SSOT 는 docs/sage_harness/mcps/{id}.md spec. enabled 없으면 mcps/ 전체 생성(default-on).",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

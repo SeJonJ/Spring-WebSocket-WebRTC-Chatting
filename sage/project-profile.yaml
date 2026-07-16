@@ -1,0 +1,263 @@
+project:
+  name: ChatForYou v2
+  prefix: chatforyou
+
+options:
+  cross_model: true
+  codegraph: optional
+  obsidian: optional
+
+paths:
+  framework_docs: "."
+  agent_docs: "docs/agent"
+  sage_home: "sage"
+  plan_docs: "plan_docs"
+  component_plan_docs: "{component}/plan_docs"
+
+components:
+  - { id: backend, paths: ["springboot-backend/**"], model: opus }
+  - { id: frontend, paths: ["nodejs-frontend/**", "chatforyou-desktop/**"], model: opus }
+
+risk:
+  l0_pass_globs: ["**/*.md", "**/*.txt", "**/*.svg", "**/*.png", "**/*.jpg", "**/*.gif"]
+  l1_path_globs:
+    - "nodejs-frontend/static/css/**"
+    - "nodejs-frontend/templates/**"
+    - "nodejs-frontend/static/images/**"
+  l2_path_globs:
+    - "springboot-backend/src/**"
+    - "springboot-backend/*.gradle"
+    - "springboot-backend/gradle/**"
+    - "nodejs-frontend/*.js"
+    - "nodejs-frontend/routes/**"
+    - "nodejs-frontend/static/js/**"
+    - "chatforyou-desktop/build-scripts/**"
+    - "chatforyou-desktop/*.js"
+    - "k8s/**"
+    - ".github/workflows/**"
+    - "scripts/**"
+    - "sage/**"
+    - ".claude/**"
+    - ".codex/**"
+  l3_filename_globs: []
+  l2_content_keywords: ["Redis", "Kafka", "transaction", "repository"]
+  l3_content_keywords: ["RTCPeerConnection", "MediaPipeline", "WebRtcEndpoint", "iceCandidate", "JwtToken"]
+  content_l3_enforce: block
+  domains:
+    - id: webrtc
+      risk_level: L3
+      path_globs:
+        - "springboot-backend/src/main/java/webChat/service/kurento/**"
+        - "springboot-backend/src/main/java/webChat/repository/kurento/**"
+        - "springboot-backend/src/main/java/webChat/model/kurento/**"
+        - "springboot-backend/src/main/java/webChat/config/*Rtc*"
+        - "springboot-backend/src/main/java/webChat/config/*WebSocket*"
+        - "springboot-backend/src/main/java/webChat/config/*Kurento*"
+        - "nodejs-frontend/static/js/rtc/**"
+        - "nodejs-frontend/static/js/chatroom/socket.js"
+        - "nodejs-frontend/templates/**/kurentoroom.html"
+        - "k8s/**/*coturn*"
+        - "k8s/**/*kurento*"
+      content_keywords: ["RTCPeerConnection", "MediaPipeline", "WebRtcEndpoint", "iceCandidate"]
+      protocol_pointer: "sage/critical-domains/webrtc.md"
+    - id: security
+      risk_level: L3
+      path_globs:
+        - "springboot-backend/src/main/java/webChat/security/**"
+        - "springboot-backend/src/main/java/webChat/config/*Security*"
+        - "springboot-backend/src/main/java/webChat/controller/LoginController.java"
+        - "springboot-backend/src/main/java/webChat/service/login/**"
+        - "springboot-backend/src/main/java/webChat/service/social/**"
+        - "springboot-backend/src/main/java/webChat/model/login/**"
+        - "springboot-backend/src/main/java/webChat/model/response/common/QRLoginResponse.java"
+        - "springboot-backend/src/main/java/webChat/utils/JwtUtil.java"
+        - "springboot-backend/src/main/java/webChat/utils/TokenUtils.java"
+        - "springboot-backend/src/main/resources/firebase/**"
+        - "springboot-backend/src/main/resources/ssl/**"
+        - "nodejs-frontend/static/js/login/**"
+        - "nodejs-frontend/templates/login/**"
+      content_keywords: ["JwtToken", "privateKey", "refreshToken", "OAuth2", "QRSession"]
+      protocol_pointer: "sage/critical-domains/security.md"
+    - id: recording
+      risk_level: L3
+      path_globs:
+        - "springboot-backend/src/main/java/webChat/batch/RecordingPartialCleanupBatchJob.java"
+        - "springboot-backend/src/main/java/webChat/service/recording/**"
+        - "springboot-backend/src/main/java/webChat/service/file/impl/RecordingFileService.java"
+        - "springboot-backend/src/main/java/webChat/model/record/**"
+        - "springboot-backend/src/main/java/webChat/model/event/Recording*"
+        - "springboot-backend/src/main/java/webChat/model/kurento/KurentoRecordingMessage.java"
+        - "springboot-backend/src/test/**/*Recording*"
+        - "springboot-backend/src/test/**/recording/**"
+        - "nodejs-frontend/static/js/rtc/recording.js"
+      content_keywords: ["RecordingPartialMarker", "recordingId", "isRecordingInProgress", "RECORDING_PARTIAL"]
+      protocol_pointer: "sage/critical-domains/recording.md"
+    - id: game
+      risk_level: L3
+      path_globs:
+        - "springboot-backend/src/main/java/webChat/config/CatchMindConfig.java"
+        - "springboot-backend/src/main/java/webChat/controller/CatchMindController.java"
+        - "springboot-backend/src/main/java/webChat/service/game/**"
+        - "springboot-backend/src/main/java/webChat/model/game/**"
+        - "springboot-backend/src/main/java/webChat/model/response/game/**"
+        - "springboot-backend/src/test/**/game/**"
+        - "springboot-backend/src/test/**/*CatchMind*"
+        - "nodejs-frontend/static/js/rtc/catchMind.js"
+        - "nodejs-frontend/static/js/game/**"
+        - "nodejs-frontend/static/css/game/**"
+        - "nodejs-frontend/templates/game/**"
+      content_keywords: ["CatchMind", "GameStatus", "GameSubjects", "GameTitles"]
+      protocol_pointer: "sage/critical-domains/game.md"
+  desktop_block_glob: "chatforyou-desktop/src/**"
+  desktop_block_hint: "nodejs-frontend의 공유 원본을 수정하고 docs/chatforyou_desktop.md 절차로 동기화"
+  plan_glob: "plan_docs/**/*.md"
+  l3_review_strategy: cycle_domain_review
+  l3_review_glob: "plan_docs/02-design/reviews/*.md"
+  generic_tokens: ["chatforyou", "springboot", "nodejs", "desktop"]
+  review_patterns: []
+
+file_type_map:
+  - { glob: "springboot-backend/src/main/**", type: backend-main }
+  - { glob: "springboot-backend/src/test/**", type: backend-test }
+  - { glob: "nodejs-frontend/**", type: frontend }
+  - { glob: "chatforyou-desktop/**", type: desktop }
+  - { glob: "plan_docs/**", type: plan-doc }
+  - { glob: "sage/**", type: governance }
+  - { glob: ".claude/**", type: governance }
+  - { glob: ".codex/**", type: governance }
+skip_untyped: true
+phase4_trigger_glob: "*plan_docs/04-analyze/*.md"
+suffixes: []
+checklist_scan_targets: ["plan_docs/03-implementation/*.md"]
+
+compliance:
+  activity_groups:
+    - { label: backend, types: [backend-main, backend-test] }
+    - { label: frontend, types: [frontend] }
+    - { label: desktop, types: [desktop] }
+    - { label: governance, types: [governance] }
+  plan_types: [plan-doc]
+  plan_gate_code_types: [backend-main, backend-test, frontend, desktop, governance]
+  plan_gate_text: "코드 또는 거버넌스 변경에 대응하는 독립 plan 문서가 필요합니다."
+  convention_reminder: {}
+
+output_contract:
+  markers:
+    Impact: [impact, 영향, backend, frontend, desktop]
+    Validation: [검증, build, test, verify]
+    Knowledge: [vault, obsidian, knowledge]
+
+pdca:
+  enabled: true
+  phases:
+    - { id: "00", glob: "plan_docs/00-base_plan/**/*.md" }
+    - { id: "01", glob: "plan_docs/01-plan/**/*.md" }
+    - { id: "02", glob: "plan_docs/02-design/**/*.md" }
+    - { id: "03", glob: "plan_docs/03-implementation/**/*.md" }
+    - { id: "04", glob: "plan_docs/04-analyze/**/*.md" }
+    - { id: "05", glob: "plan_docs/05-expert-review/**/*.md" }
+    - { id: "06", glob: "plan_docs/06-report/**/*.md" }
+  pre_implementation_required:
+    L1: ["00"]
+    L2: ["00", "01", "02", "03"]
+    L3: ["00", "01", "02", "03"]
+  report_phase: "06"
+  approve_phase: "05"
+  approve_marker: "APPROVED"
+  review_loop:
+    enabled: true
+    lenses: [correctness, security, concurrency, convention, lifecycle]
+    refuters: 2
+    refute_threshold: majority
+    max_iterations: { L2: 1, L3: 3 }
+    dry_rounds: 1
+    budget_tokens: { L2: 150000, L3: 600000 }
+    cross_model: from_options.cross_model
+    severity_block: [P0, P1]
+    architecture_escalation: from_risk.l3
+    termination_enforce: advisory
+    report_gate_enforce: advisory
+  retro:
+    report_gate_enforce: enforce
+
+conventions:
+  - { scope: backend, stack: springboot, doc: "docs/springboot_backend.md", file_globs: ["springboot-backend/**/*.java"] }
+  - { scope: frontend, stack: nodejs, doc: "docs/nodejs_frontend.md", file_globs: ["nodejs-frontend/**/*.js"] }
+  - { scope: desktop, stack: electron, doc: "docs/chatforyou_desktop.md", file_globs: ["chatforyou-desktop/**"] }
+
+verification:
+  project_local_script: "scripts/verify-changes.sh"
+  gate_policy:
+    L1: { checks: [syntax], mode: advisory }
+    L2: { checks: [build, test, lint], mode: block }
+    L3: { checks: [build, test, lint, review], mode: block }
+  commands:
+    syntax: "bash scripts/test-verify-changes.sh"
+    build: "bash scripts/verify-changes.sh --level L2"
+    test: "bash .claude/hooks/tests/run-tests.sh && bash .codex/hooks/tests/run-tests.sh"
+    lint: "bash scripts/test-verify-doc-mapping.sh"
+  acceptance:
+    enabled: true
+    require_for_risk: [L2, L3]
+    statuses: [PASS, FAIL, NOT TESTED, N/A]
+    unresolved_statuses: [FAIL, NOT TESTED]
+    report_gate_enforce: advisory
+
+runtime:
+  host: codex
+  external_reviewer: opposite_runtime
+  asset_ssot: deferred
+
+team:
+  core:
+    leader: { enabled: true }
+    implementer-a: { enabled: true, owns: [backend] }
+    implementer-b: { enabled: true, owns: [frontend] }
+    qa: { enabled: true, owns: ["**/test/**", "**/tests/**"] }
+    reviewer:
+      enabled: true
+      cross_model: { capability: from_options.cross_model, fallback: clean_context_same_runtime }
+  optional_reviewers: [external-consultant]
+  extensions: []
+
+cross_model:
+  peer: opposite_runtime
+  on_unavailable: clean_context_same_runtime
+  effort: high
+
+capabilities: { codex: true, claude: true }
+
+hooks:
+  enabled: true
+  project_root_env: "SAGE_PROJECT_ROOT"
+  register: [claude, codex]
+  tests: ".{claude,codex}/hooks/tests"
+
+codegraph:
+  enabled: from_options.codegraph
+  mcp: codegraph
+  degraded_features: ["symbol trace/impact 불가", "대규모 탐색 rg/read degrade"]
+
+knowledge_capture:
+  vault_path: "/Users/sejon/project/obsidian/sejon_second_brain"
+  provider: obsidian
+  mcp_check: true
+  scan_before_dev: true
+  update_after_dev: true
+  note_convention:
+    folder: wiki
+    filename_pattern: "{prefix} - {title}.md"
+    prefixes: [BRAINSTORM, SPEC, TECH, SAGE, BUG, POSTMORTEM]
+    flat: true
+    tags_style: frontmatter
+    index: index.md
+    required_structure:
+      BUG: ["## 문서 메타", "## 증상", "## 근본 원인", "## 수정", "## 교훈"]
+      POSTMORTEM: ["## 장애 현상", "## 장애 원인", "## 장애 수정", "## 추후 대응 전략"]
+  loop_audit_dashboard: true
+  retro_note: true
+
+context_management:
+  compaction:
+    enabled: false
+    preserve: [architectural_decisions, open_bugs, file_ownership, pending_verifications]

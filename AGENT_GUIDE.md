@@ -1,204 +1,164 @@
 # AGENT_GUIDE.md
 
-## 0. Purpose
+This is the runtime-neutral single source of truth (SSOT) for common rules,
+workflow, risk routing, safety boundaries, and Definition of Done. Both host
+runtimes ({wrapper} = CLAUDE.md | CODEX.md) are thin overrides on top of this.
 
-This document is the **single source of truth** for all AI coding agents working on ChatForYou v2.
-It defines only shared policy: rule precedence, risk routing, mandatory safety boundaries, required reference documents, and Definition of Done.
+Project-specific values (paths, risk triggers, conventions, team) live in
+`sage/project-profile.yaml`, not here. This guide stays neutral.
 
-Detailed procedures live in `docs/agent/*` and component conventions live in `docs/*.md`.
-Agent-specific wrappers such as `CODEX.md`, `CLAUDE.md`, and `GEMINI.md` must stay thin.
+## Mandatory read (session start)
 
-Project overview, architecture map, and common commands are maintained in `docs/README.md`.
+1. `AGENT_GUIDE.md` (this file)
+2. `sage/project-profile.yaml` — project values
+3. Relevant plan doc under `{paths.plan_docs}`
+4. Relevant convention docs declared in `profile.conventions`
 
-## 1. Rule Precedence
+## Project Bootstrap (conversational authoring)
 
-User instructions are respected within the non-negotiable safety boundaries below.
+Profile values, specs, and plan docs are **authored by the agent through
+conversation, not hand-written by the user** — the user supplies intent and
+approves; `sage generate` / `sage validate` then register and verify
+deterministically (some assets, e.g. agent/skill renders, still need an
+interpretive runtime render step). The profile schema is a guardrail (strict on
+top-level + selected sections), not a total type-checker. When a project is first
+set up, or a new component/asset is introduced, follow
+`docs/agent/bootstrap-authoring.md`: interview → fill profile values → handoff
+(`generate` + `validate`) → phase-first plan docs before any code. Never add
+schema keys, never edit generated artifacts, never bypass a `validate` FAIL.
 
-### 1.1 Non-Negotiable Safety Boundaries
+The conversational entry point is the **`/sage-init` skill**. It and the other
+**CORE framework bootstrap assets** — the `sage-cycle` / `sage-plan` / `sage-team` / `sage-review` / `sage-asset` /
+`sage-profile-modify` / `sage-asset-override` skills and the six CORE roster agent renders (`leader`, `implementer-a`,
+`implementer-b`, `qa`, `reviewer`, `convention-checker`) — are hand-shipped by `sage install` like
+this guide and `docs/agent/*`. They are NOT manifest-tracked: the
+manifest/claims/`validate` loop is reserved for project-authored assets created
+via `generate`/`extract`. **Do not edit these CORE renders directly** — the
+write-guard blocks it and `sage install --force` would overwrite the edit anyway.
+Customize them per-project via an **overlay** authored with `/sage-asset-override`, stored at
+`sage/asset_overrides/{agents,skills,framework}/<id>.md` (hand-authored, install never ships it so `--force`
+preserves it). SAGE **materializes** an eligible overlay directly into its CORE render as a managed
+block — do not read external overlay files by hand or edit renders directly. `sage validate` gates
+materialization (drift/tamper) and lints overlays for gate-relaxation. Overlays for gate-bearing
+assets without an independent oracle are not yet supported (validate reports them until SD-8). The CORE skills ship
+reference specs under `docs/sage_harness/skills/` (sage-init has none), but those
+specs are not manifest-registered. Until the profile is bootstrapped
+(`project.name` set + `risk`/`components` configured), `sage generate` is BLOCKED
+and `sage validate` WARNs — by design, so an empty profile cannot silently
+disable the governance gate.
 
-- Do not run `git commit` or `git push`; the user owns Git writes.
-- Do not edit `chatforyou-desktop/src` directly; change shared web assets in `nodejs-frontend` and sync through `docs/chatforyou_desktop.md`.
-- Do not run destructive commands without explicit user request; apply `docs/agent/command-safety.md`.
-- WebRTC / WebSocket / Signaling / Kurento changes require the L3 two-round review in `docs/agent/webrtc-review-protocol.md` before implementation.
-- Backend / Frontend / Desktop impact analysis is mandatory for every implementation or design change.
+Runtime discovery differs by host, and `sage install` picks one host (claude OR
+codex), so each install deploys only that host's copies. On a **claude** host,
+Claude auto-discovers repo-scoped skills and agents under `.claude/` (CORE skills →
+`.claude/skills/`, CORE agents → `.claude/agents/`). On a **codex** host, Codex does
+not auto-discover repo-scoped skills, so CORE skills install to the user-global
+`$CODEX_HOME/skills/` (`$sage-init`, `$sage-cycle`, `$sage-plan`, `$sage-team`, `$sage-review`, `$sage-asset`, `$sage-profile-modify`); and since Codex
+has no native subagent auto-discovery either, the CORE roster agent renders install
+to repo `.codex/agents/<id>.md` (the SAGE-canonical asset path), which the Codex AI
+references as role definitions via the `AGENTS.md` router rather than native
+invocation. Codex users also follow `docs/agent/bootstrap-authoring.md` (see `CODEX.md`).
 
-### 1.2 Conflict Priority
+## Risk & Workflow Gate (PDCA)
 
-When documents conflict within the safety boundaries:
-1. The user's explicit current-task instruction
-2. This `AGENT_GUIDE.md`
-3. `.local/local_agent_guide.md`
-4. Component convention docs under `docs/*.md`
-5. Agent-specific wrappers such as `CODEX.md`, `CLAUDE.md`, and `GEMINI.md`
+Every change is classified before implementation. Compound changes use the
+highest applicable level. Levels are classified from `profile.risk` (path globs +
+content keywords), not from hardcoded domain knowledge — see
+`docs/agent/risk-classification.md`.
 
-## 2. Startup Checklist
+### PDCA phases
 
-Before working:
-1. Read this `AGENT_GUIDE.md`.
-2. Read `.local/local_agent_guide.md` if it exists.
-3. Read the relevant plan document when the task depends on prior design or implementation context.
-   - Standard plan paths: `plan_docs/N월_[기능]_plan.md` or `plan_docs/00-base_plan/YYYY/MM/[feature]_plan.md`
-   - Phase documents follow `docs/agent/pdca-templates.md`.
-4. Read `docs/README.md` when project context is unfamiliar or the task spans multiple components.
-5. Select and read the required `docs/agent/*` documents from Required Agent Reference Documents.
-6. Select and read the component convention docs from Component Reference Documents.
+Work proceeds through numbered phase documents under `{paths.plan_docs}`. The
+phase set and per-level obligation are defined in `profile.pdca`; the standard
+set is:
 
-If `.local/local_agent_guide.md` activates the Obsidian vault, use it when the task has feature, bug, design, architecture, behavior, or historical-decision impact.
+| Phase | Name | Nature |
+|:---:|:---|:---|
+| 00 | Base Plan | CONTEXT — why / what / impact / prior knowledge / risk |
+| 01 | Plan | CONTENT — requirements, data model, API spec |
+| 02 | Design | architecture, sequence, error codes |
+| 03 | Implementation | file ownership, checklist, build/test evidence |
+| 04 | Analyze | design↔implementation gap (no verdict here) |
+| 05 | Expert Review | independent synthesis + final APPROVED/FAIL/BLOCKED |
+| 06 | Report | completion report — only after 05 = APPROVED |
 
-## 3. Risk & Workflow Gate
+Phase definitions, separation rules (00 vs 01, 02 vs 03, 04 vs 05), templates,
+and component-level plan_docs are in `docs/agent/pdca-templates.md`.
 
-Every change must be classified before implementation. Compound changes use the highest applicable risk level.
+### Risk → mandatory phase range
 
-| Level | Category | Required Workflow | Notes |
+| Level | Category (from `profile.risk`) | Required phases | Gate |
 |:---:|:---|:---|:---|
-| **L0** | Documentation / text only | No PDCA phase required | Summary, changed files, and skipped validation reason are enough. |
-| **L1** | UI / non-critical logic | Phase 00-03, or lightweight implementation note | No backend state, Redis, Auth, WebRTC, WebSocket, Desktop runtime, or security-sensitive behavior. |
-| **L2** | Backend state / Redis / Auth / persistence | Phase 00-05 | Plan file plus build/test evidence required. |
-| **L3** | WebRTC / WebSocket / Signaling / Kurento / Desktop sync or runtime | Phase 00-06 | Two documented design-review rounds required before implementation. |
+| **L0** | docs / text only | none | summary + skipped-validation reason |
+| **L1** | low blast radius (UI/markup) | 00–03 (lightweight note allowed) | advisory |
+| **L2** | source/config | 00–05 | build + test + lint (block) |
+| **L3** | high-risk domains | 00–06 | + independent review rounds before done |
 
-Escalate to the higher level when uncertain.
-Detailed examples and decision rules: `docs/agent/risk-classification.md`.
+### Mandatory Writing Rule
+
+- The phase range for the level is **mandatory writing**, configured in
+  `profile.pdca.pre_implementation_required` (phases required *before* a code
+  change) and enforced by the `pre-implementation-gate` hook: a missing required
+  phase **blocks** L2/L3 implementation (warns at L1).
+- An empty `plan_docs/{phase}/` directory is **not** a convention — treat it as a
+  prior task's omission, never a precedent for skipping.
+- Skipping a mandatory phase requires an explicit reason in the plan and user approval.
+- Phase 06 (report) must not be written until the approve phase (05) records
+  `APPROVED` — enforced by the gate (`profile.pdca.report_phase`/`approve_phase`).
 
 ### 3.0 Independent PDCA Cycle Rule (MANDATORY)
 
-When the user explicitly requests an L3 (or equivalent) flow or a new PDCA development flow, the agent MUST start a new, independent 00-base_plan — even if the bug or feature is technically adjacent to a recently completed cycle.
+When the user explicitly requests a new PDCA flow (or an L3-equivalent flow), the
+agent MUST start a new, independent `00-base_plan` — even if the change is
+technically adjacent to a recently completed cycle. "Technically adjacent" (same
+file / service / module) is never a reason to reuse or extend a prior cycle. A new
+cycle requires a new 00 base plan, new phase documents, and independent analysis.
 
-**"Technically adjacent" is never a reason to reuse or extend a prior cycle.**
+### Pre-implementation declaration
 
-- Adjacent = same file, same service, same module → does NOT justify cycle reuse
-- A new PDCA cycle requires: new `plan_docs/00-base_plan/YYYY/MM/[feature]_plan.md`, new phase documents 01–06, and independent log analysis
+Before writing implementation code, declare: risk level, compound rule applied,
+applicable phase range, plan/phase doc paths, independent-review status (L3),
+component impact, and reference docs read.
 
-Violation pattern to avoid: skipping 00 and reusing a prior cycle's documents because the code is in the same area. This pattern caused the 2026-05 session expiry + call drop incident PDCA to be processed incorrectly.
+If `profile.pdca.enabled` is false (non-PDCA project), the gate falls back to
+plan-doc + risk checks only; the phase machinery is inert.
 
-The Phase range listed under Required Workflow is **mandatory writing**.
-An empty `plan_docs/{phase}/` directory is not a convention — interpret it as a prior task's omission.
-Phase role boundaries (e.g., 00 vs 01) and component-level plan_docs responsibility are defined in
-`docs/agent/pdca-templates.md` under Phase Separation Rules and Component-level Plan Docs.
+## Non-negotiable safety boundaries
 
-### 3.1 Pre-Implementation Compliance Gate
+- Do not run `git commit` or `git push` unless the user explicitly asks.
+- Do not perform destructive or outward-facing actions without confirmation.
+- Do not directly edit generated artifacts (`{host}/agents`, `{host}/skills`,
+  `{host}/hooks`) — edit the spec under `docs/sage_harness/` and regenerate.
+  The hand-shipped CORE bootstrap renders (the `sage-*` skills and the six CORE roster
+  agent renders) are also write-guarded: don't edit them directly — customize per-project
+  via an overlay at `sage/asset_overrides/{agents,skills,framework}/<id>.md` (`/sage-asset-override`).
+  See the bootstrap section above.
+- Report outcomes faithfully: if tests fail, say so with the output.
 
-Before writing implementation code, explicitly declare:
-- Risk Level: L0 / L1 / L2 / L3
-- Compound rule applied: yes / no
-- Applicable phase range
-- Plan file path for L2 or higher
-- L3 review status when WebRTC / WebSocket / Signaling / Kurento / Desktop runtime is involved
-- Backend / Frontend / Desktop impact
-- Required reference docs read
+These are inherited by every agent/skill claim set as
+`AGENT_GUIDE.non_negotiable_boundaries` (referenced, never copied).
 
-For L1 changes that qualify for lightweight mode, confirm all L1 conditions in §3 hold before applying it. The implementation note must include scope, impact analysis, modified files, validation result, and remaining risks.
+## Definition of Done
 
-## 4. Mandatory Rules
+- Plan doc updated; implementation matches the plan.
+- `scripts/verify-changes.sh` passes at the required gate level.
+- Conventions in `profile.conventions` satisfied.
+- No direct edits to generated artifacts.
 
-### 4.1 Common Rules
+<!-- >>> SAGE OVERLAY v1 START (edit sage/asset_overrides/, not here) -->
+## Project-Local Additions (sage/asset_overrides/framework/AGENT_GUIDE.md)
+아래는 이 프로젝트 로컬 추가 지침이며 CORE 기본 지침에 **더한다**.
+AGENT_GUIDE·phase·review·verification·안전 경계를 **완화할 수 없다**.
+## ChatForYou Project Rules
 
-- Check whether a project skill or custom agent should be used before starting.
-- Follow the default coding behavior principles in `docs/agent/coding-principles.md`.
-- Keep comments and JavaDoc minimal and focused on WHY, not line-by-line narration.
-- Do not change code during design-only or analysis-only work unless the user explicitly asks for implementation.
-- When the task is explicitly scoped to one component, do not modify other components without notifying the user and receiving approval.
-- Any task that includes code changes, regardless of risk level, must check the vault knowledge capture requirement in `.local/local_agent_guide.md`.
-- Re-read relevant component docs before implementation.
-- Run relevant build, syntax, test, and convention checks after implementation. For L2 or higher, run the deterministic gate `scripts/verify-changes.sh` and record its evidence; see `docs/agent/verification-protocol.md`.
-- Update plan or implementation-guide checkboxes only after the corresponding validation actually ran.
-- Remove temporary exception handling, debug traces, and placeholder notes before final delivery, or report them as remaining risks.
-- Use `chatforyou_v2` as the PR base branch when discussing PRs.
-
-### 4.1.1 CodeGraph — Code Navigation Principles
-
-CodeGraph MCP is installed. Use the following priority order for code navigation:
-
-| Purpose | Preferred tool |
-|---------|---------------|
-| Locate a symbol definition | `codegraph_search` or `codegraph_callers/callees` |
-| Assess change impact | `codegraph_impact <symbol>` |
-| Find affected test files | `codegraph_affected <file>` |
-| Plain text search | Grep (as before) |
-
-Do not force CodeGraph for simple lookups where Grep suffices. Run `codegraph_impact` before modifying any symbol with complex dependencies — especially WebRTC signaling and room lifecycle.
-
-### 4.2 WebRTC / WebSocket Changes
-
-Any modification to WebRTC, WebSocket, signaling, Kurento, ICE/SDP, DataChannel, room lifecycle, or related client/server flows is L3.
-
-Implementation is blocked until both review rounds in `docs/agent/webrtc-review-protocol.md` are documented:
-- Round 1: flow correctness
-- Round 2: failure and lifecycle behavior
-
-P0 issues block implementation. Remaining P1 issues require a fix or explicit user acceptance.
-
-### 4.3 Desktop Sync
-
-`chatforyou-desktop/src` is generated from shared frontend assets and must not be edited directly.
-Apply web changes in `nodejs-frontend`, then follow `docs/chatforyou_desktop.md` and `docs/nodejs_frontend.md` for sync and SCSS validation.
-
-## 5. Required Agent Reference Documents
-
-Files under `docs/agent/` are conditionally mandatory, not optional reference links.
-
-| Condition | Required Document |
-|---|---|
-| Before implementation work or multi-step changes | `docs/agent/coding-principles.md` |
-| Risk level is unclear, compound, or disputed | `docs/agent/risk-classification.md` |
-| WebRTC / WebSocket / Signaling / Kurento changes | `docs/agent/webrtc-review-protocol.md` |
-| Before git / kubectl / npm / docker / destructive / server commands | `docs/agent/command-safety.md` |
-| Running build/test verification, or entering Phase 05 (L2 or higher) | `docs/agent/verification-protocol.md` |
-| Writing or modifying wrapper docs | `docs/agent/wrapper-contract.md` |
-| Phase documents, vault scan procedure, or external consultant protocol needed | `docs/agent/pdca-templates.md` |
-| Phase 04 gap analysis | `docs/agent/phase04-bug-patterns.md` |
-| Final result report | `docs/agent/output-contract.md` |
-
-## 6. Component Reference Documents
-
-| Scope | Required Document |
-|---|---|
-| `springboot-backend/` changes | `docs/springboot_backend.md` |
-| `nodejs-frontend/` web changes | `docs/nodejs_frontend.md` |
-| Desktop sync, Electron runtime, packaging, preload/main boundaries | `docs/chatforyou_desktop.md` |
-| Commit message recommendation | `docs/git_commit_convention.md` |
-| Multiple components | Read every applicable document above |
-
-## 7. Wrapper Contract
-
-Wrappers may define only:
-- Startup read order
-- Available tools
-- Runtime path differences
-- Agent-specific tool routing
-- Command execution differences
-- Agent role descriptions
-
-Wrappers must not redefine risk levels, PDCA phases, Definition of Done, WebRTC/WebSocket review requirements, Git policy, Desktop sync policy, command safety, or test requirements.
-
-Full contract: `docs/agent/wrapper-contract.md`.
-
-## 8. Output Contract
-
-Use `docs/agent/output-contract.md` for final reporting.
-
-All implementation or design reports must include:
-- Task summary
-- Risk level and reason
-- Scope and assumptions
-- Backend / Frontend / Desktop impact
-- Completed and skipped phases, with reasons
-- Modified files
-- Validation commands and results
-- Remaining risks
-- Next action
-
-For L0 documentation-only work, use the L0 report and state why build/test validation was skipped.
-
-## 9. Definition of Done
-
-- Applicable startup, risk, and reference-document gates were followed.
-- No non-negotiable safety boundary was violated.
-- Backend / Frontend / Desktop impact was reviewed.
-- Required plan or phase documents were created or updated when the risk level requires them.
-- Implementation work has relevant build, syntax, test, and convention evidence. For L2 or higher, the deterministic gate (`scripts/verify-changes.sh`, per `docs/agent/verification-protocol.md`) passed or its FAIL was explicitly accepted by the user, and the evidence block is recorded in the Phase 03 document.
-- WebRTC / WebSocket / Signaling / Kurento L3 work has two documented review rounds.
-- Desktop-impacting web work followed the sync policy and avoided direct `chatforyou-desktop/src` edits.
-- Temporary debug code, placeholders, and unfinished cleanup are removed or reported.
-- Vault knowledge capture was completed or marked N/A when `.local/local_agent_guide.md` requires it.
-- Final response follows `docs/agent/output-contract.md`.
-- No commit or push was performed.
+- Git commit and push are exclusively user-owned. Agents must not run either command.
+- Never edit `chatforyou-desktop/src` directly. Change the web source and follow `docs/chatforyou_desktop.md` for synchronization.
+- Every implementation and design change must state Backend, Frontend, and Desktop impact, including explicit N/A reasons.
+- Read `.local/local_agent_guide.md` for the Obsidian routing and mandatory post-change knowledge capture contract.
+- If the vault path is unavailable or a knowledge write-back fails, preserve a complete
+  wiki-ready draft under `.sage/pending-wiki/` and follow
+  `docs/chatforyou-agent/knowledge-capture-fallback.md`. Report the result as
+  `DEGRADED/PENDING`; never claim vault capture completed.
+- Keep `scripts/verify-changes.sh` project-local and use `docs/chatforyou-agent/verification.md` for its behavior.
+- Project-specific PDCA and output extensions live under `docs/chatforyou-agent/`; CORE documents remain generic.
+- Use `chatforyou_v2` as the PR base when discussing or preparing a PR.
+<!-- <<< SAGE OVERLAY v1 END -->

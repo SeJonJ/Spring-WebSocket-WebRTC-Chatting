@@ -12,16 +12,18 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"   # .../.codex/hooks/tests
 HOOKS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"     # .../.codex/hooks
+PROJECT_ROOT="$(cd "$HOOKS_DIR/../.." && pwd)"
 
-exec python3 - "$SCRIPT_DIR" "$HOOKS_DIR" <<'PYEOF'
+exec python3 - "$SCRIPT_DIR" "$HOOKS_DIR" "$PROJECT_ROOT" <<'PYEOF'
 import datetime
+import json
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
 
-test_dir, hooks_dir = sys.argv[1], sys.argv[2]
+test_dir, hooks_dir, project_root = sys.argv[1], sys.argv[2], sys.argv[3]
 today = datetime.date.today().strftime("%Y-%m-%d")
 cases_path = os.path.join(test_dir, "cases.tsv")
 fixtures_dir = os.path.join(test_dir, "fixtures")
@@ -31,6 +33,47 @@ generated_sandboxes = {"empty", "with-declared-l3", "with-session-log"}
 
 def dash(v):
     return None if v.strip() == "-" else v
+
+
+def legacy_profile(strategy):
+    return {
+        "risk": {
+            "desktop_block_glob": "chatforyou-desktop/src/**",
+            "desktop_block_hint": "nodejs-frontend 원본 수정 후 동기화",
+            "l0_pass_globs": ["**/*.md"],
+            "l1_path_globs": ["nodejs-frontend/static/js/**"],
+            "l2_path_globs": ["springboot-backend/src/main/**"],
+            "l3_filename_globs": ["*kurento*"],
+            "l2_content_keywords": ["RedisTemplate", "JwtTokenProvider"],
+            "l3_content_keywords": ["RTCPeerConnection", "WebRtcEndpoint"],
+            "content_l3_enforce": "advisory",
+            "plan_glob": "plan_docs/**/*.md",
+            "l3_review_strategy": strategy,
+            "review_patterns": [],
+        },
+        "file_type_map": [
+            {"glob": "springboot-backend/src/main/**", "type": "backend-main"},
+            {"glob": "springboot-backend/src/test/**", "type": "backend-test"},
+            {"glob": "nodejs-frontend/static/js/**", "type": "frontend-js"},
+            {"glob": "plan_docs/**", "type": "plan-doc"},
+        ],
+        "skip_untyped": True,
+        "phase4_trigger_glob": "plan_docs/04-analyze/*.md",
+        "checklist_scan_targets": [
+            {"label": "03-implementation", "glob": "plan_docs/03-implementation/*.md", "is_impl": True},
+            {"label": "backend plan_docs", "glob": "springboot-backend/plan_docs/*.md"},
+            {"label": "frontend plan_docs", "glob": "nodejs-frontend/plan_docs/*.md"},
+        ],
+        "pdca": {"enabled": False},
+        "compliance": {
+            "activity_groups": [{"label": "backend", "types": ["backend-main", "backend-test"]}],
+            "plan_types": ["plan-doc"],
+            "plan_gate_code_types": ["backend-main", "backend-test", "frontend-js"],
+            "convention_reminder": {},
+        },
+        "output_contract": {"markers": {}},
+        "knowledge_capture": {"vault_path": ""},
+    }
 
 
 passed, failed = 0, 0
@@ -51,6 +94,15 @@ with open(cases_path, encoding="utf-8") as f:
 
         tmp = tempfile.mkdtemp(prefix="codex-hooktest-")
         try:
+            shutil.copytree(
+                os.path.join(project_root, "scripts", "sage_harness", "hooks"),
+                os.path.join(tmp, "scripts", "sage_harness", "hooks"),
+                dirs_exist_ok=True,
+            )
+            os.makedirs(os.path.join(tmp, "sage"), exist_ok=True)
+            profile_path = os.path.join(tmp, "sage", "project-profile.json")
+            with open(profile_path, "w", encoding="utf-8") as pf:
+                json.dump(legacy_profile("codex_feature_signal"), pf)
             if sandbox:
                 src = os.path.join(sandbox_dir, sandbox)
                 if os.path.isdir(src):
@@ -78,7 +130,12 @@ with open(cases_path, encoding="utf-8") as f:
             with open(os.path.join(fixtures_dir, fixture), "rb") as ff:
                 stdin_bytes = ff.read()
 
-            env = dict(os.environ, CODEX_PROJECT_ROOT=tmp, CODEX_GATE_BRANCH="test")
+            env = dict(
+                os.environ,
+                CODEX_PROJECT_ROOT=tmp,
+                SAGE_GATE_BRANCH="feat",
+                SAGE_PROFILE=profile_path,
+            )
             proc = subprocess.run(
                 ["bash", os.path.join(hooks_dir, hook)],
                 input=stdin_bytes,

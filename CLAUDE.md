@@ -1,72 +1,30 @@
 # CLAUDE.md
 
-This document is a thin wrapper that defines Claude-specific execution overrides only.
-All common rules, workflow, and output contracts are governed solely by `AGENT_GUIDE.md`.
+Thin Claude-specific execution override. All common rules, workflow, and the
+output contract are governed solely by `AGENT_GUIDE.md`.
 
-## Mandatory Read (required at session start)
+## Mandatory read (session start)
 
-Before responding to any request, read the following files in order. Do not skip.
+1. `AGENT_GUIDE.md` — single source of truth
+2. `sage/project-profile.yaml` — project values
+3. Relevant plan doc + convention docs (per profile)
 
-1. `AGENT_GUIDE.md` — single source of truth for common rules, workflow, and output contract
-2. `.local/local_agent_guide.md` — local-only configuration (read if it exists)
+## Claude-specific
 
-## Start Order
-1. `AGENT_GUIDE.md`
-2. `.local/local_agent_guide.md` (if it exists)
-3. Relevant `plan_docs/N월_[기능]_plan.md` or `plan_docs/00-base_plan/YYYY/MM/[feature]_plan.md`
-4. Relevant component convention docs
-   - `docs/springboot_backend.md`
-   - `docs/nodejs_frontend.md`
-   - `docs/chatforyou_desktop.md`
-   - `docs/git_commit_convention.md`
-5. Claude runtime assets
-   - `.claude/agents/*`
-   - `.claude/skills/*`
+- Use the Claude runtime asset ecosystem (`.claude/agents`, `.claude/skills`,
+  `.claude/hooks`) which are generated from `docs/sage_harness/` specs.
+- Do not modify generated artifacts directly — edit the spec and run
+  `sage generate`. (Exception: hand-shipped CORE bootstrap renders under
+  `.claude/skills/{sage-init,sage-cycle,sage-plan,sage-team,sage-review,sage-asset,sage-profile-modify}` and `.claude/agents/`
+  CORE roster are not generated and are write-guard exempt — edit directly.)
 
-## Claude-Specific Rules
-- Use the Claude runtime asset ecosystem to coordinate design, implementation, and verification flows.
-- For design or analysis tasks, verify consistency with existing `plan_docs` first.
-- Before implementation, review relevant component convention docs and Claude skill/agent guidelines.
-- Do not modify `.claude/*` paths unless the user explicitly requests it — they are Claude runtime assets.
+<!-- >>> SAGE OVERLAY v1 START (edit sage/asset_overrides/, not here) -->
+## Project-Local Additions (sage/asset_overrides/framework/CLAUDE.md)
+아래는 이 프로젝트 로컬 추가 지침이며 CORE 기본 지침에 **더한다**.
+AGENT_GUIDE·phase·review·verification·안전 경계를 **완화할 수 없다**.
+## ChatForYou Claude Routing
 
-## Skill routing
-<!-- Claude/gstack specific tool routing only — not project policy. Project rules are in AGENT_GUIDE.md -->
-
-When the user's request matches an available skill, invoke it via the Skill tool. The
-skill has multi-step workflows, checklists, and quality gates that produce better
-results than an ad-hoc answer. When in doubt, invoke the skill. A false positive is
-cheaper than a false negative.
-
-Key routing rules:
-- Product ideas, "is this worth building", brainstorming → invoke /office-hours
-- Strategy, scope, "think bigger", "what should we build" → invoke /plan-ceo-review
-- Architecture, "does this design make sense" → invoke /plan-eng-review
-- Design system, brand, "how should this look" → invoke /design-consultation
-- Design review of a plan → invoke /plan-design-review
-- Developer experience of a plan → invoke /plan-devex-review
-- "Review everything", full review pipeline → invoke /autoplan
-- Bugs, errors, "why is this broken", "wtf", "this doesn't work" → invoke /investigate
-- Test the site, find bugs, "does this work" → invoke /qa (or /qa-only for report only)
-- Code review, check the diff, "look at my changes" → invoke /review
-- Visual polish, design audit, "this looks off" → invoke /design-review
-- Developer experience audit, try onboarding → invoke /devex-review
-- Ship, deploy, create a PR, "send it" → invoke /chatforyou-ship
-- Merge + deploy + verify → invoke /land-and-deploy
-- Configure deployment → invoke /setup-deploy
-- Post-deploy monitoring → invoke /canary
-- Update docs after shipping → invoke /document-release
-- Weekly retro, "how'd we do" → invoke /retro
-- Second opinion, codex review → invoke /codex
-- Safety mode, careful mode, lock it down → invoke /careful or /guard
-- Restrict edits to a directory → invoke /freeze or /unfreeze
-- Upgrade gstack → invoke /gstack-upgrade
-- Save progress, "save my work" → invoke /context-save
-- Resume, restore, "where was I" → invoke /context-restore
-- Security audit, OWASP, "is this secure" → invoke /cso
-- Make a PDF, document, publication → invoke /make-pdf
-- Launch real browser for QA → invoke /open-gstack-browser
-- Import cookies for authenticated testing → invoke /setup-browser-cookies
-- Performance regression, page speed, benchmarks → invoke /benchmark
-- Review what gstack has learned → invoke /learn
-- Tune question sensitivity → invoke /plan-tune
-- Code quality dashboard → invoke /health
+- Preserve project agents, commands, and skills under `.claude/`.
+- Use gstack skills for Claude coding, review, QA, security, and shipping workflows when applicable.
+- The ChatForYou shipping workflow remains the project-specific release entry point.
+<!-- <<< SAGE OVERLAY v1 END -->

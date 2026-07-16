@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sage-harness/schema/manifest.schema.json",
+  "title": "SAGE manifest",
+  "description": "docs/sage_harness/.manifest.json — spec/render/claims 해시와 conformance 추적 (staleness 판정원)",
+  "type": "object",
+  "required": ["sage_version", "host_runtime", "assets"],
+  "properties": {
+    "sage_version": { "type": "string" },
+    "generator_version": { "type": "string" },
+    "template_version": { "type": "string" },
+    "host_runtime": { "enum": ["claude", "codex"] },
+    "installed_hosts": {
+      "type": "array",
+      "items": { "enum": ["claude", "codex"] },
+      "uniqueItems": true,
+      "minItems": 1,
+      "description": "설치된 discovery surface 전체. host_runtime은 하위호환 primary 값이다."
+    },
+    "sage_source_commit": { "type": "string" },
+    "source_core_content_hash": { "$ref": "#/$defs/sha" },
+    "installed_core_content_hash": { "$ref": "#/$defs/sha" },
+    "dirty_flag": { "type": "boolean" },
+    "hook_runtime_hash": {
+      "type": "object",
+      "description": "hook 공용 런타임(run_hook.py/hook_runtime.py/io_*.py) top-level drift 추적. per-hook 중복 금지.",
+      "properties": {
+        "shared": { "$ref": "#/$defs/sha" },
+        "claude": { "$ref": "#/$defs/sha" },
+        "codex": { "$ref": "#/$defs/sha" }
+      },
+      "required": ["shared", "claude", "codex"],
+      "additionalProperties": false
+    },
+    "core_renders": {
+      "type": "object",
+      "description": "설치된 CORE 렌더의 canonical base 영수증. 엔진 소유이며 install --force 때 재계산한다.",
+      "additionalProperties": { "$ref": "#/$defs/coreRenderReceipt" }
+    },
+    "assets": {
+      "type": "object",
+      "description": "키 = '<kind>s/<id>' (예: agents/backend, hooks/pre-phase4-checklist-gate)",
+      "additionalProperties": { "$ref": "#/$defs/assetEntry" }
+    }
+  },
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "coreRenderReceipt": {
+      "type": "object",
+      "required": ["base_sha256", "sage_version"],
+      "properties": {
+        "base_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sage_version": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "assetEntry": {
+      "type": "object",
+      "description": "install 직후(미스탬프)는 conformance=UNKNOWN + form 만 존재 가능. hash(spec/render/...)는 generate --write 가 추가하며 validate 가 미스탬프를 STALE 로 보고한다.",
+      "required": ["conformance", "form"],
+      "properties": {
+        "spec_hash": {
+          "$ref": "#/$defs/sha",
+          "description": "host-neutral spec md 해시"
+        },
+        "claims_hash": {
+          "$ref": "#/$defs/sha",
+          "description": "agent/skill 의 {id}.claims.yml 해시 (hook은 없음)"
+        },
+        "canonical_hash": {
+          "$ref": "#/$defs/sha",
+          "description": "hook 정본 알고리즘(scripts/sage_harness/hooks/{id}_core.py 또는 {id}.sh) 해시 (hook 전용)"
+        },
+        "adapter_hash": {
+          "type": "object",
+          "description": "런타임별 adapter(입력추출/출력렌더/경로바인딩) 해시 — algorithm 과 별개로 adapter drift 추적 (hook 전용)",
+          "properties": {
+            "claude": { "$ref": "#/$defs/sha" },
+            "codex": { "$ref": "#/$defs/sha" }
+          },
+          "additionalProperties": false,
+          "minProperties": 1
+        },
+        "adapter_contract_version": {
+          "type": "string",
+          "description": "표준 event/decision 계약 버전 — core.CONTRACT_VERSION 과 일치해야 함"
+        },
+        "render_hash": {
+          "type": "object",
+          "description": "target 런타임별 산출물 해시. cross_model on이면 claude+codex 둘 다. native hook 은 'native' 키",
+          "properties": {
+            "claude": { "$ref": "#/$defs/sha" },
+            "codex": { "$ref": "#/$defs/sha" },
+            "native": { "$ref": "#/$defs/sha" }
+          },
+          "additionalProperties": false,
+          "minProperties": 1
+        },
+        "conformance": { "enum": ["PASS", "FAIL", "STALE", "UNKNOWN"] },
+        "form": {
+          "enum": ["native", "core_adapter", "interpretive", "declarative"],
+          "description": "native=단일 canonical .sh / core_adapter=core+런타임 adapter(hook) / interpretive=spec+claims→런타임 렌더(agent/skill) / declarative=선언 데이터→config 직렬화(mcp, 결정론)"
+        },
+        "runtime_targets": {
+          "type": "array",
+          "items": { "enum": ["claude", "codex"] },
+          "description": "mcp(declarative) 전용 — spec 이 선언한 생성 대상 런타임. review 가 단일-target currentness 판정에 사용"
+        },
+        "test": {
+          "type": "string",
+          "description": "regression 테스트 경로 (validate 가 실행). CI 계약상 명시값 권장"
+        },
+        "safety_degraded": {
+          "type": "boolean",
+          "description": "전략/정책 미선택 등으로 안전성이 낮아진 상태(WARN). 예: pre-implementation-gate L3 전략 미선택"
+        },
+        "l3_review_strategy": {
+          "type": "string",
+          "description": "pre-implementation-gate L3 review 매칭 canonical 전략 선택(claude_grep_first | codex_feature_signal | <모듈명>). 미선택이면 키 생략 → core 가 L3 BLOCK(safe default)"
+        },
+        "risk": { "type": "array", "items": { "type": "string" } },
+        "unresolved": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}

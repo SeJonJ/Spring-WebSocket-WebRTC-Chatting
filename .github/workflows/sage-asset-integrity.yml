@@ -1,0 +1,60 @@
+name: SAGE Asset Integrity
+
+on:
+  push:
+    paths:
+      - '.claude/**'
+      - '.codex/**'
+      - 'sage/**'
+      - 'schema/**'
+      - 'scripts/sage_harness/**'
+      - 'scripts/test-sage-adoption.sh'
+      - 'docs/sage_harness/**'
+      - 'AGENT_GUIDE.md'
+      - 'CLAUDE.md'
+      - 'CODEX.md'
+      - 'AGENTS.md'
+  pull_request:
+    paths:
+      - '.claude/**'
+      - '.codex/**'
+      - 'sage/**'
+      - 'schema/**'
+      - 'scripts/sage_harness/**'
+      - 'scripts/test-sage-adoption.sh'
+      - 'docs/sage_harness/**'
+      - 'AGENT_GUIDE.md'
+      - 'CLAUDE.md'
+      - 'CODEX.md'
+      - 'AGENTS.md'
+  workflow_dispatch:
+
+jobs:
+  integrity:
+    name: SAGE strict validation and registered-hook E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout pinned SAGE adoption source
+        uses: actions/checkout@v4
+        with:
+          repository: SeJonJ/SAGE
+          ref: feat/overlay-composition
+          path: .sage-engine
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SAGE with schema validation
+        run: pip install -e './.sage-engine[schema]'
+
+      - name: Validate governed assets
+        run: sage validate --check --kind all --schema --strict
+
+      - name: Run registered-hook and policy E2E
+        env:
+          ROOT: ${{ github.workspace }}
+        run: bash scripts/test-sage-adoption.sh

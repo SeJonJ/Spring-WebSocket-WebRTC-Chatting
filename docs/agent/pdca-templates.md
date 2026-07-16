@@ -1,7 +1,10 @@
 # PDCA Workflow and Phase Document Templates
 
-Use this document when a task requires Phase 00-06 planning, a vault scan, an
-external consultant review, or a phase document template.
+Use this when a task requires Phase 00–06 planning, an optional prior-knowledge
+scan, an independent/cross-model review, or a phase document template. The phase
+set and per-level obligation are configured in `profile.pdca`; this document
+defines the neutral methodology. Domain specifics (stacks, high-risk domains,
+component names) come from the profile, never from this file.
 
 ---
 
@@ -10,191 +13,102 @@ external consultant review, or a phase document template.
 | Phase | Name | Key Tasks | Deliverable |
 |:---:|:---|:---|:---|
 | 00 | Base Plan | Strategy, impact analysis, prior knowledge, technical risk | `plan_docs/00-base_plan/.../[feature]_plan.md` |
-| 01 | Plan | Requirements, data model, API specifications | `plan_docs/01-plan/[feature].md` |
+| 01 | Plan | Requirements, data model, API specifications, acceptance matrix | `plan_docs/01-plan/[feature].md` |
 | 02 | Design | Class/interface design, sequence diagrams, error codes | `plan_docs/02-design/[feature].md` |
-| 03 | Do | Implementation, unit testing, guide checklist updates | `plan_docs/03-implementation/[feature].md` |
-| 04 | Analyze | Design vs implementation gap analysis by **chatforyou-lead** (책임) + **qa-expert** (보조 — QA Coverage Verification). Single verdict not issued here. | `plan_docs/04-analyze/[feature].md` |
-| 05 | Expert Review | Independent synthesis by **chatforyou-external-expert** + **host 기준 external cross-model reviewer**. Final APPROVED/FAIL/BLOCKED verdict issued here. | `plan_docs/05-expert-review/[feature].md` |
-| 06 | Report | Final completion report by **chatforyou-lead**. **Written only after Phase 05 APPROVED**. If 05 = FAIL/BLOCKED → rework or recover external review → re-review → APPROVED → then 06. | `plan_docs/06-report/[feature].md` |
+| 03 | Implementation | Pre-code ownership/checklist skeleton, implementation, unit testing, verification evidence | `plan_docs/03-implementation/[feature].md` |
+| 04 | Analyze | Design vs implementation gap analysis by **leader** + **qa** (coverage + acceptance evidence). No single verdict here. | `plan_docs/04-analyze/[feature].md` |
+| 05 | Expert Review | Independent synthesis by **reviewer** (+ cross-model reviewer when enabled). Acceptance unresolved items block APPROVED. Final APPROVED/FAIL/BLOCKED issued here. | `plan_docs/05-expert-review/[feature].md` |
+| 06 | Report | Final completion report by **leader**. **Written only after Phase 05 = APPROVED.** If 05 = FAIL/BLOCKED → rework → re-review → APPROVED → then 06. | `plan_docs/06-report/[feature].md` |
+
+Roles (`leader` / `reviewer` / `qa`) are the neutral CORE roster — map to your
+team in `profile.team`.
 
 ## Phase Separation Rules
 
 ### Mandatory Writing Rule
-- Each Phase's writing obligation follows the risk level in `AGENT_GUIDE.md §3 Risk & Workflow Gate`.
-- An empty `plan_docs/{phase}/` directory is **not** a convention. Treat it as a prior task's omission, not a precedent for skipping.
-- Skipping a mandatory Phase requires an explicit reason in the Plan body and user approval.
+- Each phase's writing obligation follows the risk level in
+  `AGENT_GUIDE.md` Risk & Workflow Gate and `profile.pdca`.
+- An empty `plan_docs/{phase}/` directory is **not** a convention. Treat it as a
+  prior task's omission, not a precedent for skipping.
+- Skipping a mandatory phase requires an explicit reason in the plan body and
+  user approval.
+- The `pre-implementation-gate` hook **blocks** L2/L3 implementation when a
+  required pre-implementation phase is missing, and blocks Phase 06 until the
+  approve phase records `APPROVED`.
 
-### 00 vs 01 — most commonly confused boundary
+### 00 vs 01 — the most commonly confused boundary
 | Dimension | 00 Base Plan | 01 Plan |
 |:---|:---|:---|
-| Nature | **CONTEXT** — why / what / impact | **CONTENT** — details of this feature itself |
-| Covers | Strategy, prior knowledge (Vault scan), Backend/Frontend/Desktop impact, before/after changes, technical risk | User Stories, Data Schema/DTO, API Spec, detailed feature spec, detailed design, detailed analysis |
-| Does NOT cover | Function signatures, API schemas, file/line numbers | Strategic judgment, impact analysis, Vault scan |
-| Length guide | 1–2 page context | Proportional to feature scope |
+| Nature | **CONTEXT** — why / what / impact | **CONTENT** — details of this feature |
+| Covers | Strategy, prior knowledge, component impact, before/after, technical risk | User stories, data schema/DTO, API spec, detailed design |
+| Does NOT cover | Function signatures, API schemas, file/line numbers | Strategic judgment, impact analysis, prior-knowledge scan |
+| Length | 1–2 page context | Proportional to feature scope |
 
-### Other commonly confused boundaries
-- **02 Design vs 03 Implementation**
-  - 02 = architecture / sequence / error codes / interface design
-  - 03 = file ownership / implementation checklist / build & test results
-- **04 Analyze vs 05 Expert Review**
-  - 04 = **chatforyou-lead 책임** + qa-expert 보조. 설계-구현 gap (Match Rate) + Missing Items + QA Coverage Verification. **단독 판정(APPROVED/FAIL) 금지 — 판정은 05 에서**.
-  - 05 = **chatforyou-external-expert + host 기준 external cross-model reviewer**. 독립 종합 + cross-model 교차검증. 최종 판정(APPROVED/FAIL/BLOCKED) 발생 위치.
-  - external/cross-model 리뷰는 **04 가 아닌 05** 에 기록.
+### Other boundaries
+- **02 Design vs 03 Implementation**: 02 = architecture / sequence / error codes / interface design; 03 = file ownership / implementation checklist / acceptance trace / build & test results. 03 is opened before source edits with ownership and checklist, then completed after code with evidence.
+- **04 Analyze vs 05 Expert Review**: 04 = leader (responsible) + qa (coverage) — gap (match rate) + missing items + coverage. **No standalone verdict.** 05 = reviewer (+ cross-model when enabled) — independent synthesis + cross-check; final verdict (APPROVED/FAIL/BLOCKED) issued here. Cross-model review is recorded in **05, not 04**.
 
 ### Signals of incorrect separation
 - 00 contains a function signature → move to 01
 - 00 contains a file/line number → move to 01 or 02
-- 01 contains Vault prior knowledge → move to 00
+- 01 contains prior-knowledge scan → move to 00
 - 02 contains build/test results → move to 03
 
 ## Component-level Plan Docs
 
-The project runs **two parallel plan_docs trees**:
+A project may run **two parallel plan_docs trees** (configured via
+`profile.paths.component_plan_docs` and `profile.components`):
 
 | Tree | Path | Purpose | Owner |
 |:---|:---|:---|:---|
-| Root (feature-wide PDCA) | `plan_docs/00–06/[feature].md` | Cross-component, project-wide design under standard PDCA templates | `chatforyou-lead` |
-| Backend (component-level) | `springboot-backend/plan_docs/[feature]_plan.md` | Code-level implementation design for Spring Boot side | `chatforyou-backend-expert` |
-| Frontend (component-level) | `nodejs-frontend/plan_docs/[feature]_plan.md` | Code-level implementation design for Node.js frontend side | `chatforyou-frontend-expert` |
-| Desktop | — | **Not used.** `chatforyou-desktop/` mirrors `nodejs-frontend/` via sync; record Desktop-affecting changes in the frontend or root tree | — |
+| Root (feature-wide PDCA) | `plan_docs/00–06/[feature].md` | Cross-component, project-wide design under standard templates | leader |
+| Component-level | `{component}/plan_docs/[feature]_plan.md` | Code-level implementation design within one component boundary | component owner |
 
 ### Writing order for L2/L3 changes
 1. Root `00-base_plan/` — strategy + impact
-2. Root `01-plan/` — feature-level requirements + Data Schema + API spec (cross-component contract)
+2. Root `01-plan/` — feature requirements + data schema + API (cross-component contract)
 3. Root `02-design/` — architecture + sequence + error codes
-4. Component `springboot-backend/plan_docs/` and/or `nodejs-frontend/plan_docs/` — code-level implementation design (free format, may include code snippets, TDD plans, refactor diffs)
-5. Root `03-implementation/` — file ownership table, checklist, build/test results
-6. Implementation
-7. Root `04-analyze/`, `05-expert-review/`, and `06-report/` — gap analysis + external review + final report
+4. Component `{component}/plan_docs/` — code-level design (free format)
+5. Root `03-implementation/` — pre-code ownership/checklist skeleton + acceptance trace
+6. Implementation + tests
+7. Update root `03-implementation/` — files changed, checklist results, build/test evidence
+8. Root `04-analyze/`, `05-expert-review/`, `06-report/` — gap + acceptance evidence + review + report
 
-### Format conventions
-- Root tree files: follow the templates below.
-- Component tree files: free format. Recommended sections — Goal, Code-level Design, File-by-file Plan, Unit Test Plan, Sync/Verification Notes.
-- File-naming stem must match across root and component trees for the same feature (e.g., `kurento_peer_error_fallback` in both `plan_docs/02-design/kurento_peer_error_fallback.md` and `springboot-backend/plan_docs/kurento_peer_error_fallback_plan.md`).
+### Conventions
+- Root tree is the **single source of truth for the cross-component contract** (DTO fields, event names, error codes).
+- File-naming stem must match across root and component trees for the same feature.
+- Component tree owns code-level decisions inside its boundary; cross-component impact must be reflected back into root `01-plan`/`02-design`.
 
-### Conflict resolution
-- Root tree is the **single source of truth for cross-component contract** (DTO fields, event names, error codes).
-- Component tree owns code-level decisions inside its own boundary; any cross-component impact must be reflected back into root `01-plan` or `02-design`.
+## Prior-Knowledge Scan (optional — knowledge_capture)
 
-## Phase 00 Vault Scan Procedure
-
-Before writing the base plan, scan the Obsidian vault for prior knowledge when
-`.local/local_agent_guide.md` exists and the Obsidian vault MCP tools are available.
-
-1. Read the Obsidian vault's `AGENT_GUIDE.md` (vault-internal note, separate from the project root file).
-2. Read `wiki/index.md`.
-3. Search for relevant prefixed notes (filename format `TAG - {Title}.md`;
-   the frontmatter `tags:` first item mirrors the category):
-   - `BRAINSTORM - `
-   - `SPEC - `
-   - `TECH - `
-   - `BUG - `
-   - `POSTMORTEM - `
-4. Read only the relevant notes needed for the task, normally 1-5 files.
-5. Summarize findings under `## 0. Prior Knowledge (Vault Scan)` in the base plan.
-
-When vault scan is not possible, record N/A:
+When `profile.knowledge_capture.vault_path` is set and the knowledge provider is
+available, scan prior knowledge before writing the base plan; otherwise record
+N/A. Summarize findings under `## 0. Prior Knowledge` in the base plan.
 
 ```markdown
-## 0. Prior Knowledge (Vault Scan)
+## 0. Prior Knowledge
 Status: N/A
-Reason: [`.local/local_agent_guide.md` not found / Obsidian MCP tools unavailable / vault path inaccessible]
-Decision: Proceeding with standard workflow based on repository files only.
+Reason: [knowledge_capture disabled / provider unavailable]
+Decision: Proceeding from repository files only.
 ```
 
-## External Consultant Protocol
+## Independent / Cross-model Review Protocol
 
-External / cross-model expert review is **MANDATORY** for L3 (and recommended for L2) work. It is recorded in **Phase 05**, not 04.
+Independent review is **mandatory for L3** (recommended for L2). It is recorded in
+**Phase 05**, not 04. The reviewer runtime is resolved by `sage doctor`
+(same-runtime clean-context, or opposite-runtime when `profile.options.cross_model`
+is on and reachable — `docs/agent/review-protocol.md`).
 
-1. Check whether `plan_docs/04-analyze/[feature].md` exists. If yes, read the lead's gap findings + QA coverage verification first; build on them.
-2. Review from an external consultant perspective covering object-oriented design, security, and performance.
-3. **Core WebRTC Architecture Gate**:
-   - Before starting the review-rework loop, check whether the findings or proposed actions change WebRTC core architecture.
-   - Scope: WebRTC, WebSocket, Signaling, Kurento, ICE/SDP, DataChannel, room lifecycle, media pipeline, signaling event contract, recovery/reconnect state machine.
-   - If a new architecture change is detected, stop automatic rework and get user approval first.
-   - Local bug fixes inside the already approved design are not blocked by this gate.
-4. **External cross-model invocation**:
-   - Invoke the host-specific external consult skill or CLI defined by that agent/runtime with all phase documents:
-     `plan_docs/00-base_plan/[feature].md` + `01-plan/[feature].md` + `02-design/[feature].md` + `03-implementation/[feature].md` + `04-analyze/[feature].md` + component plan docs (`springboot-backend/plan_docs/`, `nodejs-frontend/plan_docs/`) + implementation files.
-   - Request: "단순 코드 리뷰가 아닌 개발 맥락 기반 외부자 검토. 04의 Review Context를 포함하여 설계 의도와 구현의 일치 여부, 프로젝트 기술 스택 적합성, lifecycle/edge case/security/test/UX 리스크, 06-report 진입 가능 여부를 검토하라. 최종 권고는 APPROVED / FAIL / BLOCKED."
-   - A review counts as cross-model/external only when it runs in a real separate runtime or model, such as Claude CLI from a Codex host. Same-runtime sub-agents do not count as completed cross-model review.
-5. **Review-rework loop policy**:
-   - L3: 3-iteration review-rework loop is mandatory and automatic in Phase 05.
-   - L2: review-rework loop is recommended only. Ask the user before starting it.
-   - L1/L0: do not use the Phase 05 review-rework loop.
-   - One iteration means: external consult (`$claude consult` in Codex), faithful findings record, external-expert + dev-team triage, accepted rework, then `03-implementation` and `04-analyze` update.
-   - Rework is limited to the already approved design and scope. New requirements, new architecture, and risky migration go to `Needs User Approval`.
-6. **3-iteration stop rule**:
-   - After the 3rd L3 review, if the Final Status is not `APPROVED`, record `Final Status: BLOCKED`.
-   - Also record `06-report 작성 금지`, stop the workflow, and report the blocked state to the user.
-7. **Fallback**:
-   - Retry the host-specific consult path or start a fresh session.
-   - If context is too large, retry with 04 Review Context + 01/02/03 + core implementation files.
-   - If token/context limits persist, split the prompt by review lens or file group, but record the split inputs and which coverage was actually reviewed.
-   - If Claude remains unavailable because of auth, quota, session-limit, token/context-limit, timeout, or runtime/tool failure, run a **separate headless Codex clean-context review** before considering same-session fallback. This is not cross-model review, but it is stronger than same-session sub-agent review because it starts an independent non-interactive Codex session.
-     - Example: `CODEX_HOME=$PWD/.codex codex exec --cd "$PWD" --sandbox read-only --ask-for-approval never "Review Phase 05 inputs as an independent clean-context reviewer. Do not edit files. Return P0/P1/P2 findings and APPROVED/FAIL/BLOCKED recommendation."`
-     - Record it as `Reviewer: Codex headless separate session (clean-context fallback) — Claude unavailable because [reason]`.
-     - Record the reason explicitly, for example: `Claude unavailable: token/context limit. Used separate headless Codex review instead.`
-   - Symmetrically — relevant when the host is Claude and Codex is the intended cross-model reviewer, as in ChatForYou's `chatforyou-external-expert` → `/codex consult` path — if Codex remains unavailable because of auth, quota, session-limit, token/context-limit, timeout, or runtime/tool failure, run a **separate headless Claude clean-context review** before considering same-session fallback. Do not silently fall through to a same-session `chatforyou-*` sub-agent review and record it as if it were cross-model.
-     - Example: `claude -p "Review Phase 05 inputs as an independent clean-context reviewer. Do not edit files. Return P0/P1/P2 findings and APPROVED/FAIL/BLOCKED recommendation." --permission-mode plan`
-     - Record it as `Reviewer: Claude headless separate session (clean-context fallback) — Codex unavailable because [reason]`.
-     - Record the reason explicitly, for example: `Codex unavailable: auth/token expired. Used separate headless Claude review instead.`
-   - Emit a copy-pastable host-specific consult command or raw CLI prompt for the user to run.
-   - Ingest the user's run output into the 05 doc.
-   - Record auth, quota, rate-limit, session-limit, token/context-limit, timeout, and tool/runtime failures under `Degraded Evidence` in Phase 05 with the original symptom and timestamp.
-8. Identify the reviewer clearly: `Reviewer: [cross-model tool] via [host agent]`.
-9. Record the opinion under `## External / Cross-model Review` in the **Phase 05** document. Output must be **faithful (no summarization)**.
-10. Cross-model agreement is a recommendation, not a decision — final verdict is external-expert + user.
-11. If mandatory L3 external review cannot be completed after fallback, the **Separate Headless Codex Clean-context Review**, the **Separate Headless Claude Clean-context Review**, and/or the **Intra-model Adversarial Review Loop** (see below) are the only sanctioned substitutes. They are not equivalent to cross-model review. Without either a completed cross-model review or a completed degraded substitute with user sign-off, record `Final Status: BLOCKED` in 05 and do not write 06.
-12. Propose improvements. Obtain user approval before adding new scope, architecture changes, or risky migration.
-
-### Separate Headless Codex Clean-context Review (cross-model UNAVAILABLE only)
-
-Use this when Claude cannot complete the review because of auth, quota, session-limit, token/context-limit, timeout, or runtime/tool failure. This path must launch a new non-interactive Codex process; it must not use a same-session sub-agent.
-
-Minimum command shape:
-
-```bash
-CODEX_HOME=$PWD/.codex codex exec --cd "$PWD" --sandbox read-only --ask-for-approval never "<review prompt>"
-```
-
-Rules:
-- The prompt must include only phase documents, Review Context, implementation files, and explicit review questions. Do not include the author's defense or the current session's reasoning.
-- The reviewer must return P0/P1/P2 findings, file/line evidence where possible, and a recommendation.
-- Record in Phase 05: `Reviewer: Codex headless separate session (clean-context fallback) — Claude unavailable because [auth/quota/session-limit/token-context-limit/timeout/tool error]`.
-- Record the Claude failure under `Degraded Evidence`, then record the Codex headless output faithfully.
-- Final Status is at best **`APPROVED_WITH_RISK`**, with the explicit risk: "independent cross-model verification not performed; substituted with separate headless Codex clean-context review." This requires **explicit user sign-off recorded in 05** before writing 06.
-
-### Separate Headless Claude Clean-context Review (cross-model UNAVAILABLE only)
-
-Use this when Codex cannot complete the review because of auth, quota, session-limit, token/context-limit, timeout, or runtime/tool failure — the direction relevant whenever the host itself is Claude and Codex is the intended cross-model reviewer (e.g. `chatforyou-external-expert` → `/codex consult`). This path must launch a new non-interactive Claude process; it must not use a same-session sub-agent.
-
-Minimum command shape:
-
-```bash
-claude -p "<review prompt>" --permission-mode plan
-```
-
-Rules:
-- The prompt must include only phase documents, Review Context, implementation files, and explicit review questions. Do not include the author's defense or the current session's reasoning.
-- The reviewer must return P0/P1/P2 findings, file/line evidence where possible, and a recommendation.
-- Record in Phase 05: `Reviewer: Claude headless separate session (clean-context fallback) — Codex unavailable because [auth/quota/session-limit/token-context-limit/timeout/tool error]`.
-- Record the Codex failure under `Degraded Evidence`, then record the Claude headless output faithfully.
-- Final Status is at best **`APPROVED_WITH_RISK`**, with the explicit risk: "independent cross-model verification not performed; substituted with separate headless Claude clean-context review." This requires **explicit user sign-off recorded in 05** before writing 06.
-
-### Intra-model Adversarial Review Loop (cross-model UNAVAILABLE only)
-
-Use this **only** when the host cross-model consult path is unavailable and the fallback retries in step 7 have failed. It is a **degraded substitute, not an equivalent** — a single model shares its own blind spots (see the 2026-06 heartbeat P0 case in `docs/agent/webrtc-review-protocol.md`). It therefore can only yield `APPROVED_WITH_RISK`, never a clean `APPROVED`.
-
-Procedure (3–5 iterations):
-1. **Critical review**: invoke `chatforyou-external-expert` (or `external-consultant`) in a **fresh context**. Provide only the phase documents + implementation files — never the author's justification. Each round must use a different adversarial lens so rounds do not echo each other: R1 flow correctness · R2 failure/lifecycle · R3 security/auth · R4 ops/config/deadlock · R5 regression/edge. Output strictly in the `P0/P1/P2 + Decision` format of `docs/agent/webrtc-review-protocol.md`. No summarization.
-2. **Feedback validity verification**: a separate pass (different agent or the lead) checks each finding — is it real, does it cite `file:line` evidence, is the severity correct? The `cross-model-p0-no-downgrade` rule is enforced here: a principle-level P0 must NOT be downgraded because the component is "core" — to lower severity requires code/domain evidence AND recorded user sign-off.
-3. **Apply to code**: accepted findings → rework within the already approved scope. New scope/architecture/risky migration → `Needs User Approval`.
-4. **Stop**: when a round produces no new P0/P1, or at 5 iterations max (3-iteration stop rule of step 6 still applies for declaring no-progress).
-
-Recording in Phase 05:
-- `Reviewer: chatforyou-external-expert (intra-model adversarial loop) — cross-model UNAVAILABLE`. Record every round faithfully (no summarization).
-- Final Status is at best **`APPROVED_WITH_RISK`**, with the explicit risk recorded: "independent cross-model verification not performed; substituted with N-round intra-model adversarial review." This requires **explicit user sign-off recorded in 05** before writing 06. Re-run a real cross-model review once the path is restored.
+1. If `plan_docs/04-analyze/[feature].md` exists, read the lead's gap findings + coverage first; build on them.
+2. Review from an independent perspective: design intent vs implementation, stack fitness, lifecycle/edge-case/security/test/UX risk.
+3. **High-risk architecture gate**: before a review-rework loop, check whether findings change a high-risk domain declared in `profile.risk` (L3). If a new architecture change is detected, stop automatic rework and get user approval. Local fixes inside the approved design are not blocked.
+4. **Cross-model invocation** (when enabled): run `sage cross-check --packet-file <packet>`, which calls the peer runtime directly (claude-host → `codex exec`, codex-host → `claude -p`) at `cross_model.effort` (default `high`). The packet carries all phase documents + implementation files. Request context-based external review (not a plain diff review) and a final recommendation: APPROVED / FAIL / BLOCKED.
+5. **Acceptance gate**: read the Phase 01 acceptance matrix and Phase 04 evidence table. Required items with `FAIL` or `NOT TESTED` block `APPROVED`; use `N/A` only with an explicit out-of-scope/deferred reason.
+6. **Review-rework loop**: L3 = mandatory iterations (default 3) in Phase 05; L2 = recommended (ask first); L1/L0 = none. One iteration = review → faithful findings record → triage → accepted rework → update 03/04.
+7. **Stop rule**: if after the final L3 iteration the status is not APPROVED, record `Final Status: BLOCKED`, do not write 06, and report to the user.
+8. **Fallback**: retry the peer path or a fresh session; if context is too large, retry with 04 Review Context + 01/02/03 + core files; if a mandatory L3 review cannot complete, record BLOCKED in 05 and do not write 06.
+9. Identify the reviewer: `Reviewer: [tool] via [host]`. Record the opinion under `## External / Cross-model Review` in the **Phase 05** document — **faithful, no summarization**.
+10. Cross-model agreement is a recommendation, not a decision — final verdict is reviewer + user.
 
 ---
 
@@ -203,21 +117,23 @@ Recording in Phase 05:
 ```markdown
 # [Base Plan] {Feature Name}
 
-## 0. Prior Knowledge (Vault Scan)
+Risk Level: <L1|L2|L3>
+<!-- required: this cycle's max risk — the higher of the user-declared level and the risk the change globs
+     imply. Replace <...> with one of L1/L2/L3. Knowledge write-back reads this exact `Risk Level: Lx` line
+     to size the note (the durable per-cycle tier that survives session resume); the 06 acceptance-evidence
+     report gate (`_cycle_risk`) also scans it as a fallback when no session-level risk was declared. Keep it current: if
+     implementation grows past what 00 planned, raise this line. An unfilled placeholder reads as unknown,
+     and write-back then defaults to a deep note. -->
+
+## 0. Prior Knowledge
 | Type | Note | Key Takeaway |
 |------|------|--------------|
-| BRAINSTORM | — | — |
-| SPEC | — | — |
-| TECH | — | — |
-| BUG | — | — |
-| POSTMORTEM | — | — |
 
 ## 1. Summary (Goal & Scope)
 
 ## 2. Impact Analysis (Critical)
-- [Backend]: ...
-- [Frontend]: ...
-- [Desktop]: ...
+- [Component A]: ...
+- [Component B]: ...
 
 ## 3. Technology & Risks
 
@@ -225,11 +141,6 @@ Recording in Phase 05:
 
 ## 5. Document Mapping (Checklist)
 ```
-
-> **Document Mapping 규칙 (STRICT)**
-> - 매핑 경로는 **파일 생성 후 실제 경로로 확정**한다. 생성 전 예측 경로(예: `…-gap.md` 로 적고 실제는 `….md` 로 만드는 것)는 금지 — 자동 대조가 경로 불일치로 BLOCK 한다.
-> - 작업 완료 시 해당 박스를 **즉시 `[x]`** 로 갱신한다. "작업 완료인데 미체크"는 06-report 진입 전 정리한다.
-> - 검증 게이트: `scripts/verify-doc-mapping.sh [base-plan.md]` — 매핑↔파일을 4상태(OK/WARN 미체크/ERROR 허위체크/ERROR 경로불일치)로 분류. ERROR(exit 2)는 경로 교정 후 통과해야 한다. 06-report 진입 전 1회 실행 권장.
 
 ---
 
@@ -242,7 +153,12 @@ Recording in Phase 05:
 
 ## 2. Data Schema (Entities, DTOs)
 
-## 3. API Specifications
+## 3. API / Interface Specifications
+
+## 4. Acceptance Matrix
+| ID | User Requirement | Required Evidence | Owner | Required? |
+|---|---|---|---|---|
+| A1 | | test / manual smoke / screenshot / log / N/A reason | | yes |
 ```
 
 ---
@@ -266,14 +182,23 @@ Recording in Phase 05:
 ```markdown
 # [Implementation] {Feature Name}
 
+## 0. Pre-Implementation Checklist
+- [ ] File ownership assigned before source edits
+- [ ] Acceptance IDs from Phase 01 mapped to implementation tasks
+- [ ] Verification command plan recorded
+
 ## 1. File Ownership (Modified Files)
 
 ## 2. Implementation Checklists
-- [ ] Development feature list
+- [ ] Feature list
 - [ ] Test scenarios and validation method
 - [ ] Code conventions
 
-## 3. Build & Test Results
+## 3. Acceptance Implementation Trace
+| Acceptance ID | Implementation Task | Test / Manual Evidence Planned | Status |
+|---|---|---|---|
+
+## 4. Build & Test Results
 ```
 
 ---
@@ -283,36 +208,28 @@ Recording in Phase 05:
 ```markdown
 # [Analyze] {Feature Name}
 
-**Reviewer:** chatforyou-lead (책임)
-**QA Contributor:** chatforyou-qa-expert (보조 — 커버리지 검증)
-**Date:** {YYYY-MM-DD}
+**Reviewer:** leader (responsible)  **Contributor:** qa (coverage)  **Date:** {YYYY-MM-DD}
 
-> 04 는 단독 판정(APPROVED/FAIL)을 내리지 않는다. 판정은 05 에서 external-expert + host 기준 external cross-model reviewer 가 종합.
+> 04 issues no standalone verdict. The verdict is issued in 05.
 
 ## 1. Design vs. Implementation Gap (Match Rate: X%)
 
 ## 2. Missing Items & Deviations
 
-## 3. QA Coverage Verification (qa-expert 보조 의견)
-- 커버한 케이스 / 미커버한 케이스 / 의도적으로 제외한 케이스
-- 설계 요구사항 대비 테스트 커버리지의 충분성 판단
-- 추가 권장 시나리오 (있다면)
+## 3. Coverage Verification (qa)
+- covered / not covered / intentionally excluded cases
+- sufficiency vs design requirements; recommended additional scenarios
 
-## 4. Review Context for External Model
+## 4. Acceptance Evidence Review
+| Acceptance ID | User Requirement | Status (PASS/FAIL/NOT TESTED/N/A) | Evidence | Notes |
+|---|---|---|---|---|
 
+## 5. Review Context for External Model
 ### Original User Intent
-
 ### Key Decisions During Implementation
-
 ### Scope Changes / Deferred Items
-
-### Design vs Implementation Notes
-
-### QA Coverage Summary
-
 ### Known Risks / Open Questions
-
-### Files External Reviewer Must Inspect
+### Files the Reviewer Must Inspect
 ```
 
 ---
@@ -322,88 +239,57 @@ Recording in Phase 05:
 ```markdown
 # [Expert Review] {Feature Name}
 
-**Reviewer Role:** chatforyou-external-expert (synthesis) + host 기준 external cross-model reviewer
+**Reviewer Role:** reviewer (synthesis) (+ cross-model reviewer when enabled)
 **Review Date:** {YYYY-MM-DD}
-**Final Status:** APPROVED / APPROVED_WITH_RISK / FAIL / BLOCKED
-**Source:** 04-analyze gap findings + 팀 결과물
+**Final Status:** APPROVED / FAIL / BLOCKED
+**Source:** 04-analyze gap findings + team output
 
 ## External / Cross-model Review
-
-**Reviewer:** [cross-model tool] via host agent
-**Invocation:** host agent 기준 cross-model invocation
+**Reviewer:** [tool] via host
 **Inputs:** plan_docs/00·01·02·03·04 + component plan docs + implementation files
-**Status:** COMPLETED / DEGRADED / BLOCKED
-
-### Degraded Evidence
-| Attempt | Runtime | Failure Mode | Evidence | Recorded At |
-|---|---|---|---|---|
-| 1 | [Claude CLI / host consult / raw CLI / N/A] | auth / quota / session limit / token-context limit / timeout / tool error / N/A | 원문 증상 또는 N/A | YYYY-MM-DD HH:mm TZ |
+**Status:** COMPLETED / BLOCKED
 
 ### External Findings
-[external reviewer 출력 원문 그대로 — 요약 금지]
+[reviewer output verbatim — no summarization]
 
 ### Review Loop Iterations
-| Iteration | External Result | Triage Result | Accepted Rework | Rejected / Deferred | 03/04 Updated | Status |
+| Iteration | External Result | Triage | Accepted Rework | Rejected/Deferred | 03/04 Updated | Status |
 |:---:|:---|:---|:---|:---|:---:|:---|
 | 1 | | | | | | |
-| 2 | | | | | | |
-| 3 | | | | | | |
 
-### external-expert Interpretation
-- 채택: [external reviewer 가 잡은 것 중 채택]
-- 반론: [프로젝트 맥락상 이미 의도된 결정 — 제외 사유]
-- 보류: [판단 보류 항목]
+### Reviewer Interpretation
+- accepted / disputed (already-intended decisions) / deferred
+
+### Acceptance Gate
+| Acceptance ID | 04 Status | Reviewer Finding | Decision |
+|---|---|---|---|
+
+Required acceptance items with `FAIL` or `NOT TESTED` block `APPROVED`. Use `N/A`
+only when the item was explicitly out of scope, deferred, or user-approved.
 
 ### Needs User Approval
-| Item | Reason | Proposed Owner | Status |
+| Item | Reason | Owner | Status |
 |---|---|---|---|
-| Core WebRTC architecture change / new scope / risky migration | 자동 rework 범위 밖 | user + lead | pending / approved / rejected |
 
 ### Final Status
-APPROVED / APPROVED_WITH_RISK / FAIL / BLOCKED
+APPROVED / FAIL / BLOCKED
 
-> L3에서 3-iteration 후에도 `APPROVED`가 아니면 `Final Status: BLOCKED`로 기록한다. 단, 유저가 cross-model unavailable 상태의 degraded fallback(별도 headless Codex clean-context review, 별도 headless Claude clean-context review, 또는 intra-model adversarial fallback)을 명시 승인한 경우에만 최대 `APPROVED_WITH_RISK`가 가능하다. 이 경우 "independent cross-model verification not performed" 리스크와 승인 근거를 기록한다. 그 외 `BLOCKED` 상태에서는 `06-report 작성 금지`이며, Phase 06으로 진행하지 않는다.
+> If not APPROVED after the final L3 iteration → `Final Status: BLOCKED`,
+> do not write Phase 06.
 
-## 1. Code Quality
-### 1.1 SOLID & Design Patterns
-### 1.2 Naming, Readability, Modularity
-### 1.3 Dead code / unnecessary complexity
-
-## 2. Backend (Spring Boot)
-### 2.1 Layer Separation (Controller / Service / Repository)
-### 2.2 Transaction & Exception Handling
-### 2.3 Security (Auth, Input Validation, Info Leakage)
-### 2.4 Performance (N+1, Index, Caching, Concurrency)
-
-## 3. Frontend (Node.js / jQuery)
-### 3.1 UI/UX Consistency
-### 3.2 Ajax / WebSocket error handling
-### 3.3 Bundle size & asset optimization
-
-## 4. Infra / Deploy
-### 4.1 Environment config separation (local / prod)
-### 4.2 Logging & Observability
-### 4.3 Failure recovery & graceful degradation
-
-## 5. Convention Compliance
-### 5.1 Project conventions (springboot_backend.md / nodejs_frontend.md)
-### 5.2 Language & framework standards
+## 1. Code Quality (SOLID, naming, dead code)
+## 2. Domain/Architecture (per profile.components)
+## 3. Security (auth, input validation, info leakage)
+## 4. Performance & Concurrency
+## 5. Convention Compliance (profile.conventions)
 
 ## 6. Review Scorecard
 | Category | Score (1–5) | Key Issues |
 |:---|:---:|:---|
-| Code Quality | | |
-| Backend Architecture | | |
-| Frontend Quality | | |
-| Infra / Deploy | | |
-| Convention Compliance | | |
 
 ## 7. Action Items
-| Priority | Category | Issue | Recommendation |
-|:---:|:---:|:---|:---|
-| P0 | | | |
-| P1 | | | |
-| P2 | | | |
+| Priority | Issue | Recommendation |
+|:---:|:---|:---|
 ```
 
 ---
@@ -413,25 +299,30 @@ APPROVED / APPROVED_WITH_RISK / FAIL / BLOCKED
 ```markdown
 # [Report] {Feature Name}
 
+Loop-Run: {run_id}
+Source-05: {root-relative path of the APPROVED Phase 05 doc}
+
 ## 1. Completion Summary
 
-## 2. Value Delivered Table
-| Problem | Solution | UX Effect | Core Value |
+## 2. Value Delivered
+| Problem | Solution | Effect | Core Value |
 |:---|:---|:---|:---|
 
 ## 3. Lessons Learned & Future Tasks
 
-## 4. Vault Knowledge Capture
-| Prefix | Note Title | Action | Reason |
-|:---|:---|:---|:---|
-| BUG - / TECH - / SPEC - / BRAINSTORM - / POSTMORTEM - | — | created / updated / checked-no-update / N/A | — |
+## 4. Knowledge Capture (optional)
+| Note | Action | Reason |
+|:---|:---|:---|
 ```
 
-`checked-no-update` means the vault capture check was performed, but no capture
-trigger applied and no note needed to be created or updated.
+`Loop-Run` copies the `run_id` from the APPROVED Phase 05 doc so the report declares
+which review cycle it closes. The Stop-time retro gate reads this line to verify
+`sage retro --check` ran for that run; omit it and the gate cannot bind the report
+(warned under advisory, blocked under enforce).
 
 ---
 
 ## Related Rules
 - `AGENT_GUIDE.md` — Risk & Workflow Gate
-- `AGENT_GUIDE.md` — Required Agent Reference Documents
+- `docs/agent/review-protocol.md` — reviewer resolution
+- `profile.pdca` — phase set, per-level obligation, report/approve gate

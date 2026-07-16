@@ -249,3 +249,24 @@ nodejs-frontend/plan_docs/*
 # ========================================
 .claude/worktrees/
 .gstack/
+
+# ========================================
+# SAGE 리소스
+# ========================================
+# Python 런타임/테스트 캐시
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+
+# SAGE 로컬 런타임 캐시
+.sage/tmp/
+
+# Obsidian 연동 실패 시 로컬에 임시 보관하는 wiki 이전 대기 문서
+.sage/pending-wiki/

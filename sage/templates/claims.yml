@@ -1,0 +1,17 @@
+# {id}.claims.yml — reverse_extract 자동 도출 (사람이 손으로 쓰지 않음, override만 허용)
+# confidence: high(양쪽) | source_supported(권위출처) | runtime_allowed(allowlist) | unresolved(사람)
+# conformance PASS/FAIL 은 deterministic checker 만. LLM judge 금지.
+claims_hash: ""
+required_claims:
+  - { type: owned_paths,       value: "",  confidence: high }
+  - { type: role_boundary,     value: "",  confidence: high }
+  - { type: test_scope,        value: "",  confidence: high }
+  - { type: tool_or_skill_ref, value: "",  confidence: high }
+  - { type: convention_doc,    value: "",  confidence: high }
+  - { type: workflow_step,     value: "",  confidence: high }
+forbidden_claims:
+  - { type: safety_forbid,     value: "",  confidence: high }
+  - { inherited_forbidden_claims: "AGENT_GUIDE.non_negotiable_boundaries" }   # 참조 (복붙 금지)
+runtime_delta_allowlist:
+  # 예: - { runtime_policy.codex: "gstack 사용 규칙" }   # 한쪽만 정상 → runtime_allowed
+unresolved: []   # 한쪽만 + 무근거 → 사람 확인 대상

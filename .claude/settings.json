@@ -1,13 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "hooks": {
-    "UserPromptSubmit": [
+    "PostToolUse": [
       {
-        "matcher": "",
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/capture-declared-risk.sh\"",
+            "command": "sage-hook --runtime claude --hook post-tool-logger",
             "timeout": 5
           }
         ]
@@ -19,25 +19,30 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-implementation-gate.sh\"",
+            "command": "sage-hook --runtime claude --hook generated-artifact-write-guard",
             "timeout": 10
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-phase4-checklist-gate.sh\"",
+            "command": "sage-hook --runtime claude --hook pre-implementation-gate",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "sage-hook --runtime claude --hook pre-phase4-checklist-gate",
             "timeout": 10
           }
         ]
       }
     ],
-    "PostToolUse": [
+    "SessionStart": [
       {
-        "matcher": "Write|Edit|MultiEdit",
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-tool-logger.sh\"",
-            "timeout": 5
+            "command": "sage-hook --runtime claude --hook session-start-snapshot",
+            "timeout": 10
           }
         ]
       }
@@ -48,8 +53,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-compliance-report.sh\"",
+            "command": "sage-hook --runtime claude --hook stop-compliance-report",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sage-hook --runtime claude --hook capture-declared-risk",
+            "timeout": 5
           }
         ]
       }

@@ -1,12 +1,12 @@
 {
   "hooks": {
-    "UserPromptSubmit": [
+    "PostToolUse": [
       {
-        "matcher": "",
+        "matcher": "apply_patch",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'PROJECT_ROOT=\"${CODEX_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}\"; CODEX_HOME=\"${CODEX_HOME:-$PROJECT_ROOT/.codex}\"; bash \"$CODEX_HOME/hooks/capture-declared-risk.sh\"'",
+            "command": "sage-hook --runtime codex --hook post-tool-logger",
             "timeout": 5
           }
         ]
@@ -18,25 +18,30 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'PROJECT_ROOT=\"${CODEX_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}\"; CODEX_HOME=\"${CODEX_HOME:-$PROJECT_ROOT/.codex}\"; bash \"$CODEX_HOME/hooks/pre-implementation-gate.sh\"'",
+            "command": "sage-hook --runtime codex --hook generated-artifact-write-guard",
             "timeout": 10
           },
           {
             "type": "command",
-            "command": "bash -c 'PROJECT_ROOT=\"${CODEX_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}\"; CODEX_HOME=\"${CODEX_HOME:-$PROJECT_ROOT/.codex}\"; bash \"$CODEX_HOME/hooks/pre-phase4-checklist-gate.sh\"'",
+            "command": "sage-hook --runtime codex --hook pre-implementation-gate",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "sage-hook --runtime codex --hook pre-phase4-checklist-gate",
             "timeout": 10
           }
         ]
       }
     ],
-    "PostToolUse": [
+    "SessionStart": [
       {
-        "matcher": "apply_patch",
+        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'PROJECT_ROOT=\"${CODEX_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}\"; CODEX_HOME=\"${CODEX_HOME:-$PROJECT_ROOT/.codex}\"; bash \"$CODEX_HOME/hooks/post-tool-logger.sh\"'",
-            "timeout": 5
+            "command": "sage-hook --runtime codex --hook session-start-snapshot",
+            "timeout": 10
           }
         ]
       }
@@ -47,8 +52,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -c 'PROJECT_ROOT=\"${CODEX_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}\"; CODEX_HOME=\"${CODEX_HOME:-$PROJECT_ROOT/.codex}\"; bash \"$CODEX_HOME/hooks/stop-compliance-report.sh\"'",
+            "command": "sage-hook --runtime codex --hook stop-compliance-report",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sage-hook --runtime codex --hook capture-declared-risk",
+            "timeout": 5
           }
         ]
       }
