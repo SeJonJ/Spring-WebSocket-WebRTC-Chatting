@@ -100,6 +100,9 @@ desktop.ini
 # Desktop 앱 동기화 관련
 chatforyou-desktop/src/.backup/
 chatforyou-desktop/src/.build-info.json
+chatforyou-desktop/src/config/config.js
+chatforyou-desktop/src/config/config.local.js
+chatforyou-desktop/src/config/config.prod.js
 chatforyou-desktop/.backup/
 *.backup-*
 sync-*.log
