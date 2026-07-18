@@ -25,7 +25,8 @@ description: ChatForYou v2 주요 기능 개발을 위한 5인 에이전트 팀 
 **팀 해산 절차**:
 1. 현재 활성 중인 chatforyou-dev-team 에이전트(lead, backend, frontend, qa, external)가 있으면 종료 메시지 전달
 2. 진행 중이던 PLAN 파일이 있으면 미완료 항목을 유저에게 요약 보고
-3. "chatforyou-dev-team이 해산되었습니다." 메시지 출력
+3. 지금까지 생성/수정된 작업 산출물 인벤토리를 유저에게 표시
+4. "chatforyou-dev-team이 해산되었습니다." 메시지 출력
 
 위 명령어가 아닌 인자는 **기능 개발 요청**으로 처리한다.
 
@@ -215,10 +216,11 @@ STEP 3 QA로 넘어가기 전에 아래 항목이 모두 충족되어야 한다:
    - 새 아키텍처 변경이 감지되면 자동 review-rework를 시작하지 않고 유저 사전 확인을 받는다.
    - 단순 버그 수정이나 기존 승인 설계 안의 국소 수정은 이 gate의 사전 확인 대상이 아니다.
 5. **Claude 교차검증 (cross-model independent review) — MANDATORY**
-   - 기본: `$claude consult` 호출
+   - 기본: `$claude consult` 또는 raw `claude -p` 등 **실제 Claude CLI/별도 런타임** 호출
+   - `chatforyou-external-expert`, `external-consultant`, `chatforyou-qa-expert` 등 같은 Codex 런타임 sub-agent는 외부/cross-model 리뷰로 카운트하지 않는다. 이들은 triage 또는 degraded intra-model fallback 근거일 뿐이다.
    - 입력은 `plan_docs/00-base_plan/[feature].md`, `01-plan`, `02-design`, `03-implementation`, `04-analyze`, `springboot-backend/plan_docs/[feature]_plan.md`, `nodejs-frontend/plan_docs/[feature]_plan.md`, 구현 파일 목록으로 고정한다.
    - 요청: "설계 기준 구현 정합 + 설계-구현 gap + 누락/엣지/보안/lifecycle 리스크" review
-   - 결과를 05 에 `Reviewer: Claude via $claude consult` 로 명시
+   - 결과를 05 에 `Reviewer: Claude via $claude consult` 또는 `Reviewer: Claude via claude -p` 로 명시
    - cross-model 동의는 권고이지 결정이 아님 (최종 판단 = external-expert + 유저)
 6. **Risk별 review-rework loop 적용 기준**
    - L3: Phase 05에서 3-iteration review-rework loop를 mandatory로 자동 실행한다.
@@ -235,15 +237,22 @@ STEP 3 QA로 넘어가기 전에 아래 항목이 모두 충족되어야 한다:
    - L3는 최대 3회까지 자동 반복한다.
    - 3번째 Claude review 결과와 external-expert 종합 판정이 `APPROVED`가 아니면 `plan_docs/05-expert-review/[기능명].md`에 `Final Status: BLOCKED`를 기록한다.
    - 이 경우 STEP 6 진입 금지, `06-report 작성 금지`, 유저 보고 후 종료한다.
-9. `$claude` 실패 시 자동 fallback을 순서대로 시도한다:
+9. `$claude`/Claude CLI 실패 시 자동 fallback을 순서대로 시도한다:
    - `$claude consult` 재시도 또는 fresh session
    - context 축약 후 04 Review Context + 01/02/03 + 핵심 구현 파일 중심으로 재시도
+   - Claude auth/quota/session limit/token-context limit/timeout/tool error 로 계속 실패하면 같은 세션 sub-agent가 아니라 **별도 headless Codex 세션**으로 clean-context 리뷰를 실행한다.
+     - 예시: `CODEX_HOME=$PWD/.codex codex exec --cd "$PWD" --sandbox read-only --ask-for-approval never "<Phase 05 review prompt>"`
+     - 05에는 `Reviewer: Codex headless separate session (clean-context fallback) — Claude unavailable because [reason]` 로 명시한다.
+     - 예: `Claude unavailable: token/context limit. Used separate headless Codex review instead.`
    - 유저가 직접 실행할 수 있는 `$claude consult` 또는 raw `claude -p` 프롬프트 출력
-10. L3에서 fallback까지 실패하면 `plan_docs/05-expert-review/[기능명].md` 에 `Final Status: BLOCKED` 를 기록하고, STEP 6 / `06-report 작성 금지`를 명시한다.
-11. L2에서 외부 리뷰가 recommended인 경우에만, 사용자 명시 수용하에 `APPROVED_WITH_RISK` 또는 `DONE_WITH_CONCERNS` 형태를 허용한다.
-12. `plan_docs/05-expert-review/[기능명].md` 작성
+   - 실패 원인이 Claude auth, quota, rate limit, session limit, token/context limit, timeout, tool/runtime 오류이면 05 에 `Degraded Evidence` 로 원문 증상과 시각을 기록한다. 같은 런타임 sub-agent 결과로 조용히 대체하지 않는다.
+10. L3에서 Claude CLI/별도 런타임 리뷰가 fallback까지 실패하면 `plan_docs/05-expert-review/[기능명].md` 에 `Final Status: BLOCKED` 를 기록하고, STEP 6 / `06-report 작성 금지`를 명시한다.
+11. L3에서 유저가 degraded fallback(별도 headless Codex clean-context review 또는 intra-model adversarial fallback) 사용을 명시 승인한 경우에만 `docs/agent/pdca-templates.md` 절차에 따라 진행할 수 있다. 이 경우 최종 상태는 최대 `APPROVED_WITH_RISK`이며, `independent cross-model verification not performed` 를 05 와 06 에 기록해야 한다.
+12. L2에서 외부 리뷰가 recommended인 경우에만, 사용자 명시 수용하에 `APPROVED_WITH_RISK` 또는 `DONE_WITH_CONCERNS` 형태를 허용한다.
+13. `plan_docs/05-expert-review/[기능명].md` 작성
    - Critical Findings / Suggestions / 통합 리스크
    - Claude Findings 원문 섹션 (요약 금지)
+   - Claude CLI 실패 시 Degraded Evidence 섹션
    - external-expert Interpretation
    - Review Loop Iterations 표
    - `Needs User Approval` 항목
@@ -266,7 +275,60 @@ STEP 3 QA로 넘어가기 전에 아래 항목이 모두 충족되어야 한다:
 3. 외부 전문가 Critical 항목 + Claude 교차검증 결과를 유저에게 전달
 4. PLAN 파일 체크리스트 완료 표시
 5. `plan_docs/06-report/[기능명].md` 작성 (Completion Summary / Lessons Learned / Future Tasks / Vault Knowledge Capture)
-6. commit 메시지 추천 (실제 commit은 유저가 직접)
+6. **작업 산출물 인벤토리 표시 (MANDATORY)** — 개발 완료 직후 유저가 바로 확인할 수 있도록 아래 항목을 최종 응답과 06-report에 모두 기록한다.
+   - `Plan Docs`: 00/01/02/03/04/05/06 root phase 문서, component plan docs(`springboot-backend/plan_docs`, `nodejs-frontend/plan_docs`), 생성하지 않은 항목은 `N/A — 사유`
+   - `Code Artifacts`: 백엔드/프론트/테스트/데스크톱 sync 산출물. `chatforyou-desktop/src` 직접 수정 여부와 sync 결과를 분리 표기
+   - `Wiki / Knowledge Artifacts`: 생성/수정된 wiki note, `wiki/index.md`, `wiki/log.md`, 또는 `N/A — 사유`
+   - `Review / Verification Artifacts`: 04 Review Context, 05 expert review, Claude/headless Codex degraded evidence, 실행한 검증 명령과 결과
+   - `Skipped / Not Produced`: 의도적으로 만들지 않은 산출물과 사유
+7. commit 메시지 추천 (실제 commit은 유저가 직접)
+
+#### Work Artifacts Inventory Template
+
+```markdown
+## Work Artifacts Inventory
+
+### Plan Docs
+| Artifact | Path | Status | Notes |
+|---|---|---|---|
+| 00 Base Plan | `plan_docs/00-base_plan/...` | CREATED / UPDATED / N/A | |
+| 01 Plan | `plan_docs/01-plan/...` | CREATED / UPDATED / N/A | |
+| 02 Design | `plan_docs/02-design/...` | CREATED / UPDATED / N/A | |
+| 03 Implementation | `plan_docs/03-implementation/...` | CREATED / UPDATED / N/A | |
+| 04 Analyze | `plan_docs/04-analyze/...` | CREATED / UPDATED / N/A | |
+| 05 Expert Review | `plan_docs/05-expert-review/...` | CREATED / UPDATED / N/A | |
+| 06 Report | `plan_docs/06-report/...` | CREATED / UPDATED / N/A | |
+| Backend Component Plan | `springboot-backend/plan_docs/...` | CREATED / UPDATED / N/A | |
+| Frontend Component Plan | `nodejs-frontend/plan_docs/...` | CREATED / UPDATED / N/A | |
+
+### Code Artifacts
+| Area | Files | Status | Notes |
+|---|---|---|---|
+| Backend | | MODIFIED / N/A | |
+| Frontend | | MODIFIED / N/A | |
+| Tests | | MODIFIED / N/A | |
+| Desktop Sync | | SYNCED / N/A | Direct `chatforyou-desktop/src` edit: yes/no |
+
+### Wiki / Knowledge Artifacts
+| Artifact | Path | Status | Notes |
+|---|---|---|---|
+| Wiki Note | | CREATED / UPDATED / N/A | |
+| Wiki Index | `wiki/index.md` | UPDATED / N/A | |
+| Wiki Log | `wiki/log.md` | UPDATED / N/A | |
+
+### Review / Verification Artifacts
+| Artifact | Path or Command | Result | Notes |
+|---|---|---|---|
+| Phase 04 Review Context | `plan_docs/04-analyze/...` | DONE / N/A | |
+| Phase 05 Expert Review | `plan_docs/05-expert-review/...` | APPROVED / APPROVED_WITH_RISK / FAIL / BLOCKED / N/A | |
+| External Review Evidence | Claude / headless Codex / N/A | COMPLETED / DEGRADED / BLOCKED / N/A | |
+| Verification | `...` | PASS / FAIL / DEGRADE / N/A | |
+
+### Skipped / Not Produced
+| Artifact | Reason |
+|---|---|
+| | |
+```
 
 ---
 

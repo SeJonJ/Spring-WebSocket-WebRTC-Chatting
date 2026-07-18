@@ -117,6 +117,7 @@ External / cross-model expert review is **MANDATORY** for L3 (and recommended fo
    - Invoke the host-specific external consult skill or CLI defined by that agent/runtime with all phase documents:
      `plan_docs/00-base_plan/[feature].md` + `01-plan/[feature].md` + `02-design/[feature].md` + `03-implementation/[feature].md` + `04-analyze/[feature].md` + component plan docs (`springboot-backend/plan_docs/`, `nodejs-frontend/plan_docs/`) + implementation files.
    - Request: "단순 코드 리뷰가 아닌 개발 맥락 기반 외부자 검토. 04의 Review Context를 포함하여 설계 의도와 구현의 일치 여부, 프로젝트 기술 스택 적합성, lifecycle/edge case/security/test/UX 리스크, 06-report 진입 가능 여부를 검토하라. 최종 권고는 APPROVED / FAIL / BLOCKED."
+   - A review counts as cross-model/external only when it runs in a real separate runtime or model, such as Claude CLI from a Codex host. Same-runtime sub-agents do not count as completed cross-model review.
 5. **Review-rework loop policy**:
    - L3: 3-iteration review-rework loop is mandatory and automatic in Phase 05.
    - L2: review-rework loop is recommended only. Ask the user before starting it.
@@ -129,13 +130,57 @@ External / cross-model expert review is **MANDATORY** for L3 (and recommended fo
 7. **Fallback**:
    - Retry the host-specific consult path or start a fresh session.
    - If context is too large, retry with 04 Review Context + 01/02/03 + core implementation files.
+   - If token/context limits persist, split the prompt by review lens or file group, but record the split inputs and which coverage was actually reviewed.
+   - If Claude remains unavailable because of auth, quota, session-limit, token/context-limit, timeout, or runtime/tool failure, run a **separate headless Codex clean-context review** before considering same-session fallback. This is not cross-model review, but it is stronger than same-session sub-agent review because it starts an independent non-interactive Codex session.
+     - Example: `CODEX_HOME=$PWD/.codex codex exec --cd "$PWD" --sandbox read-only --ask-for-approval never "Review Phase 05 inputs as an independent clean-context reviewer. Do not edit files. Return P0/P1/P2 findings and APPROVED/FAIL/BLOCKED recommendation."`
+     - Record it as `Reviewer: Codex headless separate session (clean-context fallback) — Claude unavailable because [reason]`.
+     - Record the reason explicitly, for example: `Claude unavailable: token/context limit. Used separate headless Codex review instead.`
+   - Symmetrically — relevant when the host is Claude and Codex is the intended cross-model reviewer, as in ChatForYou's `chatforyou-external-expert` → `/codex consult` path — if Codex remains unavailable because of auth, quota, session-limit, token/context-limit, timeout, or runtime/tool failure, run a **separate headless Claude clean-context review** before considering same-session fallback. Do not silently fall through to a same-session `chatforyou-*` sub-agent review and record it as if it were cross-model.
+     - Example: `claude -p "Review Phase 05 inputs as an independent clean-context reviewer. Do not edit files. Return P0/P1/P2 findings and APPROVED/FAIL/BLOCKED recommendation." --permission-mode plan`
+     - Record it as `Reviewer: Claude headless separate session (clean-context fallback) — Codex unavailable because [reason]`.
+     - Record the reason explicitly, for example: `Codex unavailable: auth/token expired. Used separate headless Claude review instead.`
    - Emit a copy-pastable host-specific consult command or raw CLI prompt for the user to run.
    - Ingest the user's run output into the 05 doc.
+   - Record auth, quota, rate-limit, session-limit, token/context-limit, timeout, and tool/runtime failures under `Degraded Evidence` in Phase 05 with the original symptom and timestamp.
 8. Identify the reviewer clearly: `Reviewer: [cross-model tool] via [host agent]`.
 9. Record the opinion under `## External / Cross-model Review` in the **Phase 05** document. Output must be **faithful (no summarization)**.
 10. Cross-model agreement is a recommendation, not a decision — final verdict is external-expert + user.
-11. If mandatory L3 external review cannot be completed after fallback, the **Intra-model Adversarial Review Loop** (see below) is the only sanctioned substitute. Without either a completed cross-model review or a completed adversarial loop with user sign-off, record `Final Status: BLOCKED` in 05 and do not write 06.
+11. If mandatory L3 external review cannot be completed after fallback, the **Separate Headless Codex Clean-context Review**, the **Separate Headless Claude Clean-context Review**, and/or the **Intra-model Adversarial Review Loop** (see below) are the only sanctioned substitutes. They are not equivalent to cross-model review. Without either a completed cross-model review or a completed degraded substitute with user sign-off, record `Final Status: BLOCKED` in 05 and do not write 06.
 12. Propose improvements. Obtain user approval before adding new scope, architecture changes, or risky migration.
+
+### Separate Headless Codex Clean-context Review (cross-model UNAVAILABLE only)
+
+Use this when Claude cannot complete the review because of auth, quota, session-limit, token/context-limit, timeout, or runtime/tool failure. This path must launch a new non-interactive Codex process; it must not use a same-session sub-agent.
+
+Minimum command shape:
+
+```bash
+CODEX_HOME=$PWD/.codex codex exec --cd "$PWD" --sandbox read-only --ask-for-approval never "<review prompt>"
+```
+
+Rules:
+- The prompt must include only phase documents, Review Context, implementation files, and explicit review questions. Do not include the author's defense or the current session's reasoning.
+- The reviewer must return P0/P1/P2 findings, file/line evidence where possible, and a recommendation.
+- Record in Phase 05: `Reviewer: Codex headless separate session (clean-context fallback) — Claude unavailable because [auth/quota/session-limit/token-context-limit/timeout/tool error]`.
+- Record the Claude failure under `Degraded Evidence`, then record the Codex headless output faithfully.
+- Final Status is at best **`APPROVED_WITH_RISK`**, with the explicit risk: "independent cross-model verification not performed; substituted with separate headless Codex clean-context review." This requires **explicit user sign-off recorded in 05** before writing 06.
+
+### Separate Headless Claude Clean-context Review (cross-model UNAVAILABLE only)
+
+Use this when Codex cannot complete the review because of auth, quota, session-limit, token/context-limit, timeout, or runtime/tool failure — the direction relevant whenever the host itself is Claude and Codex is the intended cross-model reviewer (e.g. `chatforyou-external-expert` → `/codex consult`). This path must launch a new non-interactive Claude process; it must not use a same-session sub-agent.
+
+Minimum command shape:
+
+```bash
+claude -p "<review prompt>" --permission-mode plan
+```
+
+Rules:
+- The prompt must include only phase documents, Review Context, implementation files, and explicit review questions. Do not include the author's defense or the current session's reasoning.
+- The reviewer must return P0/P1/P2 findings, file/line evidence where possible, and a recommendation.
+- Record in Phase 05: `Reviewer: Claude headless separate session (clean-context fallback) — Codex unavailable because [auth/quota/session-limit/token-context-limit/timeout/tool error]`.
+- Record the Codex failure under `Degraded Evidence`, then record the Claude headless output faithfully.
+- Final Status is at best **`APPROVED_WITH_RISK`**, with the explicit risk: "independent cross-model verification not performed; substituted with separate headless Claude clean-context review." This requires **explicit user sign-off recorded in 05** before writing 06.
 
 ### Intra-model Adversarial Review Loop (cross-model UNAVAILABLE only)
 
@@ -279,7 +324,7 @@ Recording in Phase 05:
 
 **Reviewer Role:** chatforyou-external-expert (synthesis) + host 기준 external cross-model reviewer
 **Review Date:** {YYYY-MM-DD}
-**Final Status:** APPROVED / FAIL / BLOCKED
+**Final Status:** APPROVED / APPROVED_WITH_RISK / FAIL / BLOCKED
 **Source:** 04-analyze gap findings + 팀 결과물
 
 ## External / Cross-model Review
@@ -287,7 +332,12 @@ Recording in Phase 05:
 **Reviewer:** [cross-model tool] via host agent
 **Invocation:** host agent 기준 cross-model invocation
 **Inputs:** plan_docs/00·01·02·03·04 + component plan docs + implementation files
-**Status:** COMPLETED / BLOCKED
+**Status:** COMPLETED / DEGRADED / BLOCKED
+
+### Degraded Evidence
+| Attempt | Runtime | Failure Mode | Evidence | Recorded At |
+|---|---|---|---|---|
+| 1 | [Claude CLI / host consult / raw CLI / N/A] | auth / quota / session limit / token-context limit / timeout / tool error / N/A | 원문 증상 또는 N/A | YYYY-MM-DD HH:mm TZ |
 
 ### External Findings
 [external reviewer 출력 원문 그대로 — 요약 금지]
@@ -310,9 +360,9 @@ Recording in Phase 05:
 | Core WebRTC architecture change / new scope / risky migration | 자동 rework 범위 밖 | user + lead | pending / approved / rejected |
 
 ### Final Status
-APPROVED / FAIL / BLOCKED
+APPROVED / APPROVED_WITH_RISK / FAIL / BLOCKED
 
-> L3에서 3-iteration 후에도 `APPROVED`가 아니면 `Final Status: BLOCKED`로 기록한다. 이 경우 `06-report 작성 금지`이며, Phase 06으로 진행하지 않는다.
+> L3에서 3-iteration 후에도 `APPROVED`가 아니면 `Final Status: BLOCKED`로 기록한다. 단, 유저가 cross-model unavailable 상태의 degraded fallback(별도 headless Codex clean-context review, 별도 headless Claude clean-context review, 또는 intra-model adversarial fallback)을 명시 승인한 경우에만 최대 `APPROVED_WITH_RISK`가 가능하다. 이 경우 "independent cross-model verification not performed" 리스크와 승인 근거를 기록한다. 그 외 `BLOCKED` 상태에서는 `06-report 작성 금지`이며, Phase 06으로 진행하지 않는다.
 
 ## 1. Code Quality
 ### 1.1 SOLID & Design Patterns

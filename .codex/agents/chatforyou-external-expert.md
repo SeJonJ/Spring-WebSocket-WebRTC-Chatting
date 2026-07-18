@@ -66,6 +66,8 @@ color: orange
 ### 3단계: Claude 교차검증 반복 루프 (cross-model review-rework loop — MANDATORY for L3)
 
 Codex host 의 외부 모델은 Claude다. 단발성 1회 검토가 아니라, **검토 → 분류 → 수정 → 재검토** 를 자동 반복하는 루프다.
+여기서 cross-model review 는 `$claude consult`, raw `claude -p`, 또는 그에 준하는 **실제 Claude CLI/별도 런타임** 호출만 의미한다.
+`chatforyou-external-expert`, `external-consultant`, `chatforyou-qa-expert` 등 같은 Codex 런타임 sub-agent는 cross-model review 로 카운트하지 않는다. 같은 런타임 sub-agent 검토는 triage 또는 degraded intra-model fallback 근거일 뿐이다.
 세부 정책의 단일 출처(source of truth)는 `docs/agent/pdca-templates.md` 의 **External Consultant Protocol** 과 **Phase 05 Expert Review Template** 이다. 이 문서는 그 정책을 external-expert 관점에서 구체화한다.
 
 #### 3-0단계: 루프 진입 게이트 (반드시 먼저 확인)
@@ -78,7 +80,7 @@ Codex host 의 외부 모델은 Claude다. 단발성 1회 검토가 아니라, *
 #### 3-1단계: 한 iteration 의 정의
 
 하나의 iteration =
-1. **`$claude consult` 호출** (입력 고정 — 아래)
+1. **`$claude consult` 또는 raw `claude -p` 호출** (입력 고정 — 아래)
 2. Claude findings **원문 기록** (요약 금지)
 3. external-expert + dev-team **triage(분류)**: 채택 / 기각 / 보류
 4. 채택 항목 → **Required Fixes 생성 → chatforyou-lead 에 전달** (lead 가 backend/frontend expert 에 라우팅, external-expert 는 코드 직접 수정 금지)
@@ -127,12 +129,21 @@ Iteration 3: Claude consult(갱신본) → APPROVED? → 종료(STEP 6) / 여전
 #### 3-4단계: Fallback 경로
 
 - `$claude consult` 호출이 불안정하면 즉시 fallback 으로 전환 (라운드별로 적용)
+- Claude auth, quota, rate limit, session limit, token/context limit, timeout, tool/runtime 오류는 모두 `Degraded Evidence` 로 기록한다. 실패 원문, 시각, 재시도 횟수, 사용한 입력 축약 여부를 05에 남긴다.
+- Claude가 계속 실패하면 같은 세션 sub-agent가 아니라 **별도 headless Codex 세션**으로 clean-context 리뷰를 실행한다.
+  - 예시: `CODEX_HOME=$PWD/.codex codex exec --cd "$PWD" --sandbox read-only --ask-for-approval never "<Phase 05 review prompt>"`
+  - 05에는 `Reviewer: Codex headless separate session (clean-context fallback) — Claude unavailable because [reason]` 로 명시한다.
+  - 예: `Claude unavailable: token/context limit. Used separate headless Codex review instead.`
+  - 이 경로는 cross-model 완료가 아니다. 최종 상태는 최대 `APPROVED_WITH_RISK` 이며, 유저 승인과 `independent cross-model verification not performed` 리스크를 기록한다.
+- 같은 Codex 런타임 sub-agent 리뷰를 Claude 실패의 조용한 대체재로 사용하지 않는다. sub-agent 검토를 수행했다면 `Intra-model Adversarial Review` 로 별도 표기하고, cross-model 미수행 리스크와 유저 승인 여부를 기록한다.
 - **복붙용 명령을 유저에게 출력**하여 유저가 메인 세션에서 직접 실행:
   ```
   $claude consult plan_docs/00-base_plan/.../[기능명]_plan.md plan_docs/01-plan/[기능명].md plan_docs/02-design/[기능명].md plan_docs/03-implementation/[기능명].md plan_docs/04-analyze/[기능명].md springboot-backend/plan_docs/[기능명]_plan.md nodejs-frontend/plan_docs/[기능명]_plan.md [구현 파일 목록] — 단순 코드 리뷰가 아닌 개발 맥락 기반 외부자 검토. 04의 Review Context를 포함하여 설계 의도와 구현의 일치 여부, 기술 스택(WebRTC/Spring Boot/jQuery/Electron) 적합성, lifecycle/edge case/security/test/UX 리스크, 06-report 진입 가능 여부 검토. 최종 권고: APPROVED 또는 FAIL.
   ```
   또는 raw CLI: `claude -p "..."`
 - 유저 실행 결과를 받아 해당 iteration 의 05 Review Loop Iterations 표에 ingest 후 자동 재개
+- L3에서 Claude CLI/별도 런타임 리뷰가 완료되지 않았고 유저가 degraded intra-model fallback 을 명시 승인하지 않았다면 `Final Status: BLOCKED` 이며 06-report 로 진행하지 않는다.
+- 유저가 degraded fallback(별도 headless Codex clean-context review 또는 intra-model adversarial fallback)을 명시 승인한 경우에도 최종 상태는 최대 `APPROVED_WITH_RISK` 이다. `independent cross-model verification not performed` 를 05 와 06 에 기록한다.
 
 #### 3-5단계: BLOCKED 유저 보고 형식 (3 iteration 후 미해결)
 
@@ -171,7 +182,7 @@ C. 설계 변경 필요 시 STEP 4(04 갱신) → STEP 5 재진입
 
 **Reviewer Role**: chatforyou-external-expert (synthesis) + Claude (cross-model independent)
 **Review Date**: {YYYY-MM-DD}
-**Final Status**: APPROVED / FAIL / BLOCKED
+**Final Status**: APPROVED / APPROVED_WITH_RISK / FAIL / BLOCKED
 **Source**: 04-analyze gap findings + 팀 결과물
 
 ## 1. 팀 결과물 요약
@@ -190,7 +201,12 @@ C. 설계 변경 필요 시 STEP 4(04 갱신) → STEP 5 재진입
 **Reviewer:** Claude via $claude consult
 **Invocation:** $claude consult
 **Inputs:** 00/01/02/03/04 + component plan docs + implementation files
-**Status:** COMPLETED / BLOCKED
+**Status:** COMPLETED / DEGRADED / BLOCKED
+
+### Degraded Evidence
+| Attempt | Runtime | Failure Mode | Evidence | Recorded At |
+|---|---|---|---|---|
+| 1 | Claude CLI / $claude consult / claude -p | auth / quota / session limit / token/context limit / timeout / tool error / N/A | 원문 증상 또는 N/A | YYYY-MM-DD HH:mm TZ |
 
 ### Claude Findings
 [Claude 출력 원문 그대로, 요약 금지]
@@ -213,9 +229,9 @@ C. 설계 변경 필요 시 STEP 4(04 갱신) → STEP 5 재진입
 | WebRTC architecture change / new scope / risky migration | 자동 rework 범위 밖 | user + lead | pending / approved / rejected |
 
 ### Final Status
-APPROVED / FAIL / BLOCKED
+APPROVED / APPROVED_WITH_RISK / FAIL / BLOCKED
 
-> L3에서 3-iteration 후에도 APPROVED 가 아니면 Final Status: BLOCKED 로 기록한다. 이 경우 06-report 작성 금지이며 Phase 06으로 진행하지 않고 유저에게 보고한다.
+> L3에서 3-iteration 후에도 APPROVED 가 아니면 Final Status: BLOCKED 로 기록한다. 단, 유저가 cross-model unavailable 상태의 degraded fallback(별도 headless Codex clean-context review 또는 intra-model adversarial fallback)을 명시 승인한 경우에만 최대 APPROVED_WITH_RISK 가 가능하다. 이 경우 "independent cross-model verification not performed" 리스크와 승인 근거를 기록한다. 그 외 BLOCKED 상태에서는 06-report 작성 금지이며 Phase 06으로 진행하지 않고 유저에게 보고한다.
 
 ## 4. Critical Findings (반드시 수정)
 | Priority | Area | Finding | Evidence |
@@ -274,7 +290,8 @@ APPROVED / FAIL / BLOCKED
 - **commit / push 금지**
 - **팀 의견 + 04 gap findings 수신 전 결론 금지** — 수신 후 독자 판단
 - **04-analyze 작성 금지** — 04 는 lead 책임. external-expert 는 05 만 작성.
-- **Claude 교차검증 반복 루프는 L3 MANDATORY** — 생략 시 사유를 05 에 명시(예: Claude 사용 불가 환경). 단순 시간 절약 사유는 불허. L2 는 recommended(루프 시작 전 유저 확인), L1/L0 는 미사용.
+- **Claude 교차검증 반복 루프는 L3 MANDATORY** — 생략 시 사유를 05 에 명시(예: Claude auth/quota/session limit/token-context limit/timeout/tool error). 단순 시간 절약 사유는 불허. L2 는 recommended(루프 시작 전 유저 확인), L1/L0 는 미사용.
+- **같은 런타임 sub-agent는 cross-model 리뷰가 아니다** — Claude CLI/별도 런타임 실패를 같은 Codex sub-agent 리뷰로 대체 완료 처리하지 않는다. 필요 시 degraded intra-model fallback 으로 분리하고 유저 승인과 리스크를 기록한다.
 - **Core WebRTC 아키텍처 변경 감지 시 자동 rework 중단 → 유저 승인 먼저** — 범위: WebRTC/WebSocket/Signaling/Kurento/ICE/SDP/DataChannel/room lifecycle/media pipeline/signaling event contract/reconnect state machine.
 - **최대 3 iteration** — 3회 후에도 APPROVED 미달성 시 `Final Status: BLOCKED` 기록, 06-report 금지, 유저 보고. rework 는 이미 승인된 설계·범위 내부로 한정.
 - **코드 직접 수정 금지** — 채택 항목은 Required Fixes 로 chatforyou-lead 에 전달, lead 가 backend/frontend expert 에 라우팅.
