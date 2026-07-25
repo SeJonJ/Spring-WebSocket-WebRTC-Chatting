@@ -20,6 +20,7 @@
     "sync": "node build-scripts/sync-frontend.js",
     "sync:verbose": "node build-scripts/sync-frontend.js --verbose",
     "sync:prod": "node build-scripts/sync-frontend.js --env prod",
+    "sync:check": "bash ../scripts/verify-desktop-sync.sh",
     "scss:build": "npx sass src/static/scss:src/static/css --style=compressed --no-source-map",
     "scss:dev": "npx sass src/static/scss:src/static/css --style=expanded --source-map",
     "scss:watch": "npx sass src/static/scss:src/static/css --watch --style=expanded --source-map",

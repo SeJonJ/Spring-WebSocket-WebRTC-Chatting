@@ -8,12 +8,17 @@
     "local": "cp ./config/config.local.js ./config/config.js && echo '로컬 빌드 완료'",
     "prod": "cp ./config/config.prod.js ./config/config.js && echo '운영 빌드 완료'",
     "sass": "sass --watch static/scss/main.scss static/css/chatroom/common.css",
-    "dev": "concurrently \"npm run sass\" \"npm run start\""
+    "dev": "concurrently \"npm run sass\" \"npm run start\"",
+    "syntax": "bash ../scripts/verify-frontend-syntax.sh",
+    "lint": "eslint .",
+    "lint:changed": "bash ../scripts/verify-frontend-lint.sh"
   },
   "author": "sejon",
   "license": "by-nc-sa 4.0",
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "eslint": "^9.39.5",
+    "globals": "^15.15.0",
     "sass": "^1.100.0"
   }
 }

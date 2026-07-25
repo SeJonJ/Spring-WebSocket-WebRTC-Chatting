@@ -96,7 +96,7 @@ while IFS= read -r f; do
         springboot-backend/src/main/*) backend_changed=true; bump L2 ;;
         springboot-backend/src/test/*) backend_changed=true ;;
         springboot-backend/*.gradle)   backend_changed=true; bump L2 ;;
-        nodejs-frontend/static/js/*.js|nodejs-frontend/server.js)
+        nodejs-frontend/*.js|nodejs-frontend/**/*.js)
             frontend_js_files+=("$PROJECT_ROOT/$f"); bump L1 ;;
         nodejs-frontend/*.scss|nodejs-frontend/**/*.scss)
             scss_changed=true; bump L1 ;;
@@ -163,6 +163,20 @@ if [ ${#frontend_js_files[@]} -gt 0 ]; then
     fi
 fi
 
+# CFY-FB-01/03 (9-A): 전체 route 구문 baseline + 변경파일 ESLint.
+# 위 diff-scoped node --check 를 보완 — 전체 진입점 구문 baseline + 변경 JS 신규 ESLint 위반만 차단.
+if [ ${#frontend_js_files[@]} -gt 0 ]; then
+    bash "$PROJECT_ROOT/scripts/verify-frontend-syntax.sh" >/dev/null 2>&1; rc=$?
+    if [ "$rc" -eq 0 ]; then add_result "frontend:syntax-baseline" "PASS" "전체 route 구문 baseline"
+    elif [ "$rc" -eq 3 ]; then add_result "frontend:syntax-baseline" "DEGRADE" "node 부재"; infra_missing=true
+    else add_result "frontend:syntax-baseline" "FAIL" "baseline 초과 신규 구문 오류"; fi
+
+    bash "$PROJECT_ROOT/scripts/verify-frontend-lint.sh" >/dev/null 2>&1; rc=$?
+    if [ "$rc" -eq 0 ]; then add_result "frontend:eslint" "PASS" "변경 파일 신규 위반 없음"
+    elif [ "$rc" -eq 3 ]; then add_result "frontend:eslint" "DEGRADE" "eslint 부재"; infra_missing=true
+    else add_result "frontend:eslint" "FAIL" "변경 파일 신규 ESLint 위반"; fi
+fi
+
 # scss: 컴파일 확인 (advisory)
 if $scss_changed; then
     if (cd "$PROJECT_ROOT/nodejs-frontend" && npx --no-install sass --version >/dev/null 2>&1); then
@@ -186,7 +200,7 @@ is_required() {
     case "$LEVEL" in
         L2|L3)
             case "$1" in
-                backend:*|frontend:syntax:*) return 0 ;;
+                backend:*|frontend:syntax:*|frontend:syntax-baseline|frontend:eslint) return 0 ;;
             esac ;;
     esac
     return 1

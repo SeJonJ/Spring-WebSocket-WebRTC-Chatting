@@ -1,0 +1,13 @@
+# Desktop에만 존재하도록 승인된 static/templates 산출물.
+# nodejs-frontend에서 제거된 파일을 숨기지 않도록 예외는 파일 단위로만 추가한다.
+static/css/login/main.css
+static/css/main.css
+static/images/webrtc/info/chatforyou_sse.gif
+static/images/webrtc/info/chatforyou_subtitle.gif
+static/js/common/electronUtil.js
+static/js/rtc/AudioMixer.js.backup
+static/js/rtc/SystemAudioCapture.js.backup
+static/js/rtc/recording.js.backup
+static/js/rtc/speechSubtitleManager.js.backup
+static/js/rtc/textOverlay.js
+templates/kurentoroom.html

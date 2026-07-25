@@ -60,7 +60,7 @@ class SyncEngine {
       await this.validateDirectories();
       
       // 2. 백업 생성
-      if (this.options.createBackup) {
+      if (this.options.createBackup && !this.options.dryRun) {
         await this.createBackup();
       }
       
@@ -110,7 +110,10 @@ class SyncEngine {
       }
       
       try {
-        fs.accessSync(dir.path, fs.constants.R_OK | fs.constants.W_OK);
+        const accessMode = this.options.dryRun
+          ? fs.constants.R_OK
+          : fs.constants.R_OK | fs.constants.W_OK;
+        fs.accessSync(dir.path, accessMode);
       } catch (error) {
         throw new Error(`❌ ${dir.name} 디렉토리 접근 권한이 없습니다: ${dir.path}`);
       }
@@ -255,7 +258,14 @@ class SyncEngine {
         this.stats.filesSkipped++;
         return;
       }
-      
+
+      // dry-run: 실제 쓰기 없이 처리 시뮬레이션만 수행해 트리를 변형하지 않는다.
+      // (경로 변환 단계만 dryRun 을 존중하고 복사 단계는 존중하지 않던 결함 보정)
+      if (this.options.dryRun) {
+        this.stats.filesProcessed++;
+        return;
+      }
+
       // 파일 복사
       fs.copyFileSync(sourcePath, targetPath);
       this.stats.filesProcessed++;
@@ -276,6 +286,10 @@ class SyncEngine {
    * 디렉토리 생성
    */
   async ensureDirectory(dirPath) {
+    if (this.options.dryRun) {
+      return;
+    }
+
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
     }

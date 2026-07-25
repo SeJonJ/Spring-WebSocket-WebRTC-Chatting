@@ -1,0 +1,3 @@
+# frontend syntax baseline (CFY-FB-01)
+# baseline 에 등록된 파일의 기존 구문 실패는 신규 회귀로 보지 않는다.
+# 형식: PROJECT_ROOT 기준 상대경로 1줄당 1파일 (현재 비어 있음 = 전체 PASS)

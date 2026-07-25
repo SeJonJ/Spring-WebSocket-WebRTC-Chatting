@@ -1,0 +1,222 @@
+{
+  "config/config.js": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "config/config.local.js": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "config/config.prod.js": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "eslint.config.js": {
+    "no-undef": {
+      "count": 3
+    }
+  },
+  "server.js": {
+    "no-unused-vars": {
+      "count": 2
+    }
+  },
+  "static/js/chatroom/socket.js": {
+    "no-undef": {
+      "count": 6
+    },
+    "no-unused-vars": {
+      "count": 1
+    }
+  },
+  "static/js/common/ajaxUtil.js": {
+    "no-undef": {
+      "count": 2
+    },
+    "no-unused-vars": {
+      "count": 16
+    }
+  },
+  "static/js/common/common.js": {
+    "no-unused-vars": {
+      "count": 3
+    }
+  },
+  "static/js/common/fileUtil.js": {
+    "no-global-assign": {
+      "count": 1
+    },
+    "no-undef": {
+      "count": 7
+    },
+    "no-unused-vars": {
+      "count": 3
+    }
+  },
+  "static/js/common/spinnerOpt.js": {
+    "no-undef": {
+      "count": 2
+    },
+    "no-unused-vars": {
+      "count": 1
+    }
+  },
+  "static/js/login/main.js": {
+    "no-undef": {
+      "count": 12
+    },
+    "no-unused-vars": {
+      "count": 1
+    },
+    "no-useless-escape": {
+      "count": 2
+    }
+  },
+  "static/js/login/qr/qrlogin.js": {
+    "no-undef": {
+      "count": 4
+    }
+  },
+  "static/js/login/qr/qrscan.js": {
+    "no-undef": {
+      "count": 9
+    }
+  },
+  "static/js/popup/announcement_popup.js": {
+    "no-undef": {
+      "count": 1
+    },
+    "no-unused-vars": {
+      "count": 2
+    }
+  },
+  "static/js/popup/audio_error_popup.js": {
+    "no-undef": {
+      "count": 1
+    },
+    "no-unused-vars": {
+      "count": 2
+    }
+  },
+  "static/js/popup/room_popup.js": {
+    "no-undef": {
+      "count": 34
+    },
+    "no-unused-vars": {
+      "count": 2
+    }
+  },
+  "static/js/popup/room_settings_popup.js": {
+    "no-undef": {
+      "count": 30
+    },
+    "no-unused-vars": {
+      "count": 2
+    }
+  },
+  "static/js/roomlist/roomlist.js": {
+    "no-undef": {
+      "count": 16
+    },
+    "no-unused-vars": {
+      "count": 5
+    }
+  },
+  "static/js/rtc/catchMind.js": {
+    "no-undef": {
+      "count": 59
+    },
+    "no-unused-vars": {
+      "count": 13
+    }
+  },
+  "static/js/rtc/dataChannel.js": {
+    "no-undef": {
+      "count": 20
+    },
+    "no-unused-vars": {
+      "count": 1
+    }
+  },
+  "static/js/rtc/dataChannelChatting.js": {
+    "no-empty": {
+      "count": 1
+    },
+    "no-undef": {
+      "count": 3
+    },
+    "no-useless-escape": {
+      "count": 6
+    }
+  },
+  "static/js/rtc/dataChannelFileUtil.js": {
+    "no-undef": {
+      "count": 9
+    },
+    "no-unused-vars": {
+      "count": 1
+    }
+  },
+  "static/js/rtc/kurento-screen-share.js": {
+    "no-redeclare": {
+      "count": 1
+    },
+    "no-undef": {
+      "count": 10
+    },
+    "no-unused-vars": {
+      "count": 7
+    }
+  },
+  "static/js/rtc/kurento-service.js": {
+    "no-undef": {
+      "count": 81
+    },
+    "no-unused-vars": {
+      "count": 4
+    }
+  },
+  "static/js/rtc/kurento-subtitle-ui.js": {
+    "no-undef": {
+      "count": 6
+    },
+    "no-unused-vars": {
+      "count": 3
+    }
+  },
+  "static/js/rtc/mediaDevice.js": {
+    "no-undef": {
+      "count": 7
+    },
+    "no-unused-vars": {
+      "count": 3
+    }
+  },
+  "static/js/rtc/participant.js": {
+    "no-undef": {
+      "count": 21
+    },
+    "no-unused-vars": {
+      "count": 7
+    }
+  },
+  "static/js/rtc/recording.js": {
+    "no-undef": {
+      "count": 27
+    },
+    "no-unused-vars": {
+      "count": 4
+    }
+  },
+  "static/js/rtc/speechSubtitleManager.js": {
+    "no-undef": {
+      "count": 7
+    },
+    "no-unused-vars": {
+      "count": 8
+    }
+  }
+}

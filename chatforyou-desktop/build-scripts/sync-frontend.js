@@ -34,7 +34,8 @@ class FrontendSyncScript {
       sourceDir: this.nodejsFrontendPath,
       targetDir: this.desktopSrcPath,
       logger: this.logger,
-      ...this.options
+      ...this.options,
+      createBackup: !this.options.dryRun && !this.options.skipBackup
     });
     
     this.pathConverter = new PathConverter({
@@ -46,7 +47,9 @@ class FrontendSyncScript {
     
     this.configProcessor = new ConfigProcessor({
       logger: this.logger,
-      verbose: this.options.verbose
+      verbose: this.options.verbose,
+      dryRun: this.options.dryRun,
+      createBackup: !this.options.dryRun && !this.options.skipBackup
     });
   }
 
@@ -155,7 +158,7 @@ class FrontendSyncScript {
       this.logger.warn('⚠️ nodejs-frontend/config 디렉토리를 찾을 수 없습니다. 기본 설정으로 진행합니다.');
       
       // 기본 설정 생성
-      if (!fs.existsSync(targetConfigDir)) {
+      if (!this.options.dryRun && !fs.existsSync(targetConfigDir)) {
         fs.mkdirSync(targetConfigDir, { recursive: true });
       }
       
@@ -180,6 +183,11 @@ class FrontendSyncScript {
     const mainFile = path.join(this.desktopSrcPath, 'main/electron-main.js');
     if (fs.existsSync(mainFile)) {
       this.logger.info('✅ Electron 메인 프로세스 확인됨');
+    }
+
+    if (this.options.dryRun) {
+      this.logger.info('📝 dry-run: 빌드 정보 파일 생성을 건너뜁니다');
+      return;
     }
     
     // 빌드 상태 파일 생성

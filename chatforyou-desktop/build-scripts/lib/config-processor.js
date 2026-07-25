@@ -54,7 +54,7 @@ class ConfigProcessor {
 
     try {
       // 타겟 디렉토리 생성
-      if (!fs.existsSync(targetConfigDir)) {
+      if (!this.options.dryRun && !fs.existsSync(targetConfigDir)) {
         fs.mkdirSync(targetConfigDir, { recursive: true });
       }
 
@@ -254,6 +254,13 @@ class ConfigProcessor {
     try {
       // Electron용 설정 파일 생성
       const configContent = this.generateElectronConfigContent(electronConfig);
+
+      if (this.options.dryRun) {
+        if (this.options.verbose) {
+          this.logger.debug(`💾 dry-run: 설정 파일 저장 생략: ${configPath}`);
+        }
+        return;
+      }
       
       // 백업 생성
       if (this.options.createBackup && fs.existsSync(configPath)) {
