@@ -14,8 +14,7 @@ with fix guidance.
 - uses: git diff; convention docs declared in profile.conventions
 - input_scope: changed files (git diff)
 - convention_doc: (per profile.conventions — backend/frontend/etc.)
-- overlay: optional `sage/asset_overrides/agents/convention-checker.md` has project-local
-  priority over CORE guidance and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates
+- self_overlay: unsupported; this unverified CORE agent is not in `COMPOSE_ALLOWED`
 
 ## runtime_bindings
 - model / effort: (from profile.team.core.convention-checker.runtime; unset model = host CLI

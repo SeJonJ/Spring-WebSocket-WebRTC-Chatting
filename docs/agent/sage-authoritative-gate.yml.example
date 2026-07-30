@@ -1,0 +1,71 @@
+# INACTIVE EXAMPLE. Do not rename into .github/workflows until every PIN_* value is a reviewed 40-hex commit SHA.
+name: SAGE authoritative gate
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  sage-authoritative-gate:
+    name: sage-authoritative-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: sage-authority
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      REPOSITORY: ${{ github.repository }}
+      SAGE_ATTESTATION_KEY: ${{ secrets.SAGE_ATTESTATION_KEY }}
+    steps:
+      - name: Check out protected SAGE engine
+        uses: actions/checkout@PIN_ACTIONS_CHECKOUT_40_HEX_SHA
+        with:
+          repository: SeJonJ/SAGE
+          ref: PIN_SAGE_ENGINE_40_HEX_SHA
+          path: sage-engine
+          persist-credentials: false
+
+      - name: Check out pull request base as data repository
+        uses: actions/checkout@PIN_ACTIONS_CHECKOUT_40_HEX_SHA
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: pr-data
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Fetch head object without executing it
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C pr-data fetch --no-tags --depth=1 origin "$HEAD_SHA"
+
+      - name: Inspect, attest, and verify exact bindings
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${SAGE_ATTESTATION_KEY:-}"
+          CYCLE_STEM="${HEAD_REF##*/}"
+          python -m pip install --disable-pip-version-check './sage-engine[schema]'
+          python -m sage.cli authority inspect \
+            --root pr-data --base "$BASE_SHA" --head "$HEAD_SHA" \
+            --repository "$REPOSITORY" --cycle-stem "$CYCLE_STEM" --issuer github-actions \
+            > authority-inspect.json
+          read -r STATUS RISK DIFF_SHA256 < <(python - <<'PY'
+          import json
+          data = json.load(open("authority-inspect.json", encoding="utf-8"))
+          print(data.get("status", "BLOCK"), data.get("risk", "unknown"), data.get("diff_sha256", ""))
+          PY
+          )
+          test "$STATUS" = PASS
+          python -m sage.cli authority attest \
+            --issuer github-actions --repository "$REPOSITORY" --base "$BASE_SHA" --head "$HEAD_SHA" \
+            --diff-sha256 "$DIFF_SHA256" --cycle-stem "$CYCLE_STEM" --risk "$RISK" \
+            --reviewer github-actions > authority-attestation.token
+          python -m sage.cli authority gate \
+            --root pr-data --base "$BASE_SHA" --head "$HEAD_SHA" \
+            --repository "$REPOSITORY" --cycle-stem "$CYCLE_STEM" --issuer github-actions \
+            --attestation-file authority-attestation.token

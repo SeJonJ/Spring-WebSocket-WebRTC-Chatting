@@ -8,9 +8,10 @@ hand-write profile values or specs; the agent does, under the user's approval.
 Some assets (agent/skill renders) still need an interpretive runtime render step
 after scaffolding — this protocol marks where.
 
-This document is runtime-neutral. Stack specifics (languages, frameworks,
+This document is runtime-neutral. Shared stack policy (languages, frameworks,
 high-risk domains, component names) come from the conversation and land in
-`sage/project-profile.yaml` — never in this file.
+`sage/project-profile.yaml`. Machine capabilities and private paths land in the
+Git-ignored `sage/project-profile.local.yaml` — never in this file.
 
 ---
 
@@ -38,13 +39,27 @@ approves. This is not a turnkey generator — intent's owner is the human.
 ## Stages
 
 ### 1. Install
-`sage install --host {claude|codex} --dest <project>` places the harness, the
+`sage install --host claude --dest <project>` or
+`sage install --host codex --skill-scope {global|project-local} --dest <project>` places the harness, the
 neutral docs (this file included), and an **empty** `sage/project-profile.yaml`
-(schema keys fixed, values blank). Nothing is governed yet.
+(schema keys fixed, values blank). It installs the local schema and `.gitignore`
+entry but does not create the local profile. Nothing is governed yet.
 
-### 2. Interview → profile authoring
-The agent interviews the user for intent, then fills `project-profile.yaml`
-**values** (never adds/removes schema keys — determinism constraint).
+Codex scope is mandatory for normal installs. `global` owns the effective
+`$CODEX_HOME/skills`; `project-local` owns `<project>/.codex/skills` and can travel
+with a committed repository. Neither mode installs the SAGE CLI for another user;
+each teammate installs the `sage`/`sage-hook` runtime separately. The generated
+`docs/agent/sage-onboarding.md` records the selected onboarding path.
+
+### 2. Interview → shared and local authoring
+`sage-init` is allowed only while the shared bootstrap predicate is false:
+`project.name` is empty, or both `components` and risk classification are unset.
+It interviews the user, fills shared policy values in `project-profile.yaml`, and
+creates `project-profile.local.yaml` for the current machine. If the predicate is
+already true it stops and routes to `sage-init-local`.
+
+`sage-init-local` requires a valid bootstrapped shared profile and creates or
+updates only `project-profile.local.yaml`. It never modifies shared policy.
 
 This is a **progressive conversation, not a form**: the agent takes one topic per
 turn — proposing concrete values inferred from a repo scan, showing the signal it
@@ -65,6 +80,10 @@ decisions that genuinely need user intent; author the rest from them:
   model name: claude-host maps it to the Claude subagent model, codex-host treats it
   as a nominal tier (Codex uses its own model). On a codex-host project, present it as
   a tier choice, not a Claude-model recommendation.
+  Then run `sage models --host <host>` for each installed host and ask the user to
+  choose `components[].runtime_models.<host>` for every component that runs there.
+  Codex cache candidates are cache-confirmed; Claude aliases are syntax-only and
+  account entitlement remains unverified. Never present those aliases as guaranteed access.
 - `risk.*` — derived from the stack and the high-risk domains the user names
   (e.g. secrets, auth, payments → `l3_*`). Cover the tier globs
   (`l0_pass_globs` / `l1_path_globs` / `l2_path_globs` /
@@ -75,12 +94,33 @@ decisions that genuinely need user intent; author the rest from them:
   until one is selected.
 - `verification.commands` — the deterministic build/test/lint commands for the stack.
 - `file_type_map` — `{ glob, type }` first-match classification used for logging.
+- `governance_docs` (optional) — project governance/reference docs the agent should
+  discover at session start: architecture notes, security policy (including hidden
+  paths like `.github/SECURITY.md`), domain protocol or convention docs **not already
+  wired** through `risk.domains[].protocol_pointer`. Each entry is
+  `{ doc: <relative path that exists>, label: <short one-line description ≤80 chars> }`.
+  It renders into the AGENT_GUIDE **project routing block** as a read-pointer — path +
+  label only, **never** classification triggers (`path_globs`/`content_keywords` stay in
+  `risk.*`). Propose entries inferred from the repo scan for a single confirm; leave empty
+  (`[]`) if none. Editing it later requires `sage sync-overlays` to re-materialize the block.
 - `options.cross_model` — when true, Phase 05 review is opposite-runtime **only
   when reachable**; `sage doctor` resolves reachability from peer CLI availability
-  (`which codex` / `which claude`) and falls back to clean-context same-runtime
-  when the peer CLI is unavailable. No third-party tool is needed — SAGE calls
+  (`which codex` / `which claude`) and blocks Phase 05 when the peer CLI is
+  unavailable. No third-party tool is needed — SAGE calls
   the peer runtime directly (`codex exec` / `claude -p`). It is **not** resolved
   from `runtime.external_reviewer` (which records the intended preference only).
+- `runtime.installed_hosts` / `runtime.active_host` — configure every desired SAGE
+  discovery surface, but keep exactly one active host. A double-host project does
+  not run both hosts concurrently and SAGE never switches hosts or phases automatically.
+  To hand off, finish durable exact-Cycle-Stem phase documents, switch runtimes
+  manually, set the new single `active_host`, and resume from those documents.
+  `runtime.host` is a legacy alias; do not author both keys with different values.
+  Double-host projects should set `options.cross_model: true` so Phase 05 calls the
+  runtime opposite the active host.
+- `cross_model.reviewer` — when cross-model is enabled, ask the user to enter reviewer
+  `host` and `model`. The host must be opposite `active_host`; `sage validate` checks
+  that invariant and `sage doctor` checks the local catalog. A manual host handoff
+  requires revisiting this explicit reviewer selection.
 - **Review loop (Phase 05)** — the optional adversarial review-rework loop. Use the
   shared interview set below (§ Review loop + vault interview set). Both `sage-init`
   (first authoring) and `sage-profile-modify` (later editing) drive the *same* set.
@@ -174,6 +214,8 @@ On approval, hand off — do not keep authoring registration artifacts by hand:
 sage generate --kind hook --write --target claude     # or: --target both (claude + codex)
 # component implementer SCAFFOLDS (only if components[] is set):
 sage generate --kind roster --write
+# materialize the AGENT_GUIDE routing block from the profile (risk.domains + governance_docs):
+sage sync-overlays
 # verification (default --kind hook; use --kind all to also check agent/skill):
 sage validate --check --schema --kind all
 ```
@@ -189,6 +231,9 @@ Notes that matter:
   `sage generate --kind agent --id <id> --write` reverse-extracts spec+claims and
   registers them in the manifest (render_hash for both runtimes) — roster alone
   does not complete them.
+- `sage sync-overlays` materializes the AGENT_GUIDE **project routing block** from the
+  profile (`risk.domains` + `governance_docs`). Run it before `validate` — otherwise the
+  block stays empty while the profile has entries and `validate` reports drift.
 - `sage validate` defaults to `--kind hook`; pass `--kind all` to also validate
   agent/skill renders (only meaningful once they are registered).
 
@@ -244,4 +289,5 @@ Never edit a generated artifact directly (see AGENT_GUIDE safety boundaries).
 - `docs/agent/pdca-templates.md` — phase templates + separation + component-level order
 - `docs/agent/review-protocol.md` — reviewer resolution (`sage doctor`), L3 review
 - `docs/agent/risk-classification.md` — how `profile.risk` maps to levels
-- `sage/project-profile.yaml` — the single mutable SSOT this protocol fills
+- `sage/project-profile.yaml` — committed shared policy SSOT
+- `sage/project-profile.local.yaml` — Git-ignored machine capability and private-path layer

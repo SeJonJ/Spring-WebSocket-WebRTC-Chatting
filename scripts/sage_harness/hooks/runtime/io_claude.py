@@ -22,10 +22,21 @@ def should_skip(raw):
 def extract_changes(raw, rel):
     ti = raw.get("tool_input") or {}
     fp = ti.get("file_path") or ""
+    tool_name = raw.get("tool_name") or ""
     blob = (ti.get("content") or "") or (ti.get("new_string") or "")
+    removed = ti.get("old_string") or ""
     for e in (ti.get("edits") or []):
         blob += "\n" + (e.get("new_string") or "")
-    return [{"path": rel(fp), "op": "write", "content": blob}] if fp else []
+        removed += "\n" + (e.get("old_string") or "")
+    if not fp:
+        return []
+    change = {"path": rel(fp), "op": "write" if tool_name == "Write" else "update",
+              "content": blob}
+    if tool_name == "Write":
+        change["full_content"] = True
+    if removed:
+        change["removed_content"] = removed
+    return [change]
 
 
 def read_declared_level(raw, root):

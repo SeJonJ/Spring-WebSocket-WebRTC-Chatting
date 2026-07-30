@@ -14,8 +14,7 @@ auth, boundaries) from a user/attacker perspective.
   after implementers' unit tests.
 - uses: (qa skills declared in profile.team)
 - convention_doc: AGENT_GUIDE.md
-- overlay: optional `sage/asset_overrides/agents/qa.md` has project-local priority
-  over CORE guidance and is not shipped by `sage install`
+- self_overlay: unsupported; this gate-bearing CORE agent is not in `COMPOSE_ALLOWED`
 
 ## runtime_bindings
 - model / effort: (from profile.team.core.qa.runtime; unset model = host CLI default,

@@ -40,14 +40,32 @@ profile.risk: { desktop_block_glob, l0_pass_globs, l3_filename_globs, l2_path_gl
 ## PDCA phase 강제 (F9, profile.pdca — 독립)
 profile.pdca: { enabled, phases[{id,glob}], pre_implementation_required{L1,L2,L3}, report_phase, approve_phase, approve_marker }
 - adapter 가 phase glob(root 상대, recursive) 스캔 → snapshot.phase_docs={id:[{path,content,recent}]}.
-- core `decide`: ① report←approve 게이트(L0 단축 전, report dir 작성 시 approve 에 APPROVED 없으면 block_report_without_approval)
-  ② 구현 전 의무 phase(`_missing_pre_impl_phases`, _doc_match=ticket→recent) — L2/L3 결핍=block_phase_incomplete, L1=warn_phase_incomplete.
-- enabled=false/phases 없음 → `_pdca_cfg`=None → 강제 skip(기존 동작 보존). report dir 감지는 glob base-dir prefix(fnmatch `**` 불일치 회피).
+- `cycle_binding`은 configured phase glob에 실제로 매칭되는 markdown basename과 정확히 한 번 선언된
+  `Cycle-Stem`의 동일성을 검증한다. 선언은 fenced code block 밖에 있어야 한다. Phase 디렉터리 아래라도 glob 밖 파일은 cycle 문서가 아니다.
+  recursive `**`는 선두/중간/말미에서 0개 이상의 path segment로 동일하게 해석한다. 전체 Write/Add는
+  선언을 반드시 포함하고, 부분 Edit/Update는 기존 선언을 건드리지 않을 때만 snapshot identity를 사용한다.
+  선언 삭제·중복·오염은 snapshot fallback 없이 fail-closed 한다.
+  phase write는 changed path/declaration, source write는 explicit event stem 또는 exact branch final segment로
+  current cycle을 하나만 정한다. 숫자 substring과 recent/mtime은 cycle identity에 쓰지 않는다.
+- explicit event stem 은 `SAGE_CYCLE_STEM` env 로 주입된다(EH-7). 장수 브랜치에서는 branch final segment
+  추론이 영영 맞지 않으므로 이게 정상 경로다. `decide` 는 판정에 `cycle_stem`/`cycle_source`/
+  `cycle_stem_declared` 를 스탬프해서, ① 안내가 추론 사실과 선언 경로를 가리키게 하고 ② 어댑터가 선언
+  사용을 `.sage/override.jsonl` 의 `cycle_stem_declared` 로 세션·stem 1회 기록하게 한다. 선언 stem 은
+  이미 완결된 사이클을 지목해 전 게이트를 통과시킬 수 있어서, 기록 실패 시 통과를 허용하지 않는다
+  (`block_cycle_stem_audit_failure`).
+- core `decide`: ① missing/conflicting/ambiguous binding은 `block_cycle_binding`
+  ② report←approve 게이트(L0 단축 전, current stem의 05에 정확히 한 개의
+  `Final Status: APPROVED`가 없으면 block_report_without_approval). Placeholder, duplicate status,
+  fenced code example, substring `APPROVED`는 승인 증거가 아니다. 06과 다른 phase를 같은 변경에서 수정하면 pre-write
+  snapshot으로 검증할 수 없으므로 분리 작성을 요구하고 차단한다.
+  ③ 구현 전 의무 phase(current stem exact) — L2/L3 결핍=block_phase_incomplete, L1=warn_phase_incomplete.
+- enabled=false/phases 없음 → `_pdca_cfg`=None → 강제 skip(기존 동작 보존). report/phase write는 snapshot과
+  같은 configured glob semantics로 판정한다.
 
 ## report←approve audit 게이트 (9.5, profile.pdca.review_loop.report_gate_enforce — F-5)
 review_loop.enabled + report_gate_enforce ∈ {advisory, enforce} 일 때, 마커 검사에 더해 06 작성 시
-`_audit_gate` 가: cycle 05 문서 1개를 `_doc_match`(ticket→recent)로 선택 → 그 동일 문서에서 APPROVED 마커
-+ `Loop-Run: <run_id>` 를 함께 읽고, 주입된 `snapshot.loop_audit.runs[run_id]` 가 다음을 모두 만족하는지 검사:
+`_audit_gate` 가: current `Cycle-Stem`의 05 문서 1개를 exact 선택 → 그 동일 문서에서 APPROVED 마커와
+fenced code block 밖의 정확히 한 개 `Loop-Run: <run_id>` 를 함께 읽고, 주입된 `snapshot.loop_audit.runs[run_id]` 가 다음을 모두 만족하는지 검사:
 clean(open 1회 + close 최대 1회 — 고아 close·중복/재사용 open·close 아님; open-only run 은 clean=True 이며 별도
 `closed` 체크가 거른다) · seq_ok≠False(라운드 seq 연속 — 7차 배치3) · closed · result=APPROVED ·
 degraded 아님(reviewer 의도=실제 — 7차 배치3). 위반 시 advisory=warn_report_without_audit(exit0) /
@@ -70,16 +88,28 @@ Loop-Run 을 *같은* selected 문서에서 읽는다.
   (exit0)이므로 hard break 아님 — 루프 켠 기존 프로젝트에 새 경고가 뜨는 것은 의도된 advisory-first 거동
   (codex R1b P2: 명시 off 는 여전히 skip, 마이그레이션은 advisory 관찰 후 enforce 전환).
 
-## acceptance evidence 게이트 (verification.acceptance.report_gate_enforce)
-build/test/lint 통과가 "사용자 요구사항 충족"을 자동 증명하지 않는 갭을 advisory-first 로 닫는다.
-verification.acceptance.enabled + report_gate_enforce ∈ {advisory, enforce} 일 때, 06 작성 시
-`_acceptance_gate` 가: cycle risk(declared→주입→00~05 문서 추정)가 require_for_risk(기본 L2/L3)에 들면
-→ 01 문서의 acceptance matrix required ID 와 04 문서의 acceptance evidence table 을 `_doc_match`(ticket→recent)
-로 선택해 대조. 04 문서 미선택 · 01 matrix required ID 없음 · evidence table 부재 · required ID 누락
-· 미해결 상태(unresolved_statuses 기본 FAIL·NOT TESTED) · 미인식 상태값이면 위반. 위반 시
-advisory=warn_report_without_acceptance(exit0) / enforce=block_report_without_acceptance(exit2).
-acceptance 비활성 · off · cycle risk 가 *known* 이고 require_for_risk 밖이면 skip(하위호환); cycle risk
-`unknown`(문서가 risk 라벨 미기재)은 skip 하지 않고 보수적으로 적용한다.
+## acceptance evidence 게이트 (verification.acceptance.report_gate_by_risk)
+build/test/lint 통과가 "사용자 요구사항 충족"을 자동 증명하지 않는 갭을 위험도별로 닫는다.
+`verification.acceptance.enabled=true`일 때 06 작성 시
+`_acceptance_gate` 가: cycle risk(declared·주입·같은 stem의 00~05 선언 중 최댓값)가 require_for_risk(기본 L2/L3)에 들면
+→ current stem의 01 acceptance matrix와 04 acceptance evidence를 exact 선택해 fence 밖 table만 대조. 01/04 문서 미선택,
+matrix ID 없음/형식 오류/중복, evidence table 부재, required ID 누락, 미정의/중복 evidence ID,
+미해결 상태(unresolved_statuses 기본 FAIL·NOT TESTED), 미인식 상태값, N/A의 명시적 사유 부재이면 위반.
+required ID가 0개인 all-optional matrix 자체는 유효하다. 기본 정책은 L2 advisory(WARN), L3 enforce(BLOCK)이며
+`unknown`은 L3처럼 enforce한다. `report_gate_by_risk`도 L2 advisory/L3 enforce만 허용해 profile만으로 L3를
+하향할 수 없다. legacy `report_gate_enforce: enforce`는 전 위험도 enforce를 유지한다. legacy `advisory`/`off`는
+L3를 낮추지 않도록 L2 advisory/L3 enforce로 안전 승격하며 doctor/validate가 migration을 안내한다.
+`require_for_risk`에서도 L3를 제거할 수 없다. validate가 해당 profile을 FAIL하고 런타임도 L3를 강제 포함한다.
+Acceptance 상태는 PASS/FAIL/NOT TESTED/N/A로 닫혀 있으며 PASS와 사유 있는 N/A만 해결 상태다. Profile이
+추가한 custom status는 validate FAIL이고 런타임에서도 unresolved로 처리한다.
+
+L3 `NOT TESTED` 중 운영·외부 환경에서만 확인 가능한 단일 ID는 `sage acceptance-waiver grant`로 exact cycle stem,
+exact required acceptance ID, reason, scope, remaining evidence, user confirmation을 기록한 경우에만 residual WARN으로
+낮출 수 있다. TTL은 최대 24시간이고 `FAIL`, wildcard, unknown risk, expired/revoked/malformed/duplicate/conflicting grant에는
+적용되지 않는다. 상태를 PASS로 바꾸지 않으며 `warn_report_with_l3_waiver`에 남은 evidence를 출력한다. hook은 report 쓰기
+전에 `.sage/acceptance-waivers.jsonl`에 `use`를 append하고, 기록 실패 시 BLOCK한다.
+
+acceptance 비활성, legacy off, cycle risk가 *known*이고 require_for_risk 밖이면 skip한다.
 core 는 판단하지 않고 04 의 구조화된 상태(PASS/FAIL/NOT TESTED/N/A)만 확인한다.
 
 ## reverse_extract 분류
@@ -93,7 +123,7 @@ core 는 판단하지 않고 04 의 구조화된 상태(PASS/FAIL/NOT TESTED/N/A
     섞인 L3 키워드 문자열도 L3 로 올릴 수 있음. L0 문서(plan_docs/docs/*.md) pass 가 선행이라 문서 오탐은 제한됨.
 
 ## tests
-scripts/sage_harness/hooks/tests/test_pre_implementation_gate.py (59 PASS)
+scripts/sage_harness/hooks/tests/test_pre_implementation_gate.py (86 PASS)
 - classify(L0~L3/escalation/desktop/declared/case-insensitive) + decide(분기) + 전략 후보 2종(인라인플래그/무효패턴 포함)
   + PDCA 강제(의무 phase block/통과/L3 review 보존/report 게이트/비활성 하위호환) + adapter(L3 block·L1 pass)
   + audit 게이트 seq_ok/degraded 분기 + report_gate_enforce 기본 advisory(7차 배치3)

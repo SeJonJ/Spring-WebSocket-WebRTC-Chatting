@@ -6,8 +6,8 @@
 PROJECT_ROOT="${CODEX_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 CORE_DIR="${SAGE_HOOK_CORE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 # 설치된 콘솔 엔트리포인트는 SAGE 패키지 인터프리터를 보장하므로 overlay L1도 활성이다.
-# 수동/레거시 adapter 호출도 등록 경로와 같은 실행기를 우선 사용한다.
-if command -v sage-hook >/dev/null 2>&1; then
+# 단 수동/레거시 adapter가 SAGE_PROFILE을 명시했다면 그 입력을 보존하는 direct runtime 경로를 쓴다.
+if [ -z "${SAGE_PROFILE:-}" ] && command -v sage-hook >/dev/null 2>&1; then
   exec sage-hook --runtime codex --hook session-start-snapshot --root "$PROJECT_ROOT" --core-dir "$CORE_DIR"
 fi
 # Python 해석(P3-11 이식성): SAGE_PYTHON override → python3 → python 폴백(Windows/Git Bash 대응)

@@ -9,12 +9,13 @@ description: "SAGE implementer A — design, implementation, and component-level
 
 1. `docs/sage_harness/agents/implementer-a.md` — authoritative intent, advisory_scope, runtime_bindings
 2. `AGENT_GUIDE.md` — PDCA phases, risk gate, phase-first rule, safety boundaries
-3. `sage/project-profile.yaml` — `team.core.implementer-a.owns` (your component id), `components`, `conventions`
+3. `sage/project-profile.yaml` — `components[].paths` (your ownership boundary), `conventions`
 
 ## Role
 
 You implement one assigned component. Your ownership boundary is the source paths
-of the component id specified in `profile.team.core.implementer-a.owns`.
+of the component assigned to you — `profile.components[].paths`. (`team.core.*.owns`
+is not read by any code; the component's own `paths` is the live source.)
 
 **Core responsibilities:**
 

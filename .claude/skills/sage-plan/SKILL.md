@@ -7,7 +7,8 @@ description: "Plan the first half of a SAGE PDCA cycle (Phases 00–02) — veri
 
 Invoke as `/sage-plan` (Claude) or `$sage-plan` (Codex).
 
-Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it). For project-local customization use `/sage-asset-override`: SAGE materializes an eligible overlay into this render as a managed block and `sage validate` gates it. Overlays for gate-bearing assets without an independent oracle are not yet supported (validate reports them).
+Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it).
+- overlay: optional `sage/asset_overrides/skills/sage-plan.md` has project-local priority over this CORE render and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates (they stay floored by independent oracles). Put broad project rules in profile/conventions and create genuinely new project assets with `/sage-asset`.
 
 This skill owns the **planning half** of a PDCA cycle: it produces the plan doc
 (Phases 00–02) and the file-ownership map, then hands back. Implementation through
@@ -29,6 +30,11 @@ Confirm `sage/project-profile.yaml` is bootstrapped:
 
 If any check fails: stop and say "Profile is not bootstrapped. Run `/sage-init` to
 set up the project profile before starting a PDCA cycle."
+
+On a resumed session with a user-supplied context packet, run
+`sage context restore --snapshot <path>` and read the generated briefing before
+resolving the planning stage. A stale or invalid packet is a hard stop; never claim
+that hidden Claude conversation state was restored.
 
 ## Step 1 — Scope + planning interview
 
@@ -70,6 +76,8 @@ Hand off to the `leader` agent with this briefing:
 - Required: author a plan doc covering the task scope, distribute file ownership
   to `implementer-a` and `implementer-b` by component, and state the integration
   point
+- Required: choose one markdown basename as the cycle identity and declare the
+  exact same `Cycle-Stem: <basename>` once near the top of every 00–02 document.
 - Required: the 00 base plan must record a `Risk Level: Lx` line — L1/L2/L3, the
   higher of the user-declared level and the risk the change globs imply. This is the
   durable per-cycle tier knowledge write-back reads to size the final note (and the 06
@@ -80,6 +88,10 @@ Hand off to the `leader` agent with this briefing:
 
 After the leader completes, confirm the plan doc file exists and is non-empty.
 If the leader did not create it, block and ask the leader to retry.
+
+Confirm every 00–02 markdown basename equals its single `Cycle-Stem` declaration.
+Missing, duplicate, mismatched, or multiple candidate stems are a hard stop; do
+not select a recent document as a fallback.
 
 Also confirm the 00 base plan carries a filled `Risk Level: L1`/`L2`/`L3` line (not the
 `<L1|L2|L3>` placeholder). If it is missing or unfilled, block and ask the leader to set
@@ -116,9 +128,15 @@ because 03/04 are easy to misorder. This skill produces 00–02; the rest follow
   **test coverage** (qa) + acceptance evidence (`PASS`/`FAIL`/`NOT TESTED`/`N/A`).
   No verdict here. (Writing tests is 03's job; 04 judges their sufficiency.)
 - **05 Expert Review** — independent reviewer (cross-model when enabled) issues
-  the verdict (APPROVED/FAIL/BLOCKED). Required acceptance items marked `FAIL` or
-  `NOT TESTED` block APPROVED. Run `/sage-review` here.
+  the verdict (APPROVED/FAIL/BLOCKED). Required `FAIL` blocks APPROVED. `NOT TESTED`
+  also blocks unless an exact active L3 waiver preserves it as residual evidence;
+  never convert it to PASS. Run `/sage-review` here.
 - **06 Report** — only after 05 records APPROVED.
+
+When `context_management.compaction.enabled: true`, run
+`sage context snapshot --cycle-stem <stem> --phase <id>` after each completed
+00, 01, and 02 boundary and report every packet path. Do not infer a boundary from
+file presence alone and do not launch or switch hosts.
 
 ---
 

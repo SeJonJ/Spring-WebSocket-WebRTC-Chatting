@@ -8,8 +8,9 @@ Design, implementation, and component-level unit tests for one assigned componen
 plus production code-convention verification within that component's boundary.
 
 ## advisory_scope
-- owns: source paths of the component assigned in `profile.team.core.implementer-b.owns`
-  (a `profile.components` id — stack/paths come from the profile, not this spec)
+- owns: the source paths of one assigned component — `profile.components[].paths`
+  (stack/paths come from the profile, not this spec). Note that `profile.team.core.*.owns`
+  is NOT read by any code; assignment is expressed by the component's own `paths`.
 - role_boundary: integration / HTTP / boundary-value / scenario tests are the qa
   agent's scope; this agent writes component-level unit tests only. Cross-component
   work coordinates with the other implementer at integration points.

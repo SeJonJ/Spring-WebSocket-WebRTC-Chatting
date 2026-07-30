@@ -21,17 +21,31 @@ def should_skip(raw):
 
 
 def extract_changes(raw, rel):
-    # apply_patch 본문 → 파일별 {path, op, content(+라인 누적)}
+    # apply_patch 본문 → 파일별 {path, op, content(+라인), removed_content(-라인)}
     command = (raw.get("tool_input") or {}).get("command") or ""
-    changes, cur = [], None
+    changes, content_targets = [], []
     for line in command.splitlines():
         m = re.match(r"^\*\*\* (Add|Update|Delete) File: (.+)$", line)
         if m:
-            cur = {"path": rel(m.group(2).strip()), "op": m.group(1).lower(), "content": ""}
-            changes.append(cur)
+            change = {"path": rel(m.group(2).strip()), "op": m.group(1).lower(), "content": ""}
+            changes.append(change)
+            content_targets = [change]
             continue
-        if cur is not None and line.startswith("+"):
-            cur["content"] += line[1:] + "\n"
+        move = re.match(r"^\*\*\* Move to: (.+)$", line)
+        if move:
+            prior_content = content_targets[0]["content"] if content_targets else ""
+            destination = {"path": rel(move.group(1).strip()), "op": "move", "content": prior_content}
+            if content_targets and content_targets[0].get("removed_content"):
+                destination["removed_content"] = content_targets[0]["removed_content"]
+            changes.append(destination)
+            content_targets.append(destination)
+            continue
+        if line.startswith("+"):
+            for target in content_targets:
+                target["content"] += line[1:] + "\n"
+        elif line.startswith("-"):
+            for target in content_targets:
+                target["removed_content"] = target.get("removed_content", "") + line[1:] + "\n"
     return changes
 
 

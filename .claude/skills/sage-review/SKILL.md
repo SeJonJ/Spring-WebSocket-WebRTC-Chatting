@@ -5,13 +5,14 @@ description: "Run SAGE Phase-05 independent review. Single-pass clean-context/cr
 
 # sage-review — SAGE Phase-05 Independent Review
 
-Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it). For project-local customization use `/sage-asset-override`: SAGE materializes an eligible overlay into this render as a managed block and `sage validate` gates it. Overlays for gate-bearing assets without an independent oracle are not yet supported (validate reports them).
+Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it).
+- overlay: optional `sage/asset_overrides/skills/sage-review.md` has project-local priority over this CORE render and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates (they stay floored by independent oracles). Put broad project review policy in profile/conventions and create genuinely new project assets with `/sage-asset`.
 
 ## Read these first (mandatory, in order)
 
 1. `docs/sage_harness/skills/sage-review.md` — authoritative spec: procedure, drift_checks
 2. `docs/agent/review-protocol.md` — the reviewer output format + loop contract
-3. `sage/project-profile.yaml` — `options.cross_model`, `cross_model.effort`,
+3. `sage/project-profile.yaml` — `options.cross_model`, `cross_model.reviewer`, `cross_model.effort`,
    and **`pdca.review_loop`** (lenses, refuters, max_iterations, dry_rounds, budget_tokens)
 
 ## Resolve review mode
@@ -49,10 +50,13 @@ that gate.
 ## Single-pass review (default)
 
 ### Gather inputs
-1. Plan doc path(s) for the current PDCA cycle (from `paths.plan_docs`)
+1. Plan doc path(s) selected by one exact `Cycle-Stem` equal to each markdown basename
 2. Changed files + unit test results (from implementers)
 3. QA findings summary (from qa agent)
-4. Phase 01 acceptance matrix + Phase 04 acceptance evidence table
+4. Same-stem Phase 01 acceptance matrix + Phase 04 acceptance evidence table, with
+   well-formed unique IDs and exact required-ID coverage
+
+Do not identify a cycle from branch-number substrings or recent-file/mtime fallback.
 
 If any input is missing, block and request it.
 
@@ -66,12 +70,18 @@ not filter.
 The reviewer's verdict maps to the **Final Status marker the gate reads** (the report←approve
 hook looks for the literal `APPROVED`; `Final Status: CLEAR` would be rejected). Always record
 one of `APPROVED | FAIL | BLOCKED`:
-- Required acceptance items marked `FAIL` or `NOT TESTED` in Phase 04 block `APPROVED`.
-  Use `N/A` only with explicit out-of-scope/deferred/user-approved reasoning.
+- Missing/unknown/duplicate acceptance IDs or required items marked `FAIL` block
+  `APPROVED`. `NOT TESTED` also blocks unless an exact active L3 waiver preserves
+  the row as residual evidence; never convert it to PASS. Use `N/A` only with
+  explicit out-of-scope/deferred/user-approved reasoning.
 - **CLEAR** → record `Final Status: APPROVED` (reason note: `CLEAR`), proceed
 - **BLOCK on L3** → record `Final Status: BLOCKED` (reason: `BLOCK`), STOP (no release/merge until cleared)
 - **ADVISORY** → present to the leader; if they accept the result, record `Final Status: APPROVED`
   (reason: `ADVISORY`), otherwise `BLOCKED`
+
+Record exactly one anchored `Final Status: <value>` line outside fenced code blocks.
+Remove template placeholders, code examples, and duplicate status declarations. Write
+Phase 06 later as a separate change from every 00–05 phase update.
 
 ---
 
@@ -151,9 +161,10 @@ can flag a degraded cross-model run — `$ACTUAL` from `sage cross-check`, or `s
 sage review-loop close --run-id $RUN_ID --result <APPROVED|BLOCKED> --reason <REASON> --iterations <n> --reviewer-actual $ACTUAL
 ```
 
-**Record the run id in the Phase-05 doc** — add a line `Loop-Run: $RUN_ID` to this cycle's
-Phase-05 document. The 06←05 audit gate (`pdca.review_loop.report_gate_enforce`) binds the
-report to this exact run: it reads `Loop-Run` + the `APPROVED` marker from the *same* 05 doc
+**Record the run id in the Phase-05 doc** — add exactly one line `Loop-Run: $RUN_ID` outside
+fenced code blocks in this cycle's exact-`Cycle-Stem` Phase-05 document. The 06←05 audit gate
+(`pdca.review_loop.report_gate_enforce`) binds the report to this exact run: it reads that
+single `Loop-Run` + the `APPROVED` marker from the *same* 05 doc
 and confirms the run closed APPROVED. Without this line the gate cannot bind the report to a
 loop and (in advisory) warns or (in enforce) blocks.
 

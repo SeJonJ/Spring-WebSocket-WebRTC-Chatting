@@ -1,4 +1,7 @@
 {
+  "sage": {
+    "required_version": "0.9.72"
+  },
   "project": {
     "name": "ChatForYou v2",
     "prefix": "chatforyou"
@@ -292,6 +295,24 @@
       "nodejs-frontend/templates/game/**"
     ]
   },
+  "governance_docs": [
+    {
+      "doc": "docs/chatforyou-agent/output-contract.md",
+      "label": "출력 계약 및 컴포넌트 영향 규약"
+    },
+    {
+      "doc": "docs/chatforyou-agent/verification.md",
+      "label": "verify-changes.sh 실행 규약"
+    },
+    {
+      "doc": "docs/chatforyou-agent/pdca-extensions.md",
+      "label": "PDCA 확장 규약"
+    },
+    {
+      "doc": "docs/chatforyou-agent/knowledge-capture-fallback.md",
+      "label": "지식 write-back fallback 규약"
+    }
+  ],
   "file_type_map": [
     {
       "glob": "springboot-backend/src/main/**",
@@ -453,7 +474,6 @@
         "correctness",
         "security",
         "concurrency",
-        "convention",
         "lifecycle"
       ],
       "refuters": 2,
@@ -555,11 +575,22 @@
         "FAIL",
         "NOT TESTED"
       ],
-      "report_gate_enforce": "advisory"
+      "report_gate_by_risk": {
+        "L2": "advisory",
+        "L3": "enforce"
+      },
+      "waiver": {
+        "enabled": true
+      }
     }
   },
   "runtime": {
-    "host": "codex",
+    "host": "claude",
+    "installed_hosts": [
+      "codex",
+      "claude"
+    ],
+    "active_host": "claude",
     "external_reviewer": "opposite_runtime",
     "asset_ssot": "deferred"
   },
@@ -601,9 +632,14 @@
     "extensions": []
   },
   "cross_model": {
+    "policy": "recommended",
     "peer": "opposite_runtime",
-    "on_unavailable": "clean_context_same_runtime",
-    "effort": "high"
+    "on_unavailable": "block",
+    "effort": "high",
+    "reviewer": {
+      "host": "codex",
+      "model": "gpt-5.6-sol"
+    }
   },
   "capabilities": {
     "codex": true,
@@ -667,13 +703,14 @@
   },
   "context_management": {
     "compaction": {
-      "enabled": false,
+      "enabled": true,
       "preserve": [
         "architectural_decisions",
         "open_bugs",
         "file_ownership",
         "pending_verifications"
-      ]
+      ],
+      "max_snapshot_bytes": 1048576
     }
   }
 }

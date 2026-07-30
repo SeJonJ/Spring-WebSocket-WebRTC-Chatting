@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sage-hook --runtime claude --hook post-tool-logger",
+            "command": "/bin/sh -c 'if [ -n \"${SAGE_HOOK_BIN:-}\" ] && [ \"${SAGE_HOOK_BIN#/}\" != \"$SAGE_HOOK_BIN\" ] && [ -f \"$SAGE_HOOK_BIN\" ] && [ -x \"$SAGE_HOOK_BIN\" ]; then exec \"$SAGE_HOOK_BIN\" --runtime claude --hook post-tool-logger; elif command -v sage-hook >/dev/null 2>&1; then exec sage-hook --runtime claude --hook post-tool-logger; elif [ -x \"$HOME/.local/bin/sage-hook\" ]; then exec \"$HOME/.local/bin/sage-hook\" --runtime claude --hook post-tool-logger; else printf \"%s\\n\" \"sage-hook not found: install SAGE or set absolute SAGE_HOOK_BIN\" >&2; exit 127; fi'",
             "timeout": 5
           }
         ]
@@ -19,17 +19,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sage-hook --runtime claude --hook generated-artifact-write-guard",
+            "command": "/bin/sh -c 'if [ -n \"${SAGE_HOOK_BIN:-}\" ] && [ \"${SAGE_HOOK_BIN#/}\" != \"$SAGE_HOOK_BIN\" ] && [ -f \"$SAGE_HOOK_BIN\" ] && [ -x \"$SAGE_HOOK_BIN\" ]; then exec \"$SAGE_HOOK_BIN\" --runtime claude --hook generated-artifact-write-guard; elif command -v sage-hook >/dev/null 2>&1; then exec sage-hook --runtime claude --hook generated-artifact-write-guard; elif [ -x \"$HOME/.local/bin/sage-hook\" ]; then exec \"$HOME/.local/bin/sage-hook\" --runtime claude --hook generated-artifact-write-guard; else printf \"%s\\n\" \"sage-hook not found: install SAGE or set absolute SAGE_HOOK_BIN\" >&2; exit 127; fi'",
             "timeout": 10
           },
           {
             "type": "command",
-            "command": "sage-hook --runtime claude --hook pre-implementation-gate",
+            "command": "/bin/sh -c 'if [ -n \"${SAGE_HOOK_BIN:-}\" ] && [ \"${SAGE_HOOK_BIN#/}\" != \"$SAGE_HOOK_BIN\" ] && [ -f \"$SAGE_HOOK_BIN\" ] && [ -x \"$SAGE_HOOK_BIN\" ]; then exec \"$SAGE_HOOK_BIN\" --runtime claude --hook pre-implementation-gate; elif command -v sage-hook >/dev/null 2>&1; then exec sage-hook --runtime claude --hook pre-implementation-gate; elif [ -x \"$HOME/.local/bin/sage-hook\" ]; then exec \"$HOME/.local/bin/sage-hook\" --runtime claude --hook pre-implementation-gate; else printf \"%s\\n\" \"sage-hook not found: install SAGE or set absolute SAGE_HOOK_BIN\" >&2; exit 127; fi'",
             "timeout": 10
           },
           {
             "type": "command",
-            "command": "sage-hook --runtime claude --hook pre-phase4-checklist-gate",
+            "command": "/bin/sh -c 'if [ -n \"${SAGE_HOOK_BIN:-}\" ] && [ \"${SAGE_HOOK_BIN#/}\" != \"$SAGE_HOOK_BIN\" ] && [ -f \"$SAGE_HOOK_BIN\" ] && [ -x \"$SAGE_HOOK_BIN\" ]; then exec \"$SAGE_HOOK_BIN\" --runtime claude --hook pre-phase4-checklist-gate; elif command -v sage-hook >/dev/null 2>&1; then exec sage-hook --runtime claude --hook pre-phase4-checklist-gate; elif [ -x \"$HOME/.local/bin/sage-hook\" ]; then exec \"$HOME/.local/bin/sage-hook\" --runtime claude --hook pre-phase4-checklist-gate; else printf \"%s\\n\" \"sage-hook not found: install SAGE or set absolute SAGE_HOOK_BIN\" >&2; exit 127; fi'",
             "timeout": 10
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sage-hook --runtime claude --hook session-start-snapshot",
+            "command": "/bin/sh -c 'if [ -n \"${SAGE_HOOK_BIN:-}\" ] && [ \"${SAGE_HOOK_BIN#/}\" != \"$SAGE_HOOK_BIN\" ] && [ -f \"$SAGE_HOOK_BIN\" ] && [ -x \"$SAGE_HOOK_BIN\" ]; then exec \"$SAGE_HOOK_BIN\" --runtime claude --hook session-start-snapshot; elif command -v sage-hook >/dev/null 2>&1; then exec sage-hook --runtime claude --hook session-start-snapshot; elif [ -x \"$HOME/.local/bin/sage-hook\" ]; then exec \"$HOME/.local/bin/sage-hook\" --runtime claude --hook session-start-snapshot; else printf \"%s\\n\" \"sage-hook not found: install SAGE or set absolute SAGE_HOOK_BIN\" >&2; exit 127; fi'",
             "timeout": 10
           }
         ]
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sage-hook --runtime claude --hook stop-compliance-report",
+            "command": "/bin/sh -c 'if [ -n \"${SAGE_HOOK_BIN:-}\" ] && [ \"${SAGE_HOOK_BIN#/}\" != \"$SAGE_HOOK_BIN\" ] && [ -f \"$SAGE_HOOK_BIN\" ] && [ -x \"$SAGE_HOOK_BIN\" ]; then exec \"$SAGE_HOOK_BIN\" --runtime claude --hook stop-compliance-report; elif command -v sage-hook >/dev/null 2>&1; then exec sage-hook --runtime claude --hook stop-compliance-report; elif [ -x \"$HOME/.local/bin/sage-hook\" ]; then exec \"$HOME/.local/bin/sage-hook\" --runtime claude --hook stop-compliance-report; else printf \"%s\\n\" \"sage-hook not found: install SAGE or set absolute SAGE_HOOK_BIN\" >&2; exit 127; fi'",
             "timeout": 15
           }
         ]
@@ -65,7 +65,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sage-hook --runtime claude --hook capture-declared-risk",
+            "command": "/bin/sh -c 'if [ -n \"${SAGE_HOOK_BIN:-}\" ] && [ \"${SAGE_HOOK_BIN#/}\" != \"$SAGE_HOOK_BIN\" ] && [ -f \"$SAGE_HOOK_BIN\" ] && [ -x \"$SAGE_HOOK_BIN\" ]; then exec \"$SAGE_HOOK_BIN\" --runtime claude --hook capture-declared-risk; elif command -v sage-hook >/dev/null 2>&1; then exec sage-hook --runtime claude --hook capture-declared-risk; elif [ -x \"$HOME/.local/bin/sage-hook\" ]; then exec \"$HOME/.local/bin/sage-hook\" --runtime claude --hook capture-declared-risk; else printf \"%s\\n\" \"sage-hook not found: install SAGE or set absolute SAGE_HOOK_BIN\" >&2; exit 127; fi'",
             "timeout": 5
           }
         ]

@@ -1,7 +1,7 @@
 """Deterministic pre-implementation L3 review evidence matcher.
 
 Evidence is accepted only from the dedicated review snapshot and must bind to
-the current branch/ticket cycle, one registered domain, and both design rounds.
+the exact current cycle stem, one registered domain, and both design rounds.
 """
 
 import yaml
@@ -23,11 +23,12 @@ def _frontmatter(content):
 
 
 def find_l3_review(signals: dict, snapshot: dict) -> dict:
-    cycle_ids = {str(value) for value in (signals.get("cycle_ids") or set()) if str(value)}
+    cycle_stem = str(signals.get("cycle_stem") or "")
     domains = {str(value) for value in (signals.get("matched_domains") or set()) if str(value)}
-    if not cycle_ids:
+    if not cycle_stem:
+        detail = signals.get("cycle_binding_error") or "current cycle stem unavailable"
         return {"found": False, "enforce": True, "strategy": "cycle_domain_review",
-                "reason": "current cycle id unavailable"}
+                "reason": detail}
     if not domains:
         return {"found": False, "enforce": True, "strategy": "cycle_domain_review",
                 "reason": "L3 change did not match a registered risk domain"}
@@ -40,10 +41,10 @@ def find_l3_review(signals: dict, snapshot: dict) -> dict:
         if error:
             malformed.append(f"{doc.get('path')}: {error}")
             continue
-        cycle_id = str(meta.get("cycle_id") or "")
+        review_stem = str(meta.get("cycle_stem") or "")
         domain_ref = meta.get("domain_ref")
         rounds = meta.get("round")
-        if cycle_id not in cycle_ids:
+        if review_stem != cycle_stem:
             continue
         if not isinstance(domain_ref, str) or domain_ref not in domains:
             continue

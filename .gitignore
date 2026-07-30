@@ -264,9 +264,8 @@ coverage.xml
 htmlcov/
 .venv/
 venv/
+.sage/
 
-# SAGE 로컬 런타임 캐시
-.sage/tmp/
-
-# Obsidian 연동 실패 시 로컬에 임시 보관하는 wiki 이전 대기 문서
-.sage/pending-wiki/
+# >>> SAGE LOCAL PROFILE
+/sage/project-profile.local.yaml
+# <<< SAGE LOCAL PROFILE

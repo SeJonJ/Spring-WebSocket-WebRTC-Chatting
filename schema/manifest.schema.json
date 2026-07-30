@@ -37,6 +37,15 @@
       "description": "설치된 CORE 렌더의 canonical base 영수증. 엔진 소유이며 install --force 때 재계산한다.",
       "additionalProperties": { "$ref": "#/$defs/coreRenderReceipt" }
     },
+    "core_skill_receipts": {
+      "type": "object",
+      "description": "host별 hand-shipped CORE skill 설치 scope/version 영수증.",
+      "properties": {
+        "claude": { "$ref": "#/$defs/coreSkillReceipt" },
+        "codex": { "$ref": "#/$defs/coreSkillReceipt" }
+      },
+      "additionalProperties": false
+    },
     "assets": {
       "type": "object",
       "description": "키 = '<kind>s/<id>' (예: agents/backend, hooks/pre-phase4-checklist-gate)",
@@ -56,6 +65,15 @@
           "type": "string",
           "pattern": "^[0-9a-f]{64}$"
         },
+        "sage_version": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "coreSkillReceipt": {
+      "type": "object",
+      "required": ["scope", "sage_version"],
+      "properties": {
+        "scope": { "enum": ["global", "project-local", "disabled"] },
         "sage_version": { "type": "string" }
       },
       "additionalProperties": false

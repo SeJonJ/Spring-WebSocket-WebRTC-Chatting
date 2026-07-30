@@ -35,9 +35,17 @@ scripts/sage_harness/hooks/stop_compliance_report_core.py
   `sage retro --check` 실행 여부를 세션 종료 시 사후 확인. enforce는 host별 차단 wire로 실제 종료를 막는다. retro_audit.jsonl(감사 트레일)에
   성공(retro_check_ok)·미완료(retro_check_missing)·노트생략(retro_check_skipped, --no-vault)을 append. **enforcement 라
   hook_runtime_hash 로 추적**(advisory 인 위 둘과 달리 부재 시 게이트가 조용히 무동작하므로).
-  06 감지는 로그기반 ∪ SessionStart baseline 스냅샷(writer-독립 — Bash 작성 06 포착, W2). baseline 이 없거나
-  손상돼 writer-독립 감지가 불가하면(SessionStart 미발화·session_id 부재·손상) **enforce 는 fail-closed BLOCK**,
-  advisory·재시도(stop_hook_active)는 WARN — 놓친 Bash-06 가능성을 조용히 통과시키지 않는다.
+  06 감지는 로그기반 ∪ 세션 baseline 스냅샷(writer-독립 — Bash 작성 06 포착, W2). baseline은
+  SessionStart에서 기록하고 첫 UserPromptSubmit이 보조한다. 둘 다 미발화하거나 baseline이 손상돼
+  writer-독립 감지가 불가하면(session_id 부재 포함) **enforce 는 fail-closed BLOCK**,
+  advisory·재시도(stop_hook_active)는 WARN — 놓친 Bash-06 가능성을 조용히 통과시키지 않는다. snapshot은
+  no-follow 정규 파일만 신뢰하므로 symlink·비정규 파일도 손상 상태로 분류한다.
+- policies/writeback_depth_gate.py: **공유(양 host)**, L2/L3 write-back 심층 노트가 host depth self-review 를 거쳤는지
+  `pdca.writeback.depth_review_gate`(off|advisory|enforce)로 세션 종료 시 사후 확인. 이번 세션 L2/L3 06(Risk Level 미기재=보수적 L2)이
+  헤더 메타블록에 `Depth-Self-Review: performed` 를 자기선언했는지 검사 — 품질이 아니라 self-review 실행 증거만 본다(깊이 판정은
+  skill·host 소관, false-assurance 회피). 미선언 시 enforce 첫 Stop=BLOCK / advisory·재시도=WARN. retro_gate 와 같은 06 감지
+  (로그기반 ∪ SessionStart 스냅샷)·1회 block 제약을 공유하며, 둘 다 BLOCK 이면 한 번의 block 에 문구를 합쳐 싣는다. **enforcement 라
+  hook_runtime_hash 로 추적**. update_after_dev(write-back) 가 꺼지면 강제할 노트가 없어 무동작(INFO).
 
 ## profile_bound
 - L3 패턴 단일소스 = **profile.risk.l3_filename_globs 재사용**('*' strip + lower substring). pre-impl-gate 와 동일 소스(drift 방지),

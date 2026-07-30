@@ -1,3 +1,5 @@
+sage:
+  required_version: 0.9.72
 project:
   name: ChatForYou v2
   prefix: chatforyou
@@ -116,6 +118,13 @@ risk:
   generic_tokens: ["chatforyou", "springboot", "nodejs", "desktop"]
   review_patterns: []
 
+# 프로젝트 거버넌스 문서 라우팅 — AGENT_GUIDE 세션 시작 라우팅 블록으로 결정론 렌더(경로+라벨만, 규칙 본문 아님)
+governance_docs:
+  - { doc: "docs/chatforyou-agent/output-contract.md", label: "출력 계약 및 컴포넌트 영향 규약" }
+  - { doc: "docs/chatforyou-agent/verification.md", label: "verify-changes.sh 실행 규약" }
+  - { doc: "docs/chatforyou-agent/pdca-extensions.md", label: "PDCA 확장 규약" }
+  - { doc: "docs/chatforyou-agent/knowledge-capture-fallback.md", label: "지식 write-back fallback 규약" }
+
 file_type_map:
   - { glob: "springboot-backend/src/main/**", type: backend-main }
   - { glob: "springboot-backend/src/test/**", type: backend-test }
@@ -166,7 +175,7 @@ pdca:
   approve_marker: "APPROVED"
   review_loop:
     enabled: true
-    lenses: [correctness, security, concurrency, convention, lifecycle]
+    lenses: [correctness, security, concurrency, lifecycle]
     refuters: 2
     refute_threshold: majority
     max_iterations: { L2: 1, L3: 3 }
@@ -201,10 +210,16 @@ verification:
     require_for_risk: [L2, L3]
     statuses: [PASS, FAIL, NOT TESTED, N/A]
     unresolved_statuses: [FAIL, NOT TESTED]
-    report_gate_enforce: advisory
+    report_gate_by_risk:
+      L2: advisory
+      L3: enforce
+    waiver:
+      enabled: true
 
 runtime:
-  host: codex
+  host: claude
+  installed_hosts: [codex, claude]
+  active_host: claude
   external_reviewer: opposite_runtime
   asset_ssot: deferred
 
@@ -221,9 +236,13 @@ team:
   extensions: []
 
 cross_model:
+  policy: recommended
   peer: opposite_runtime
-  on_unavailable: clean_context_same_runtime
+  on_unavailable: block
   effort: high
+  reviewer:
+    host: codex
+    model: gpt-5.6-sol
 
 capabilities: { codex: true, claude: true }
 
@@ -259,5 +278,6 @@ knowledge_capture:
 
 context_management:
   compaction:
-    enabled: false
+    enabled: true
     preserve: [architectural_decisions, open_bugs, file_ownership, pending_verifications]
+    max_snapshot_bytes: 1048576

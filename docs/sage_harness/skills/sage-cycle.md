@@ -28,6 +28,9 @@ resumes at the right half.
    `paths.plan_docs`, the same way the sub-skills do. Ask for a one-sentence task
    description if not given. Match only that stem; ignore stale docs from other
    cycles (never treat another feature's plan as this cycle's).
+   When this is a resumed session and the user supplies a context packet, run
+   `sage context restore --snapshot <path>`, then read the generated briefing
+   before resolving the half/stage. Never claim hidden conversation state was restored.
 3. Planning half: check whether a real, non-empty plan doc for this cycle's stem
    exists.
    - No usable plan (absent/empty/stub) → invoke `/sage-plan` to produce the plan
@@ -40,6 +43,8 @@ resumes at the right half.
 4. Invoke `/sage-team` to drive 03–06 (implementation → deterministic verification →
    QA → Phase-05 review via `/sage-review` → completion), honoring the same
    evidence-anchored resume logic sage-team owns.
+   The sub-skills own phase-boundary `sage context snapshot` calls when
+   `context_management.compaction.enabled: true`; this umbrella does not duplicate them.
 5. Relay the same completion summary `/sage-team` produces: per-phase outcome,
    recorded review `run_id`, generated artifact inventory (each named by path), a summary
    of the retro proposals, verification results, and any pending human action (especially
@@ -52,12 +57,11 @@ resumes at the right half.
   sequences `/sage-plan` (00–02) then `/sage-team` (03–06)
 - uses: sage-plan skill, sage-team skill, project-profile.yaml, AGENT_GUIDE.md
 - convention_doc: AGENT_GUIDE.md
-- overlay: optional `sage/asset_overrides/skills/sage-cycle.md` has project-local
-  priority over CORE guidance and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates
+- overlay: optional `sage/asset_overrides/skills/sage-cycle.md` has project-local priority over this CORE render and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates (they stay floored by independent oracles)
 
 ## runtime_bindings
 - claude: .claude/skills/sage-cycle/SKILL.md (repo — Claude Code auto-discovers)
-- codex:  $CODEX_HOME/skills/sage-cycle/SKILL.md (global — codex does not auto-discover repo-scoped skills)
+- codex:  $CODEX_HOME/skills/sage-cycle/SKILL.md or .codex/skills/sage-cycle/SKILL.md (explicit global or project-local install scope)
 
 ## drift_checks
 - conformance: procedure step 3 (delegate/skip planning by real-plan presence for

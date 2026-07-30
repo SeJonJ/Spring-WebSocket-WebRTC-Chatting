@@ -7,7 +7,8 @@ description: "Run a full SAGE PDCA cycle (Phases 00–06) end to end from one en
 
 Invoke as `/sage-cycle` (Claude) or `$sage-cycle` (Codex).
 
-Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it). For project-local customization use `/sage-asset-override`: SAGE materializes an eligible overlay into this render as a managed block and `sage validate` gates it. Overlays for gate-bearing assets without an independent oracle are not yet supported (validate reports them).
+Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it).
+- overlay: optional `sage/asset_overrides/skills/sage-cycle.md` has project-local priority over this CORE render and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates (they stay floored by independent oracles). Put broad project rules in profile/conventions and create genuinely new project assets with `/sage-asset`.
 
 This is the **umbrella** entry point for a whole PDCA cycle. It runs the two halves
 in order:
@@ -45,6 +46,11 @@ named the task, ask for a one-sentence description and derive/confirm the stem.
 Match only that stem; ignore stale docs from other cycles (never treat another
 feature's plan as this cycle's).
 
+When this is a resumed session and the user supplies a context packet, run
+`sage context restore --snapshot <path>`, then read the generated briefing before
+resolving the half/stage. A failed restore is a hard stop. This restores verified
+repository context only, never hidden conversation state.
+
 ## Step 2 — Planning half (00–02)
 
 Check whether a **real, non-empty** plan doc for *this* cycle's stem already exists.
@@ -70,6 +76,9 @@ and drives the cycle to completion using its own evidence-anchored resume logic
 (**presence ≠ completion**): implementation (03) → deterministic verification →
 QA (04) → Phase-05 review via `/sage-review` → completion (06). Do not duplicate any
 of sage-team's steps here — this umbrella only invokes it.
+
+The sub-skills own phase-boundary `sage context snapshot` calls when
+`context_management.compaction.enabled: true`; this umbrella does not duplicate them.
 
 - **Claude host**: sage-team spawns implementers as parallel subagents.
 - **Codex host**: sage-team sequentializes the same steps (semantics preserved).

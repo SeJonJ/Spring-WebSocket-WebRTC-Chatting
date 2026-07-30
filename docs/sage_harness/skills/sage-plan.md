@@ -28,6 +28,9 @@ L2/L3 code is written. Hands back an ownership map; `/sage-team` drives 03–06.
    (`docs/agent/plan-interview.md` — core questions platform/features/data·API/constraints/
    done-criteria + adaptive, anchored to Phase 00/01). Record Q&A to `.sage/plan_interview.md`;
    the leader authors 00/01 from it. Skip/shorten if the user already gave rich detail.
+   On a resumed session with a user-supplied packet, first run
+   `sage context restore --snapshot <path>` and read the generated briefing. A restore
+   failure is a hard stop; never fall back to an unverified packet.
 4. If `knowledge_capture.scan_before_dev: true` and `knowledge_capture.vault_path`
    is set, write the task scope to `.sage/knowledge_query.txt` and run
    `python -m sage knowledge scan --query-file .sage/knowledge_query.txt`. The
@@ -36,6 +39,8 @@ L2/L3 code is written. Hands back an ownership map; `/sage-team` drives 03–06.
    vault context", not as a blocker.
 5. Invoke the `leader` agent to:
    a. Author a plan doc under `paths.plan_docs` that covers the task scope.
+      Use one markdown basename as the cycle identity and put the exact same
+      `Cycle-Stem: <basename>` declaration once near the top of every 00–02 doc.
    b. Record a filled `Risk Level: Lx` line in the 00 base plan (L1/L2/L3 — the higher
       of the user-declared level and the glob-implied risk; write-back reads it to size
       the note, the 06 acceptance-evidence report gate scans it as a fallback). Never
@@ -45,7 +50,8 @@ L2/L3 code is written. Hands back an ownership map; `/sage-team` drives 03–06.
 6. Verify the plan doc exists before handing off:
    check that the file under `paths.plan_docs` is non-empty and references
    the feature scope, and that 00 carries a filled `Risk Level: L[123]` line
-   (not the `<L1|L2|L3>` placeholder) — if missing/unfilled, block and have the
+   (not the `<L1|L2|L3>` placeholder), and that every file basename equals its
+   single `Cycle-Stem` declaration — if missing/unfilled/mismatched, block and have the
    leader set it.
 7. Report the ownership map to the user and confirm they are ready to proceed
    to implementation via `/sage-team` (or the `/sage-cycle` umbrella).
@@ -56,17 +62,20 @@ L2/L3 code is written. Hands back an ownership map; `/sage-team` drives 03–06.
    design↔implementation gap, test coverage, and acceptance evidence (no verdict);
    05 = independent reviewer verdict via `/sage-review`; 06 = report only after
    05 records APPROVED.
+9. When `context_management.compaction.enabled: true`, after each completed 00, 01,
+   and 02 boundary run `sage context snapshot --cycle-stem <stem> --phase <id>` and
+   report the packet path. These packets are the only supported cross-session resume
+   input; they do not launch or switch hosts.
 
 ## advisory_scope
 - role_boundary: does not implement code; invokes leader only. Owns 00–02, not 03–06.
 - uses: leader agent, project-profile.yaml, AGENT_GUIDE.md
 - convention_doc: AGENT_GUIDE.md
-- overlay: optional `sage/asset_overrides/skills/sage-plan.md` has project-local
-  priority over CORE guidance and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates
+- overlay: optional `sage/asset_overrides/skills/sage-plan.md` has project-local priority over this CORE render and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates (they stay floored by independent oracles)
 
 ## runtime_bindings
 - claude: .claude/skills/sage-plan/SKILL.md (repo — Claude Code auto-discovers)
-- codex:  $CODEX_HOME/skills/sage-plan/SKILL.md (global — codex does not auto-discover repo-scoped skills)
+- codex:  $CODEX_HOME/skills/sage-plan/SKILL.md or .codex/skills/sage-plan/SKILL.md (explicit global or project-local install scope)
 
 ## drift_checks
 - conformance: procedure step 1 (gate check) and step 5 (leader invocation) must be present

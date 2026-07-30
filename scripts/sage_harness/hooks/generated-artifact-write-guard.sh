@@ -47,15 +47,15 @@ for p in out:
 #  소유하고 비-MCP 설정 공존이라 파일 통째 가드 안 함 — staleness+소유권 검사로 보호. MCP plan §2.3 비대칭.)
 is_guarded() {
   local p; p="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
-  # framework override는 CORE 렌더의 정식 저작 경로다. 렌더와 basename이 같으므로
-  # 일반 framework 문서 패턴보다 먼저 예외 처리하지 않으면 redirect 대상 자체를 차단한다.
+  # 기존 framework override는 migration/removal을 위해 hand-authored 경로로 유지한다. 새 저작은
+  # 독립 oracle 부재로 validate/materialization이 block하며, write guard도 이 경로를 추천하지 않는다.
   case "$p" in
     sage/asset_overrides/framework/*.md|*/sage/asset_overrides/framework/*.md) return 1 ;;
   esac
   # CORE 부트스트랩 렌더(install hand-ship: CORE skill·로스터 에이전트)도 이제 가드한다.
   #   과거엔 spec→generate 산출물이 아니라는 이유로 면제했으나, 그러면 CORE 렌더 직접수정이 무방비였고
-  #   sage install --force 가 그 수정을 조용히 덮어썼다. 이제 sage/asset_overrides/** (install-safe overlay)가
-  #   프로젝트 로컬 커스터마이즈의 정식 경로이므로, CORE 렌더도 가드하고 block() 이 overlay 로 redirect 한다.
+  #   sage install --force 가 그 수정을 조용히 덮어썼다. CORE 렌더도 가드하되, block() 은 executable
+  #   eligibility가 있는 자산만 overlay로 안내하고 나머지는 미지원 사유를 명시한다.
   #   (id→overlay 매핑은 core_overlay_hint. hook_runtime.make_rel 가 절대경로를 root 상대로 먼저 정규화한다.)
   case "$p" in
     *.claude/agents/*|*.claude/hooks/*|*.claude/skills/*) return 0 ;;
@@ -63,13 +63,13 @@ is_guarded() {
     .mcp.json|*/.mcp.json)                                 return 0 ;;
     # AGENT_GUIDE.md 도 CORE 렌더(sage install --force 가 덮어씀)이자 core_renders 앵커 대상.
     #   직접 편집은 업그레이드에 조용히 사라지고, overlay-read 재주입 변조 경로이기도 하다. framework
-    #   문서는 framework override 로 프로젝트 고유 규칙을 보존한다.
+    #   framework overlay는 독립 oracle 부재로 blocked이므로 프로젝트 값/문서는 별도 SSOT로 이동한다.
     agent_guide.md|*/agent_guide.md|claude.md|*/claude.md|codex.md|*/codex.md|agents.md|*/agents.md) return 0 ;;
   esac
   return 1
 }
 
-# CORE 프레임워크 문서면 return 0. block() 이 framework overlay 로 안내한다.
+# CORE 프레임워크 문서면 return 0. block() 이 지원되는 project-local SSOT로 안내한다.
 is_framework_doc() {
   local p; p="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
   case "$p" in
@@ -78,16 +78,32 @@ is_framework_doc() {
   return 1
 }
 
-# CORE 부트스트랩 렌더면 프로젝트 로컬 overlay 경로를 출력(return 0), 아니면 return 1.
-#   block() 안내 전용 — is_guarded 판정과 무관. 대상 = 과거 가드 면제였던 CORE 렌더와 동일:
-#   claude CORE skill 렌더 + 양 host 로스터 에이전트(codex CORE skill 은 전역설치라 repo 경로로 안 옴).
+# 현재 executable eligibility가 있는 CORE 렌더면 canonical project-local overlay 경로를
+# 출력(return 0), 아니면 return 1. overlay_classify.COMPOSE_ALLOWED와 같은 대상만 둔다.
 core_overlay_hint() {
   local p; p="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
   case "$p" in
-    *.claude/skills/sage-init/*|*.claude/skills/sage-cycle/*|*.claude/skills/sage-plan/*|*.claude/skills/sage-team/*|*.claude/skills/sage-review/*|*.claude/skills/sage-asset/*|*.claude/skills/sage-profile-modify/*|*.claude/skills/sage-asset-override/*)
-      printf 'sage/asset_overrides/skills/%s.md' "$(basename "$(dirname "$1")")"; return 0 ;;
-    *.claude/agents/leader.md|*.claude/agents/implementer-a.md|*.claude/agents/implementer-b.md|*.claude/agents/qa.md|*.claude/agents/reviewer.md|*.claude/agents/convention-checker.md|*.codex/agents/leader.md|*.codex/agents/implementer-a.md|*.codex/agents/implementer-b.md|*.codex/agents/qa.md|*.codex/agents/reviewer.md|*.codex/agents/convention-checker.md)
-      printf 'sage/asset_overrides/agents/%s' "$(basename "$1")"; return 0 ;;
+    # non-gate 워커 + FB23 재분류(oracle-backed gate-bearing) 에이전트 → agents overlay 경로.
+    *.claude/agents/implementer-a.md|*.claude/agents/implementer-b.md|*.codex/agents/implementer-a.md|*.codex/agents/implementer-b.md|*.claude/agents/leader.md|*.claude/agents/reviewer.md|*.codex/agents/leader.md|*.codex/agents/reviewer.md)
+      printf 'sage/asset_overrides/agents/%s' "$(basename "$p")"; return 0 ;;
+    # FB23 재분류 skill → skills overlay 경로(overlay id = skill 디렉터리명, SKILL.md basename 아님).
+    *.claude/skills/sage-cycle/*|*.claude/skills/sage-plan/*|*.claude/skills/sage-review/*|*.claude/skills/sage-team/*|*.codex/skills/sage-cycle/*|*.codex/skills/sage-plan/*|*.codex/skills/sage-review/*|*.codex/skills/sage-team/*)
+      local d; d="${p%/*}"; printf 'sage/asset_overrides/skills/%s.md' "${d##*/}"; return 0 ;;
+  esac
+  return 1
+}
+
+# CORE 렌더이지만 현재 overlay 합성이 막힌 자산인지 판정한다. 일반 project-authored
+# agent/skill과 구분해 존재하지 않는 overlay 경로로 사용자를 보내지 않기 위한 안내용이다.
+is_blocked_core_render() {
+  local p; p="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+  # FB23 로 leader/reviewer/sage-cycle/sage-plan/sage-review/sage-team 은 overlay-eligible 로 이동 →
+  # core_overlay_hint 가 먼저 처리한다. 여기 남는 건 여전히 oracle-미보증인 (c) 자산뿐이다.
+  case "$p" in
+    *.claude/skills/sage-init/*|*.claude/skills/sage-asset/*|*.claude/skills/sage-profile-modify/*|*.claude/skills/sage-asset-override/*|*.codex/skills/sage-init/*|*.codex/skills/sage-asset/*|*.codex/skills/sage-profile-modify/*|*.codex/skills/sage-asset-override/*)
+      return 0 ;;
+    *.claude/agents/qa.md|*.claude/agents/convention-checker.md|*.codex/agents/qa.md|*.codex/agents/convention-checker.md)
+      return 0 ;;
   esac
   return 1
 }
@@ -95,11 +111,11 @@ core_overlay_hint() {
 block() {
   # printf 사용(heredoc temp 파일 회피 — 제한 환경에서도 exit 2 보장, audit 5회차 P1).
   if is_framework_doc "$1"; then
-    local framework_overlay="sage/asset_overrides/framework/$(basename "$1")"
     printf '%s\n' \
       "⛔ SAGE write guard: '$1' 는 CORE 프레임워크 문서입니다. 직접수정 금지 (sage install --force 가 덮어씀)." \
-      "→ 프로젝트 값은 'sage/project-profile.yaml', 문서 고유 prose는 '$framework_overlay' 에 작성하세요." \
-      "→ framework override는 domain_refs frontmatter 계약과 'sage validate'를 통과해야 합니다." >&2
+      "→ framework overlay는 독립 gate oracle이 없어 현재 차단됩니다." \
+      "→ 프로젝트 값은 'sage/project-profile.yaml', 규칙은 conventions/critical-domain/project-local 문서에 작성하세요." \
+      "→ 그 문서를 세션 시작 라우팅 블록에 노출하려면 profile 의 'governance_docs'(경로+라벨)에 등록하세요." >&2
     exit 2
   fi
   local overlay=""; overlay="$(core_overlay_hint "$1")" || true
@@ -108,6 +124,12 @@ block() {
       "⛔ SAGE write guard: '$1' 는 CORE 부트스트랩 렌더입니다. 직접수정 금지." \
       "→ 프로젝트 로컬 커스터마이즈는 '$overlay' 에 작성하세요 (sage install --force 에도 보존)." \
       "→ 작성 도움: '/sage-asset-override' (게이트 완화 여부까지 점검)." >&2
+  elif is_blocked_core_render "$1"; then
+    printf '%s\n' \
+      "⛔ SAGE write guard: '$1' 는 CORE 부트스트랩 렌더입니다. 직접수정 금지." \
+      "→ 이 gate-bearing CORE 자산은 독립 executable oracle이 없어 현재 overlay 비지원입니다." \
+      "→ CORE base 갱신은 선택한 host/scope의 'sage install --force'를 사용하세요." \
+      "→ 프로젝트 고유 규칙은 profile/conventions/critical-domain 문서에 두고, 새 프로젝트 자산은 '/sage-asset'으로 작성하세요." >&2
   else
     printf '%s\n' \
       "⛔ SAGE write guard: '$1' 는 생성 산출물입니다. 직접수정 금지." \

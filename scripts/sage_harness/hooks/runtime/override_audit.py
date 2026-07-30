@@ -142,6 +142,40 @@ def is_override_active(root, gate, now=None):
     return bool(active_grants(root, gate=gate, now=now))
 
 
+def _dedupe_scope(session_id, epoch):
+    """선언 dedupe 의 상관키. session_id 부재 시 UTC 날짜로 대체(무한 dedupe 방지, 증가량 1/일 상한)."""
+    sid = (session_id or "").strip()
+    return sid if sid else "date:" + time.strftime("%Y-%m-%d", time.gmtime(epoch))
+
+
+def record_cycle_stem_declaration(root, gate, stem, session_id, status="", now=None):
+    """env(SAGE_CYCLE_STEM) 로 선언된 cycle stem 이 게이트 판정에 쓰인 사실을 기록 → 레코드, 중복이면 None.
+
+    선언 자체는 막지 않는다 — 장수 브랜치에서는 브랜치 leaf 추론이 영영 맞지 않으므로 이게 정상 경로다.
+    문제는 흔적이었다: 이미 완결된 사이클의 stem 을 지목하면 phase 문서와 리뷰 증거가 모두 갖춰진
+    상태로 판정되어 게이트 전체가 통과하는데, 그 통과가 아무 곳에도 남지 않았다. grant 처럼 권한을
+    주는 행위가 아니라 사후 추적이므로 감사 로그에만 남긴다(권한 캐시는 건드리지 않는다).
+
+    게이트는 편집마다 발동하므로 (gate, stem, session) 단위로 dedupe 한다 — 커밋되는 감사 로그가
+    같은 사실로 부풀지 않으면서 "이 세션이 이 stem 을 선언했다" 는 사실은 남는다. session_id 가 없는
+    입력은 상관키가 없어 날짜로 대체한다: 그대로 빈 문자열을 키로 쓰면 첫 레코드가 이후 모든 세션의
+    선언을 영구히 dedupe 해서, 기록했다고 믿는 채로 실제로는 기록되지 않는 상태가 된다.
+    """
+    t = time.time() if now is None else now
+    key = (gate, stem, _dedupe_scope(session_id, t))
+    for r in read_records(root):
+        if r.get("event") != "cycle_stem_declared":
+            continue
+        if (r.get("gate"), r.get("cycle_stem"),
+                _dedupe_scope(r.get("session_id"), r.get("epoch") or 0)) == key:
+            return None
+    rec = {"event": "cycle_stem_declared", "ts": _iso(t), "epoch": int(t), "gate": gate,
+           "cycle_stem": stem, "session_id": session_id or "", "status": status,
+           "user": os.environ.get("USER") or "unknown"}
+    _append(audit_path(root), rec)
+    return rec
+
+
 def record_bypass(root, gate, files, message_key, grant_rec, now=None):
     """grant 가 실제로 BLOCK 을 통과시킨 사실을 감사 로그에 기록 — 무엇을(message_key) 어느 파일에
     적용했는지 추적. 권한이 아니라 사후 추적이므로 감사 로그에만 남긴다."""

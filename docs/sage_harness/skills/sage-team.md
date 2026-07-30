@@ -21,26 +21,34 @@ ownership. SAGE owns the deterministic gates; this skill only ensures they are i
    00–02) for this cycle exists. If not bootstrapped → direct to `/sage-init`; if no plan
    → direct to `/sage-plan` (do not author the plan here).
 2. Resolve the cycle by its plan-doc stem and find the resume point by evidence anchors,
-   not file presence: 03 complete = pre-code checklist + impl + recorded verify evidence;
+   not file presence or recency. Require every 00–06 basename and its single `Cycle-Stem`
+   declaration to equal that plan-doc stem; ambiguity is a hard stop. 03 complete = pre-code checklist + impl + recorded verify evidence;
    04 complete = gap + qa coverage + acceptance evidence context; 05 state ∈ {started (open run), closed-nonapproved, approved
    (APPROVED marker + matching closed APPROVED run, audit integrity clean)}. Only
    `05_approved` permits Phase 06. Start at the first stage whose anchor is absent.
+   On a resumed session with a user-supplied context packet, first run
+   `sage context restore --snapshot <path>` and read the generated briefing. Reject a
+   failed/stale packet instead of using it as advisory context.
 3. Implementation (03): before source edits, open/update the 03 doc with ownership,
    checklist, and Phase-01 acceptance IDs. Root scaffolding/config/glue (build files,
    `local.properties`, `.gitignore`, `settings.*`) are source edits too — classified by
    `profile.risk`, not component ownership; no "scaffolding is exempt" shortcut. For L2/L3
    this is a hard gate (`pre_implementation_required` includes `03`): a source edit before
    03 exists is BLOCKED. Then dispatch implementers by ownership (Claude = parallel
-   subagents, Codex = sequential, semantics preserved). Each edits only its component paths
-   and records files, checklist, acceptance trace, and unit tests into 03.
+   subagents, Codex = sequential, semantics preserved). Resolve each component's
+   `runtime_models.<active_host>` and pass it when the delegation API supports model
+   pinning; otherwise report `MODEL_SELECTION_DEGRADED` and the actual host default.
+   Never claim the configured model ran without execution evidence. Each edits only its
+   component paths and records files, checklist, acceptance trace, and unit tests into 03.
 4. Verification: invoke `scripts/verify-changes.sh` per `profile.verification` at the risk
    gate. SAGE owns policy/gates/result format; this skill only triggers the run
    (pre-implementation-gate is not the executor). Record results in 03; stop if red.
 5. QA (04): invoke the qa agent for design↔implementation gap + test coverage +
    acceptance evidence (`PASS`/`FAIL`/`NOT TESTED`/`N/A`). No verdict.
 6. Review (05): hand off to `/sage-review` (never hand-write 05). It records the loop to
-   `.sage/loop_audit.jsonl`, resolves cross-model, and blocks APPROVED when required
-   acceptance evidence is `FAIL` or `NOT TESTED`. On BLOCKED, stop.
+   `.sage/loop_audit.jsonl`, resolves cross-model, and always blocks APPROVED for `FAIL`.
+   `NOT TESTED` also blocks unless an exact active L3 waiver preserves it as residual
+   evidence; never convert it to PASS. On BLOCKED, stop.
 7. Completion (06): **before writing 06, reconcile the risk tier** — re-classify actual changed
    paths/content with `profile.risk`, take `max(00's tier, that)`, and raise 00's `Risk Level` line
    if it grew (prompt-level best effort; deterministic enforcement = EH-5). Doing it before 06 keeps
@@ -71,10 +79,15 @@ ownership. SAGE owns the deterministic gates; this skill only ensures they are i
    (`CLAUDE.md`/`AGENTS.md`/`GEMINI.md`/`AGENT_GUIDE.md`, first found) and follow its note
    conventions — choose tags/prefix and body format per it — then run `python -m sage knowledge write-back --title "<cycle-stem>" --prefix <PREFIX> --tags "<t1,t2,…>" --summary-file .sage/knowledge_writeback_summary.md --append-log` (omit --tags/--prefix for defaults when no guide).
    Record the output or skipped reason in the completion report. **Then run the host depth self-review
-   checklist (advisory, not a hook-enforced gate — the host's own review):** for L2/L3, re-open the note
-   and confirm each section has real content (변경 내역 names actual `파일:함수:line`, 검증 states
-   concrete results) — not an empty header the marker check still passes; rewrite and re-run if
-   hollow. This is an explicit
+   checklist (the host's own review — the marker check cannot judge depth, so this is where hollow
+   sections are caught):** for L2/L3, re-open the note and confirm each section has real content
+   (변경 내역 names actual `파일:함수:line`, 검증 states concrete results) — not an empty header the
+   marker check still passes; rewrite and re-run if hollow. **Then attest the outcome in the 06 header
+   metadata block (the top block with `Loop-Run:`/`Risk Level:`, before the first `##` heading) as a
+   deterministic line: `Depth-Self-Review: performed` for L2/L3, or `Depth-Self-Review: skipped` for
+   L1.** The Stop-hook `writeback_depth_gate` (`pdca.writeback.depth_review_gate`) reads that line — an
+   L2/L3 06 with no `performed` attestation warns/blocks at session end, so an unreviewed shallow note
+   cannot silently close the cycle; write `performed` only after genuinely re-reading the note. This is an explicit
    host step, not hidden automatic mutation. **One allowed hand-edit only:** if the vault's
    guide keeps a history *table* in `log.md`/index, add that row by hand (CLI appends a line,
    not a row) — limited to that existing hub table; never hand-create notes and never write
@@ -105,13 +118,17 @@ ownership. SAGE owns the deterministic gates; this skill only ensures they are i
    opening the note. If a retro human-gate note was created, explicitly ask the user to review
    it and approve `approved: true` before `sage absorb --from-retro`; do not imply the proposal
    has been applied.
+11. When `context_management.compaction.enabled: true`, run
+   `sage context snapshot --cycle-stem <stem> --phase <id>` after each completed 03,
+   04, 05, and 06 boundary and include the packet paths in the artifact inventory.
+   Snapshot only after that phase's evidence anchor is complete; a file's mere presence
+   is not a phase boundary.
 
 ## advisory_scope
 - role_boundary: does not implement code; orchestrates leader/implementers/qa/reviewer
 - uses: leader, implementer agents, qa agent, sage-review skill, verify-changes, project-profile.yaml
 - convention_doc: AGENT_GUIDE.md, docs/agent/pdca-templates.md
-- overlay: optional `sage/asset_overrides/skills/sage-team.md` has project-local
-  priority over CORE guidance and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates
+- overlay: optional `sage/asset_overrides/skills/sage-team.md` has project-local priority over this CORE render and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates (they stay floored by independent oracles)
 
 ## enforcement
 - SOFT-ENFORCED: the loop/verification are non-skippable only when this skill is followed.
@@ -120,7 +137,7 @@ ownership. SAGE owns the deterministic gates; this skill only ensures they are i
 
 ## runtime_bindings
 - claude: .claude/skills/sage-team/SKILL.md (repo — Claude Code auto-discovers)
-- codex:  $CODEX_HOME/skills/sage-team/SKILL.md (global — codex does not auto-discover repo-scoped skills)
+- codex:  $CODEX_HOME/skills/sage-team/SKILL.md or .codex/skills/sage-team/SKILL.md (explicit global or project-local install scope)
 
 ## drift_checks
 - conformance: procedure step 6 (Phase-05 via sage-review, not hand-written), step 7

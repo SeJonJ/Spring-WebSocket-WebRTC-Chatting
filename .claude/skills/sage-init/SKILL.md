@@ -1,15 +1,16 @@
 ---
 name: sage-init
-description: Use at the start of a SAGE project (right after `sage install`) to fill `sage/project-profile.yaml` through a conversation, then hand off to `sage generate`/`sage validate`. Invoke when the user says "/sage-init" (Claude) or "$sage-init" (Codex), "bootstrap SAGE", "set up the profile", "SAGE 부트스트랩", or when the profile's project.name is empty.
+description: Use at the start of a SAGE project to author both the shared project policy and the first machine-local capability profile. Block when the shared profile is already bootstrapped and route to sage-init-local.
 ---
 
 # sage-init — Conversational SAGE Bootstrap
 
 Invoke as `/sage-init` (Claude) or `$sage-init` (Codex).
 
-Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it). For project-local customization use `/sage-asset-override`: SAGE materializes an eligible overlay into this render as a managed block and `sage validate` gates it. Overlays for gate-bearing assets without an independent oracle are not yet supported (validate reports them).
+Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it). Self-overlay is unsupported: `skills/sage-init` is not in `COMPOSE_ALLOWED`. Put project values in the profile and create genuinely new project assets with `/sage-asset`.
 
-This skill turns user intent into a SAGE-conformant `sage/project-profile.yaml`
+This skill turns user intent into a SAGE-conformant shared `sage/project-profile.yaml`
+and machine-local `sage/project-profile.local.yaml`
 **through conversation**, then hands off to the deterministic backend
 (`sage generate` / `sage validate`). The user supplies intent and approves; you
 author the profile values to the schema. This is the designed entry point — the
@@ -30,6 +31,16 @@ This skill is the active driver of that protocol.
 
 ## Hard rules
 
+- **Run only for an unbootstrapped shared profile.** Bootstrap is complete only when
+  `project.name` is non-empty and at least one of these is configured: non-empty
+  `components`, or a non-empty L0-L3 `risk` classification glob. File existence alone
+  is not completion because `sage install`
+  places an empty shared template. If the shared profile is already bootstrapped,
+  stop with **BLOCKED** and direct the user to `/sage-init-local` or `$sage-init-local`.
+- **Write both ownership layers.** Shared project policy goes to
+  `sage/project-profile.yaml`; machine capabilities and private paths go to
+  `sage/project-profile.local.yaml`. Never compile local values into JSON or manifests.
+
 - **Fill values, never add/remove schema keys.** The schema is fixed; only values
   change (determinism constraint). Adding a top-level key, or any key under
   `risk` / `pdca` / `output_contract`, is a schema violation that `sage validate`
@@ -44,14 +55,16 @@ This skill is the active driver of that protocol.
 ## Step 0 — Read context first
 
 Read, in order, before asking anything:
-1. `sage/project-profile.yaml` — the file you will fill (confirm `project.name` is empty)
-2. `AGENT_GUIDE.md` — risk gate, PDCA phases, safety boundaries
-3. `docs/agent/bootstrap-authoring.md` — the full protocol and signals of incorrect bootstrap
-4. The repo itself — list top-level dirs, detect stack/build files (package.json,
+1. `sage/project-profile.yaml` — confirm the full bootstrap predicate is false
+2. `sage/project-profile.local.yaml` — read only if a partial prior attempt exists
+3. `AGENT_GUIDE.md` — risk gate, PDCA phases, safety boundaries
+4. `docs/agent/bootstrap-authoring.md` — the full protocol and signals of incorrect bootstrap
+5. The repo itself — list top-level dirs, detect stack/build files (package.json,
    build.gradle, pyproject.toml, etc.) so you can propose values instead of asking blind.
 
-If `project.name` is already non-empty, the project is bootstrapped — stop and ask
-whether the user wants to add a component/asset (Step 5) instead of re-running setup.
+If the complete bootstrap predicate is true, stop with **BLOCKED** and route to
+`sage-init-local`. Shared policy changes use `sage-profile-modify`; this flow must
+not overwrite an established shared profile.
 
 ## Step 1 — Interview (progressive conversation, one topic at a time)
 
@@ -109,8 +122,13 @@ reach thoroughness through the back-and-forth, not a wall of questions.
      (design-heavy / high-complexity components), `sonnet` = standard. On a **claude-host**
      project this tier maps to the Claude subagent model; on a **codex-host** project it is
      just a nominal intensity hint (Codex uses its own model regardless). So when the host
-     is Codex, do **not** frame this as "recommending a Claude model" — say "heavier tier
-     (`opus`)" or "standard tier (`sonnet`)". Allowed values stay `opus | sonnet`.
+   is Codex, do **not** frame this as "recommending a Claude model" — say "heavier tier
+   (`opus`)" or "standard tier (`sonnet`)". Allowed values stay `opus | sonnet`.
+   - After the tier, run `sage models --host <host>` for each installed host and show
+     candidates with their verification label. Ask the user to choose an actual
+     `runtime_models.<host>` value for each component. Codex cache candidates are
+     cache-confirmed; Claude aliases are syntax-only/account-unverified. Do not claim
+     that an alias proves account entitlement or silently probe a paid endpoint.
 3. **`verification.commands`** — propose the real `build` / `test` / `lint` (and
    `syntax` for L1) from the build files you found. Empty = that check is skipped,
    so confirm only commands that genuinely exist.
@@ -139,7 +157,17 @@ reach thoroughness through the back-and-forth, not a wall of questions.
      module name). The review protocol blocks L3 until this is set.
 6. **`file_type_map`** — propose `{ glob, type }` first-match classification for
    logging from the stack you've established.
-7. **`team.core.<role>.runtime.model` / `.effort`** — optional per-agent runtime settings
+7. **`governance_docs`** (optional) — project governance/reference docs the agent should
+   discover at session start. Propose from the Step 0 repo scan: architecture notes,
+   security policy (including hidden paths like `.github/SECURITY.md`), domain protocol
+   docs, or convention docs **not already wired** through `risk.domains[].protocol_pointer`.
+   Each entry is `{ doc: <relative path>, label: <short one-line description ≤80 chars> }`
+   and renders into the AGENT_GUIDE **project routing block** as a read-pointer —
+   **path + label only, never classification triggers** (`path_globs`/`content_keywords`
+   stay in `risk.*`, the hook's authoritative source). One turn: propose the entries you
+   inferred for a single confirm; leave empty (`[]`) if the project has none. `doc` must be
+   a project-relative path that exists; the label says why the agent should read it.
+8. **`team.core.<role>.runtime.model` / `.effort`** — optional per-agent runtime settings
    for the CORE roles (`leader`, `implementer-a`, `implementer-b`, `qa`, `reviewer`,
    `convention-checker`). Ask once, as a single topic; leaving both unset is a fine answer.
    Note the nesting: these live under `runtime:`, *not* directly on the role — a bare
@@ -161,13 +189,19 @@ reach thoroughness through the back-and-forth, not a wall of questions.
 Keep `pdca.*` at the standard 00–06 unless the user runs a different phase set
 (don't raise it as a question unless they bring it up).
 
-## Step 2 — Options
+## Step 2 — Shared policy and local capabilities
 
 Same one-topic-per-turn style as Step 1: raise each toggle on its own turn, propose
 a default, and only dive into the matching section if the user enables it. Skip a
 toggle's detail entirely when it stays off.
 
-- **`options.cross_model`** — when true, Phase 05 review runs opposite-runtime
+- **`cross_model.policy`** — shared policy is `required | recommended | off`.
+  `required` forces the local value on, `recommended` defaults on but permits a local
+  opt-out, and `off` forces it off. Record the machine decision in
+  `project-profile.local.yaml` as `cross_model.enabled`.
+  - If policy is `required`, do not offer `false`. An explicit request for local
+    `false` is **BLOCKED** because a local profile cannot weaken shared policy.
+- **Effective cross-model behavior** — when enabled, Phase 05 review runs opposite-runtime
   **only when reachable**. `sage doctor` resolves reachability from peer CLI
   availability: claude-host checks `which codex`, codex-host checks `which claude`.
   No third-party tool is required — SAGE calls the peer runtime directly
@@ -187,10 +221,13 @@ toggle's detail entirely when it stays off.
     and `sage cross-check` reject it:
     - peer `codex` (claude-host): `minimal | low | medium | high | xhigh`
     - peer `claude` (codex-host): `low | medium | high | xhigh | max`
-    The peer's **model** is never configurable from SAGE — that stays the peer CLI's own setting.
-- **`options.obsidian` / `knowledge_capture`** — if used, set
-  `knowledge_capture.vault_path` (empty path = vault features fully OFF) and the
-  note convention. If a vault path is set, explicitly confirm the PDCA boundary
+    Ask the user for `cross_model.reviewer.host` and `.model`; the host must be the
+    runtime opposite `active_host`. Show that host's `sage models` output first. If the
+    reviewer block is omitted, explain that SAGE uses the peer CLI default model.
+- **`options.obsidian` / `knowledge_capture`** — shared automation flags and note
+  conventions stay in `project-profile.yaml`. Machine availability and the private
+  vault path go in `project-profile.local.yaml` as `enabled` and `vault_path`.
+  If a vault path is set, explicitly confirm the PDCA boundary
   automation flags:
   - `knowledge_capture.scan_before_dev` — `/sage-plan` runs `sage knowledge scan`
     before leader planning and refreshes `.sage/knowledge_scan.md`.
@@ -219,7 +256,7 @@ MCP servers themselves are governed as the `mcp` asset kind
 
 ## Step 3 — Present for approval
 
-Show the filled profile (or the consequential choices) and get explicit approval.
+Show both the filled shared profile and the separate local profile, then get explicit approval.
 Call out anything you inferred rather than were told, so the user can correct it.
 
 ## Step 4 — Handoff + asset generation (ask auto vs manual)
@@ -231,6 +268,7 @@ After approval, ask the user how to generate the registration artifacts:
 ```
 sage generate --kind hook --write --target <claude|codex|both>
 sage generate --kind roster --write                   # only if components[] is set
+sage sync-overlays                                    # profile(risk.domains + governance_docs)을 AGENT_GUIDE 라우팅 블록에 반영
 sage validate --check --schema --kind all
 ```
 
@@ -243,6 +281,9 @@ Notes that matter (from bootstrap-authoring.md):
   runtime AI render + `extract_agent --register` before they are manifest-registered.
 - `sage validate` defaults to `--kind hook`; pass `--kind all` to also check
   agent/skill renders.
+- `sage sync-overlays` materializes the AGENT_GUIDE **project routing block** from the
+  profile (`risk.domains` + `governance_docs`). Run it after authoring, before `validate` —
+  otherwise the block is empty while the profile has entries and `validate` reports drift.
 - A `validate` FAIL points at the value/spec to fix — fix and re-run, never bypass.
 
 ## Step 5 — Asset additions later (same loop)
@@ -255,6 +296,7 @@ runtime render plus extraction/registration.
 ## Done
 
 Bootstrap is complete when `project.name` is set, the profile reflects the user's
-intent, and `sage validate` passes (or only WARNs the user has accepted). From
+intent, the routing block is synced (`sage sync-overlays`), and `sage validate` passes
+(or only WARNs the user has accepted). From
 here the normal PDCA phase-first flow applies — author plan docs before any L2/L3
 code, or the `pre-implementation-gate` will block.

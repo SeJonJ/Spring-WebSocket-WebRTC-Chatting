@@ -7,7 +7,8 @@ description: "Drive the implementation half of a SAGE PDCA cycle (Phases 03–06
 
 Invoke as `/sage-team` (Claude) or `$sage-team` (Codex).
 
-Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it). For project-local customization use `/sage-asset-override`: SAGE materializes an eligible overlay into this render as a managed block and `sage validate` gates it. Overlays for gate-bearing assets without an independent oracle are not yet supported (validate reports them).
+Do not edit this CORE render directly (the write-guard blocks it and `sage install --force` overwrites it).
+- overlay: optional `sage/asset_overrides/skills/sage-team.md` has project-local priority over this CORE render and is not shipped by `sage install`; it must not relax AGENT_GUIDE, phase, review, or verification gates (they stay floored by independent oracles). Put broad project rules in profile/conventions and create genuinely new project assets with `/sage-asset`.
 
 This skill takes the plan + ownership map that `/sage-plan` produced and drives
 the cycle to completion: implementation → deterministic verification → QA → Phase-05
@@ -40,9 +41,16 @@ different skill's job).
 
 ## Resolve the cycle + resume point (presence ≠ completion)
 
+On a resumed session with a user-supplied context packet, first run
+`sage context restore --snapshot <path>` and read the generated briefing. A stale
+or invalid packet is a hard stop; never use it as unverified advisory context or
+claim hidden model conversation state was restored.
+
 Identify the **single cycle** by its plan-doc stem (the feature name `/sage-plan`
-used). Match every phase doc and audit run to that one stem — ignore stale docs from
-other cycles. Then find the first incomplete stage using **evidence anchors**, not bare
+used). Require every 00–06 markdown basename and its exactly-one `Cycle-Stem`
+declaration to equal that stem. Match every phase doc and audit run to it — ignore stale
+docs from other cycles and never use recency as identity. Missing/conflicting/ambiguous
+stems are a hard stop. Then find the first incomplete stage using **evidence anchors**, not bare
 file existence:
 
 - **03 complete** = pre-code ownership/checklist exists, implementation files exist for
@@ -69,6 +77,12 @@ checklist, verification plan, and Phase-01 acceptance IDs. Then dispatch impleme
 ownership from `profile.components` / `team.core`. Each implementer edits ONLY its
 component's paths (file-ownership boundary; the integration point is stated in the plan
 doc).
+
+Before dispatch, resolve `runtime.active_host` and each component's
+`runtime_models.<active_host>`. Pass an explicit selection to the host delegation API
+when that API supports model pinning. If it cannot pin the model, state
+`MODEL_SELECTION_DEGRADED` and the actual host default; never report the configured model
+as used merely because it appears in the profile.
 
 > **No "scaffolding is exempt" shortcut.** Root scaffolding / config / glue files (build
 > files, lockfiles, `local.properties`, `.gitignore`, `settings.*`) ARE source edits —
@@ -117,8 +131,9 @@ adversarial find→refute→triage→rework loop, recording every round to
   preserved." Sequentialization must not change ownership, review independence, or the
   recorded outcome.
 - The verdict maps to the 05 doc's Final Status (`APPROVED | FAIL | BLOCKED`). Required
-  acceptance items marked `FAIL` or `NOT TESTED` block APPROVED. On BLOCKED, STOP — no
-  completion until cleared.
+  `FAIL` items block APPROVED. `NOT TESTED` also blocks unless an exact active L3
+  acceptance waiver preserves the row as residual evidence; never convert it to PASS.
+  On BLOCKED, STOP — no completion until cleared.
 - Ensure the 05 doc carries a `Loop-Run: <run_id>` line (sage-review writes it). The 06←05
   audit gate (`pdca.review_loop.report_gate_enforce`) binds the report to that closed
   APPROVED run; without it, Step 5 is blocked (enforce) or warned (advisory).
@@ -203,13 +218,18 @@ After 06 is written, run the configured knowledge write-back when it is enabled:
    boundary.)
 3. Record the command output in 06. If it reports `N/A` or fails, record the exact
    skipped/failed reason; do not claim vault capture completed. **Then run the host depth self-review
-   checklist (advisory — the marker check cannot judge depth, and there is no hook enforcing this;
-   it is your own review, not an independent human gate):** for an L2/L3 note, re-open the written
-   note and confirm each skeleton section carries *real content* — not an empty header the advisory
-   marker check would still pass. Specifically verify 변경 내역 names actual `파일:함수:line` and 검증
-   states concrete test results. If any section is a hollow placeholder, rewrite and re-run before
-   declaring the cycle done, and record in 06 that this self-review was performed (or, for L1, that
-   it was intentionally skipped).
+   checklist — the marker check cannot judge depth, so this is where hollow sections are caught (it is
+   your own review, not an independent human gate):** for an L2/L3 note, re-open the written note and
+   confirm each skeleton section carries *real content* — not an empty header the advisory marker check
+   would still pass. Specifically verify 변경 내역 names actual `파일:함수:line` and 검증 states concrete
+   test results. If any section is a hollow placeholder, rewrite and re-run before declaring the cycle
+   done. **Then attest the outcome in the 06 header metadata block (the top block with `Loop-Run:` /
+   `Risk Level:`, before the first `##` heading) as a deterministic line: `Depth-Self-Review: performed`
+   for an L2/L3 note, or `Depth-Self-Review: skipped` for an L1 note.** The Stop-hook
+   `writeback_depth_gate` (`pdca.writeback.depth_review_gate`) reads that line — an L2/L3 06 with no
+   `performed` attestation warns or blocks at session end, so an unreviewed shallow note cannot silently
+   close the cycle. Write `performed` only after you actually re-read the note and each section holds
+   real content; the line attests the review happened, not merely that headers exist.
 4. **Planning-interview note (if it exists).** If `.sage/plan_interview.md` exists (a
    planning interview ran in `sage-plan`) AND vault is enabled, capture it as a **separate**
    vault note via the same single write path. This is a raw-requirements note, **not** a deep tech
@@ -278,6 +298,11 @@ Never set `approved: true` yourself; that is the human gate. Record that retro r
 it was skipped) in 06. Applying any proposal is a separate human-gated step.
 
 ## Done
+
+When `context_management.compaction.enabled: true`, run
+`sage context snapshot --cycle-stem <stem> --phase <id>` after each completed
+03, 04, 05, and 06 boundary. A boundary requires that phase's evidence anchor, not
+mere file presence. Include every packet path in the final artifact inventory.
 
 The cycle is complete when 06 exists and reflects an APPROVED Phase 05 with a clean,
 closed loop-audit run for this cycle, and **both** closing captures are accounted for in 06

@@ -2,11 +2,20 @@
 
 L3 changes require an independent review before they are considered done.
 
-1. A plan doc must exist for the change (matched by ticket or recency).
+1. The current cycle must have exactly one Phase 01, 04, and 05 document whose
+   basename and single `Cycle-Stem` declaration outside fenced code blocks are identical. Ticket substrings,
+   unrelated branch numbers, and recent-file/mtime fallback are not review identity.
 2. An independent reviewer assesses the change. The reviewer runtime is
    resolved by `sage doctor`:
-   - same-runtime clean-context (cross_model off, or fallback), or
-   - opposite-runtime review (cross_model on + reachable).
+   - same-runtime clean-context via `sage review --packet-file <packet> --host <active_host>`
+     (recommended local opt-out or policy off), or
+   - opposite-runtime review (cross_model on + reachable). If
+     `cross_model.reviewer.model` is configured, `sage cross-check` passes it explicitly
+     to the peer CLI; otherwise the peer CLI default remains in effect.
+   The opposite runtime is derived from the profile's single `runtime.active_host`
+   (`runtime.host` only for legacy profiles), never from a shared `both` state. The same-runtime
+   command must match this host and must emit process/host/model/mode/status evidence. A missing
+   CLI, timeout, nonzero exit, or unparseable output is BLOCKED, not a successful fallback.
 3. The review outcome is recorded in a review/plan document.
 
 ## Acceptance evidence gate
@@ -14,12 +23,19 @@ L3 changes require an independent review before they are considered done.
 Review is not only a code-quality check. It must verify whether explicit user
 requirements were converted into evidence:
 
-1. Read the Phase 01 acceptance matrix.
-2. Read the Phase 04 acceptance evidence table.
-3. Treat required items marked `FAIL` or `NOT TESTED` as blocking findings.
-4. Allow `N/A` only with an explicit out-of-scope/deferred/user-approved reason.
-5. Do not record `Final Status: APPROVED` while required acceptance evidence is
+1. Read the exact same-`Cycle-Stem` Phase 01 acceptance matrix outside fenced code blocks.
+2. Read the exact same-`Cycle-Stem` Phase 04 acceptance evidence table outside fenced code blocks.
+3. Require every matrix/evidence ID to be well formed and unique, reject Phase 04
+   IDs not declared by Phase 01, and require evidence for every required Phase 01 ID.
+4. Treat required items marked `FAIL` or `NOT TESTED` as blocking findings. An exact,
+   active L3 waiver may defer only `NOT TESTED`; keep it unresolved in the review and
+   record its reason, scope, remaining evidence, confirmer, and waiver ID. Never rewrite it as PASS.
+5. Allow `N/A` only with an explicit out-of-scope/deferred/user-approved reason.
+6. Do not record `Final Status: APPROVED` while required acceptance evidence is
    missing or unresolved.
+7. Record exactly one anchored `Final Status: APPROVED | FAIL | BLOCKED` declaration
+   outside fenced code blocks. Replace template placeholders; duplicate declarations,
+   code examples, and free-text substrings are invalid.
 
 How a change is matched to its review document is a project policy
 (`profile.risk.l3_review_strategy`). Strategy candidates are preserved under
@@ -62,7 +78,8 @@ records `APPROVED`. The loop never relaxes that gate; it adds audited find→ref
 rounds in front of it. Configuration values live only in `profile.pdca.review_loop`
 (validated fail-closed by `sage doctor`/`sage validate`).
 
-When `profile.verification.acceptance.enabled` is true, the report gate can also
-warn or block Phase 06 if Phase 04 has no acceptance evidence table or contains
-unresolved required statuses (`FAIL`, `NOT TESTED`). This gate is deterministic:
-it reads recorded status markers; it does not infer product quality by itself.
+When `profile.verification.acceptance.enabled` is true, the report gate warns for L2 and
+blocks for L3/unknown if Phase 04 lacks evidence or has unresolved required statuses.
+Only an explicit `sage acceptance-waiver` grant for the exact L3 cycle and required ID
+can turn `NOT TESTED` into a residual warning. This gate reads recorded status and audit
+markers; it does not infer product quality or user identity by itself.
