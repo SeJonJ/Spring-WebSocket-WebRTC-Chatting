@@ -28,7 +28,9 @@ then re-validate. The profile-editing counterpart to /sage-init (first authoring
 2. Identify the target section (project/components including `runtime_models`/
    verification/risk/pdca.review_loop/options/knowledge_capture/file_type_map/compliance/
    `governance_docs`/`cross_model.reviewer`). For model edits, run `sage models --host <host>`
-   and preserve its verification label; reviewer host must remain opposite `runtime.active_host`.
+   and preserve its verification label; `cross_model.reviewer.host` scopes which peer the model
+   was chosen for (the reviewer itself is resolved at run time) and must be an installed host
+   other than a pinned `runtime.active_host`.
    `governance_docs` renders into the AGENT_GUIDE routing block (path + label only, never
    classification triggers).
 3. For pdca.review_loop and vault outputs, drive the SAME shared interview set as

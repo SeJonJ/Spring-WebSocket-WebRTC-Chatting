@@ -184,6 +184,30 @@ def _changed_phase_ids(event, cfg):
     return changed
 
 
+def _phase_glob(cfg, phase_id):
+    for phase in cfg.get("phases") or []:
+        if str(phase.get("id") or "") == str(phase_id):
+            return phase.get("glob") or ""
+    return ""
+
+
+def _is_phase00_repair_only(event, cfg):
+    """Phase 00 자체를 만들거나 고치는 쓰기는 잘못된 기존 선언으로 자기차단하지 않는다."""
+    changes = event.get("changes") or []
+    phase00_glob = _phase_glob(cfg, "00")
+    other_globs = [
+        phase.get("glob") or ""
+        for phase in (cfg.get("phases") or [])
+        if str(phase.get("id") or "") != "00" and phase.get("glob")
+    ]
+    return bool(changes and phase00_glob) and all(
+        cycle_binding.matches_glob(change.get("path") or "", phase00_glob)
+        and not any(cycle_binding.matches_glob(change.get("path") or "", glob)
+                    for glob in other_globs)
+        for change in changes
+    )
+
+
 def _plan_exists(event: dict, snapshot: dict) -> str:
     """snapshot.plan_files 에서 ticket→recent 매칭(기존 계약 유지)."""
     return _doc_match(snapshot.get("plan_files") or [], event)
@@ -271,13 +295,63 @@ def _structured_declaration_line(raw):
 def _parse_risk_declaration(raw):
     """Return L1/L2/L3, unknown for risk-like malformed text, or None when unrelated."""
     line = _structured_declaration_line(raw)
-    label = re.search(r"(?i)(risk\s*level|risk|위험도)\s*[:：]", line)
-    if label:
-        match = re.search(r"(?i)(risk\s*level|risk|위험도)\s*[:：]\s*(L[123])\b", line)
-        return match.group(2).upper() if match else "unknown"
+    label_pattern = r"(?i)(risk\s*level|risk|위험도)\s*[:：]"
+    labels = list(re.finditer(label_pattern, line))
+    if labels:
+        # Keep the historical read compatibility for Markdown bullets and trailing reasons,
+        # while rejecting two declarations hidden on one line.
+        if len(labels) != 1:
+            return "unknown"
+        match = re.search(label_pattern + r"\s*(L[123])\b", line)
+        if not match:
+            return "unknown"
+        # Placeholder alternatives such as L1|L2|L3 used to be misread as L1.
+        if re.match(r"\s*[|/]\s*L[123]\b", line[match.end():], re.IGNORECASE):
+            return "unknown"
+        return match.group(2).upper()
     if _RISK_LABEL_CANDIDATE_RE.search(line):
         return "unknown"
     return None
+
+
+def _bound_phase00_risk(event, profile, snapshot):
+    """현재 cycle의 authoritative Phase 00 risk 선언을 구조화한다."""
+    cfg = _pdca_cfg(profile)
+    if cfg is None:
+        return {"status": "missing", "risk": None, "path": "", "detail": "PDCA 비활성", "cycle_stem": ""}
+    binding = cycle_binding.resolve(event, snapshot, cfg)
+    if binding.get("error"):
+        return {"status": "ambiguous", "risk": None, "path": "",
+                "detail": binding["error"], "cycle_stem": ""}
+    docs = (snapshot.get("phase_docs") or {}).get("00") or []
+    unreadable = next(
+        (doc for doc in docs if not isinstance((doc or {}).get("content"), str)),
+        None,
+    )
+    if unreadable is not None:
+        return {"status": "invalid", "risk": None, "path": unreadable.get("path") or "",
+                "detail": "읽을 수 없는 Phase 00 snapshot content",
+                "cycle_stem": binding["stem"]}
+    doc, error = cycle_binding.select_document(docs, binding["stem"])
+    if error:
+        status = "ambiguous" if "ambiguous" in error.lower() else "missing"
+        return {"status": status, "risk": None, "path": "",
+                "detail": error, "cycle_stem": binding["stem"]}
+    path = (doc or {}).get("path") or ""
+    declarations = []
+    for raw in _non_fenced_lines((doc or {}).get("content") or ""):
+        parsed = _parse_risk_declaration(raw)
+        if parsed == "unknown":
+            return {"status": "invalid", "risk": None, "path": path,
+                    "detail": "malformed 또는 placeholder Risk Level 선언", "cycle_stem": binding["stem"]}
+        if parsed is not None:
+            declarations.append(parsed)
+    if len(declarations) != 1:
+        return {"status": "invalid", "risk": None, "path": path,
+                "detail": f"Risk Level 선언은 정확히 1개여야 함(found {len(declarations)})",
+                "cycle_stem": binding["stem"]}
+    return {"status": "valid", "risk": declarations[0], "path": path,
+            "detail": "", "cycle_stem": binding["stem"]}
 
 
 def _report_gate(event: dict, profile: dict, snapshot: dict):
@@ -692,6 +766,18 @@ def _audit_gate(event, profile, snapshot):
 
     if select_error:
         return fail(f"05 선택 실패: {select_error}")
+    if la.get("file_ok", True) is False:
+        # 10-g: malformed/non-object JSON은 run_id 자체를 신뢰할 수 없어 특정 run으로 격리할 수 없다.
+        # 유효 레코드만 골라 통과시키면 손상 줄에 숨은 증거를 skip하는 우회가 되므로 파일 단위로 닫는다.
+        snapshot_error = la.get("snapshot_error")
+        if snapshot_error:
+            return fail(f"loop audit snapshot 생성 실패 — {snapshot_error} "
+                        "(감사 증거를 읽지 못해 신뢰 불가)")
+        file_issues = la.get("file_issues") or []
+        if file_issues:
+            detail = "; ".join(str(issue).replace("\n", " ") for issue in file_issues[:3])
+            return fail(f"loop audit 로그 무결성 실패 — {detail} (감사 증거 신뢰 불가)")
+        return fail("loop audit 로그 원문 무결성 실패(원인 미제공) — 감사 증거 신뢰 불가")
     content = sel.get("content") or ""
     marker = (cfg.get("approve_marker") or "APPROVED").upper()
     status, status_error = _final_status(content)
@@ -720,6 +806,9 @@ def _audit_gate(event, profile, snapshot):
     if run.get("seq_ok") is False:
         # 7차 배치3-3: seq 불연속/누락 = CLI/라이브러리 우회한 수기 JSONL append 또는 순서 조작.
         return fail(f"run {run_id!r} 의 라운드 seq 불연속/누락 — 수기 기록 또는 순서 조작 의심(감사 증거 신뢰 불가)")
+    if run.get("chain_ok") is False:
+        # 10-g: selected run의 immediate-predecessor/self-hash 검증 실패. 키 부재/None은 legacy skip.
+        return fail(f"run {run_id!r} 의 strict hash-chain 불일치 — 기록 수정/누락/순서 조작 의심(감사 증거 신뢰 불가)")
     if not run.get("closed"):
         return fail(f"run {run_id!r} 가 닫히지 않음(루프 미종료)")
     if (run.get("result") or "").upper() != "APPROVED":
@@ -827,6 +916,7 @@ def _decide(event: dict, profile: dict, snapshot: dict, strategy_result) -> dict
     # PDCA cycle identity is a prerequisite for governed source changes and every phase write.
     # Do not infer from branch numbers or recent mtimes: zero/multiple/conflicting candidates block.
     cfg = _pdca_cfg(profile)
+    changed_phases = set()
     if cfg is not None and (_is_phase_write(event, cfg) or risk in ("L1", "L2", "L3")):
         binding = cycle_binding.resolve(event, snapshot, cfg)
         if binding.get("error"):
@@ -846,6 +936,28 @@ def _decide(event: dict, profile: dict, snapshot: dict, strategy_result) -> dict
                     "reason": (f"report phase {report_phase}와 dependency phase {mixed}를 같은 변경에서 "
                                "수정하면 pre-write snapshot으로 검증할 수 없음"),
                     "file_short": c["file_short"]}
+
+        governed_progress = bool(changed_phases - {"00"}) or risk in ("L1", "L2", "L3")
+        if governed_progress and not _is_phase00_repair_only(event, cfg):
+            phase00 = _bound_phase00_risk(event, profile, snapshot)
+            if phase00["status"] != "valid":
+                return {"status": "block", "exit_code": 2, "risk": "PDCA",
+                        "message_key": "block_cycle_risk_declaration",
+                        "reason": f"Phase 00 Risk Level 선언 미충족: {phase00['detail']}",
+                        "file_short": phase00.get("path") or c["file_short"]}
+            if _RANK.get(risk, -1) > _RANK.get(phase00["risk"], -1):
+                return {
+                    "status": "block",
+                    "exit_code": 2,
+                    "risk": "PDCA",
+                    "message_key": "block_cycle_risk_reconciliation",
+                    "reason": (f"계산 위험도 {risk}가 Phase 00 선언 {phase00['risk']}보다 높음; "
+                               "Phase 00 Risk Level을 먼저 상향한 뒤 재시도"),
+                    "file_short": c["file_short"],
+                    "phase00_path": phase00["path"],
+                    "phase00_risk": phase00["risk"],
+                    "required_risk": risk,
+                }
 
     # PDCA report←approve 게이트: report phase 문서 작성은 L0(plan_docs)이라 아래 단축 전에 검사.
     # (pdca 비활성이거나 report/approve 미설정 → None → skip, 하위호환)

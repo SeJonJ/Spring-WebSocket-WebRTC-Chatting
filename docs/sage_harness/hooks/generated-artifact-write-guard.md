@@ -16,9 +16,11 @@ spec(docs/sage_harness)으로 redirect 한다. SSOT 모델의 잠금장치 — �
 - on_fail: block            # adapter가 exit 2(stderr) / JSON 으로 매핑
 
 ## canonical
-scripts/sage_harness/hooks/generated-artifact-write-guard.sh
-- 입력: --path | $SAGE_GUARD_PATH | stdin JSON(tool_input.file_path)
-- 핵심 알고리즘 = "경로가 생성 산출물인가" 분류 (런타임별 입력 추출은 얇은 어댑터)
+scripts/sage_harness/hooks/generated_artifact_write_guard_core.py
+- 입력: stdin JSON(tool_input.file_path/path 또는 apply_patch command의 다중 target)
+- 핵심 알고리즘 = "경로가 생성 산출물인가" 분류
+- 양 host는 `sage-hook` → `runtime/run_hook.py` → `hook_runtime`을 통해 같은 Python core를 실행한다.
+- core load/실행 실패는 exit 2 fail-closed로 차단한다.
 
 ## enforcement
 - block(exit 2): `*.claude/{agents,hooks,skills}/*`, `*.codex/{agents,hooks,skills}/*`,

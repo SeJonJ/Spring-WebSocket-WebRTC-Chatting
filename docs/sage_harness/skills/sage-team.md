@@ -51,8 +51,10 @@ ownership. SAGE owns the deterministic gates; this skill only ensures they are i
    evidence; never convert it to PASS. On BLOCKED, stop.
 7. Completion (06): **before writing 06, reconcile the risk tier** — re-classify actual changed
    paths/content with `profile.risk`, take `max(00's tier, that)`, and raise 00's `Risk Level` line
-   if it grew (prompt-level best effort; deterministic enforcement = EH-5). Doing it before 06 keeps
-   the 06 acceptance-evidence report gate and write-back off a stale L1. Then, only when `05_approved`,
+   if it grew. The pre-implementation gate enforces this throughout implementation: update only
+   Phase 00 first, then retry the source or later-phase write; a combined patch is checked against
+   the pre-write snapshot and blocked. Doing it before 06 keeps the 06 acceptance-evidence report
+   gate and write-back off a stale L1. Then, only when `05_approved`,
    the leader writes 06. The 06←05 gate enforces this deterministically. The 06 doc must declare
    `Loop-Run: <RUN_ID>` at its top (copy the run_id from the APPROVED 05 doc; add `Source-05: <05 doc
    path>`) — the Stop-time retro gate reads this line to bind the report to its cycle, so it survives
@@ -63,8 +65,8 @@ ownership. SAGE owns the deterministic gates; this skill only ensures they are i
    (synthesize, do not transcribe), written to the depth of the vault's own hand-written deep
    notes of the same prefix. **Depth scales with this cycle's risk tier** (read the `Risk Level: Lx`
    line from the 00 base plan, already reconciled to the actual work in step 7; `profile.risk` is
-   only the glob mapping that yields a tier, not a per-cycle tier; if 00 carries no `Risk Level` or
-   only the `<L1|L2|L3>` placeholder, default to L2 and write the deep note): L1 (only when plainly trivial)
+   only the glob mapping that yields a tier, not a per-cycle tier; missing, placeholder, malformed,
+   or duplicate Phase 00 declarations must be repaired before completion, not inferred): L1 (only when plainly trivial)
    → a few sentences (what changed + the one thing to remember) and pass `--skip-structure-check` so
    the advisory does not WARN on an intentionally skeleton-less note; L2/L3 → a deep note in the
    vault guide's own headers/callout syntax covering

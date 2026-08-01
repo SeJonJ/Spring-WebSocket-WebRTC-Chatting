@@ -72,10 +72,14 @@ A project may install both discovery surfaces sequentially. This is a manual
 double-host model: `runtime.installed_hosts` records desired surfaces and exactly
 one `runtime.active_host` owns the current cycle execution. SAGE does not run hosts
 concurrently or switch hosts/phases automatically. A handoff resumes from completed,
-exact-Cycle-Stem phase documents after the user changes the active host. Phase 05
-cross-review is derived from the runtime opposite that active host.
-Host-specific component models live in `components[].runtime_models`; an explicit
-`cross_model.reviewer` must name that opposite host. Use `sage models` and `sage doctor`
+exact-Cycle-Stem phase documents after the user changes the active host. Set
+`active_host: auto` to have the running host read from the environment instead of pinned
+in the shared profile. Phase 05 cross-review always excludes the host that is actually
+executing, so a stale pin cannot make a host review its own work — it is reported, not
+enforced. Host-specific component models live in `components[].runtime_models`;
+`cross_model.reviewer` names both the peer `host` and the `model` chosen for it, because a
+model id belongs to one runtime — if the resolved peer differs, the model is skipped and the
+peer CLI default is used. Use `sage models` and `sage doctor`
 to distinguish cache-confirmed candidates from account-unverified aliases.
 
 ## Risk & Workflow Gate (PDCA)

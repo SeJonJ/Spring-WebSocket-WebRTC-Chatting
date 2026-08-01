@@ -12,7 +12,7 @@ kind: hook
 
 ## canonical
 # form=core_adapter: scripts/sage_harness/hooks/<id>_core.py (pure decide) + adapters/{claude,codex}/<id>.sh
-# form=native:       scripts/sage_harness/hooks/<id>.sh (단일 정본, 예: write-guard)
+# form=native:       scripts/sage_harness/hooks/<id>.sh (단일 정본, legacy/custom POSIX hook)
 
 ## enforcement
 - 차단 조건과 통과 조건을 명시 (enforcement는 hook 전용)

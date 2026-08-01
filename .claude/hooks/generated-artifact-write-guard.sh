@@ -3,4 +3,4 @@
 ROOT="${SAGE_PROJECT_ROOT:-${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}}"
 export SAGE_HOOK_CORE_DIR="$ROOT/scripts/sage_harness/hooks"
 [ -z "${SAGE_PROFILE:-}" ] && [ -f "$ROOT/sage/project-profile.json" ] && export SAGE_PROFILE="$ROOT/sage/project-profile.json"
-exec bash "$ROOT/scripts/sage_harness/hooks/generated-artifact-write-guard.sh" "$@"
+exec bash "$ROOT/scripts/sage_harness/hooks/adapters/claude/generated-artifact-write-guard.sh" "$@"

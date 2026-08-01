@@ -113,14 +113,19 @@ decisions that genuinely need user intent; author the rest from them:
   discovery surface, but keep exactly one active host. A double-host project does
   not run both hosts concurrently and SAGE never switches hosts or phases automatically.
   To hand off, finish durable exact-Cycle-Stem phase documents, switch runtimes
-  manually, set the new single `active_host`, and resume from those documents.
+  manually, and resume from those documents. Prefer `active_host: auto`, which reads
+  the running host at execution time: the key lives only in the shared committed
+  profile (a machine-local file cannot override it), so a pinned value has to be
+  edited — through the L2 gate — every time a developer changes hosts.
   `runtime.host` is a legacy alias; do not author both keys with different values.
   Double-host projects should set `options.cross_model: true` so Phase 05 calls the
   runtime opposite the active host.
-- `cross_model.reviewer` — when cross-model is enabled, ask the user to enter reviewer
-  `host` and `model`. The host must be opposite `active_host`; `sage validate` checks
-  that invariant and `sage doctor` checks the local catalog. A manual host handoff
-  requires revisiting this explicit reviewer selection.
+- `cross_model.reviewer` — when cross-model is enabled, ask the user for the reviewer
+  `host` and `model`. The `host` scopes the model — model ids belong to one runtime, so SAGE
+  skips the model when the resolved peer differs. The reviewer itself is resolved at run time by
+  excluding the host that is actually executing, so a host handoff needs no reviewer edit.
+  `sage validate` checks `host` is an installed host and is not the pinned `active_host`;
+  `sage doctor` checks the local catalog.
 - **Review loop (Phase 05)** — the optional adversarial review-rework loop. Use the
   shared interview set below (§ Review loop + vault interview set). Both `sage-init`
   (first authoring) and `sage-profile-modify` (later editing) drive the *same* set.

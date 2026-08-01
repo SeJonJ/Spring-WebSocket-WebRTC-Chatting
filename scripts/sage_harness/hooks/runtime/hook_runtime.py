@@ -152,8 +152,16 @@ def build_snapshot(profile, root, rel):
     try:
         import loop_audit
         la = loop_audit.audit_summary(root)
-    except Exception:
-        la = {"runs": {}, "has_any_records": False}
+    except Exception as exc:
+        # 파일을 읽어 요약하지 못한 상태를 "정상적으로 빈 로그"와 구분한다. 선택 run도 사라지므로
+        # 기존 gate가 닫히지만, 원문 파싱 실패와 adapter/module 실패의 원인은 구분한다(10-g).
+        la = {
+            "runs": {},
+            "has_any_records": False,
+            "file_ok": False,
+            "file_issues": [],
+            "snapshot_error": f"{type(exc).__name__}: {exc}",
+        }
     acceptance = ((profile.get("verification") or {}).get("acceptance") or {})
     waiver_cfg = acceptance.get("waiver") if isinstance(acceptance, dict) else {}
     if isinstance(waiver_cfg, dict) and waiver_cfg.get("enabled") is True:
@@ -224,6 +232,8 @@ def run_strategy(hook_id, profile, core_dir, changes, event, snapshot):
 
 
 _NON_OVERRIDABLE_BLOCKS = {
+    "block_cycle_risk_declaration",
+    "block_cycle_risk_reconciliation",
     "block_report_without_acceptance",
     "block_report_waiver_audit_failure",
     "block_gate_runtime_error",
@@ -248,12 +258,27 @@ def _maybe_override(hook_id, root, decision, changes):
         import override_audit as ov
     except Exception:
         return False
-    grants = ov.active_grants(root, gate=hook_id)
+    # 조회 실패는 예외로 흘리지 않는다. 여기서 raise 하면 어댑터 경로(run_hook.main)에 예외 처리가
+    # 없어 traceback rc=1 로 죽고, 호스트가 이를 non-blocking 오류로 분류해 **도구 호출이 그대로
+    # 진행된다** — 10-d 에서 고친 write-guard fail-open 과 같은 유형이다. override 를 확인할 수
+    # 없으면 우회하지 않고(False) 원래 BLOCK 을 그대로 렌더링하는 것이 fail-closed 다.
+    try:
+        grants = ov.active_grants(root, gate=hook_id)
+    except Exception as exc:
+        print(f"⚠️  [{hook_id}] override 조회 실패 → 우회 없이 원래 판정을 유지합니다: "
+              f"{type(exc).__name__}: {exc}", file=sys.stderr)
+        return False
     if not grants:
         return False
     files = [c.get("path") for c in (changes or []) if c.get("path")]
     g = grants[0]
-    ov.record_bypass(root, hook_id, files, decision.get("message_key"), g)
+    try:
+        ov.record_bypass(root, hook_id, files, decision.get("message_key"), g)
+    except Exception as exc:
+        # 감사 기록 없이 우회를 적용하면 무감사 통과가 된다 — 우회를 포기하고 BLOCK 을 유지한다.
+        print(f"⚠️  [{hook_id}] override bypass 감사 기록 실패 → 우회를 적용하지 않습니다: "
+              f"{type(exc).__name__}: {exc}", file=sys.stderr)
+        return False
     print(f"⚠️  [{hook_id}] GATE BLOCK override 적용 — 사유: {g.get('reason')} "
           f"(만료 {g.get('expires_at')}, .sage/override.jsonl 감사). "
           f"우회: {decision.get('message_key')} | 파일: {', '.join(files) or '(미상)'}",
@@ -404,6 +429,23 @@ def run_pre_implementation_gate(io, root, core_dir, raw_text):
     if _maybe_override(hid, root, decision, changes):   # P1-5: 활성 override 면 BLOCK 우회(감사 기록)
         return 0
     return io.render_gate(decision, profile)     # ← 런타임별 채널/포맷/exit
+
+
+def run_generated_artifact_write_guard(raw_text, core_dir, direct_path=None):
+    """Run the Python write guard; unexpected failures block instead of disabling protection."""
+    try:
+        if core_dir not in sys.path:
+            sys.path.insert(0, core_dir)
+        core = importlib.import_module("generated_artifact_write_guard_core")
+        decision = core.decide_input(raw_text or "", direct_path=direct_path)
+        message = decision.get("message") or ""
+        if message:
+            print(message, file=sys.stderr)
+        return int(decision.get("exit_code", 2))
+    except Exception as exc:
+        print("⛔ [generated-artifact-write-guard] Python core failure → "
+              f"fail-closed BLOCK: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
 
 
 def run_capture_declared_risk(io, root, core_dir, raw_text):

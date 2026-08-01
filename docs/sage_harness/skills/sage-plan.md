@@ -42,15 +42,15 @@ L2/L3 code is written. Hands back an ownership map; `/sage-team` drives 03–06.
       Use one markdown basename as the cycle identity and put the exact same
       `Cycle-Stem: <basename>` declaration once near the top of every 00–02 doc.
    b. Record a filled `Risk Level: Lx` line in the 00 base plan (L1/L2/L3 — the higher
-      of the user-declared level and the glob-implied risk; write-back reads it to size
-      the note, the 06 acceptance-evidence report gate scans it as a fallback). Never
-      leave the `<L1|L2|L3>` placeholder.
+      of the user-declared level and the glob-implied risk; later gates and write-back
+      use it as the durable cycle tier). Record exactly one declaration outside code
+      fences and never leave the `<L1|L2|L3>` placeholder.
    c. Distribute file ownership to implementer-a / implementer-b by component.
    d. State the integration point where the two implementers connect.
 6. Verify the plan doc exists before handing off:
    check that the file under `paths.plan_docs` is non-empty and references
-   the feature scope, and that 00 carries a filled `Risk Level: L[123]` line
-   (not the `<L1|L2|L3>` placeholder), and that every file basename equals its
+   the feature scope, and that 00 carries exactly one filled `Risk Level: L[123]`
+   line outside code fences (not the `<L1|L2|L3>` placeholder), and that every file basename equals its
    single `Cycle-Stem` declaration — if missing/unfilled/mismatched, block and have the
    leader set it.
 7. Report the ownership map to the user and confirm they are ready to proceed

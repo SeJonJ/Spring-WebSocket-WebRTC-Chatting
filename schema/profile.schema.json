@@ -531,8 +531,10 @@
         "active_host": {
           "enum": [
             "claude",
-            "codex"
-          ]
+            "codex",
+            "auto"
+          ],
+          "description": "auto = 실행 시점 env 로 판별(dual-host 권장). 명시 pin 도 유효하나 리뷰어 선택에서는 실측 판별이 우선한다."
         },
         "external_reviewer": {
           "type": "string"
@@ -588,7 +590,8 @@
               "enum": [
                 "claude",
                 "codex"
-              ]
+              ],
+              "description": "이 model 을 쓸 peer runtime. model id 는 런타임 종속이라(gpt-…/opus) 어느 peer 용인지 함께 선언한다. 실제 peer 가 다르면 model 은 적용되지 않는다."
             },
             "model": {
               "type": "string",

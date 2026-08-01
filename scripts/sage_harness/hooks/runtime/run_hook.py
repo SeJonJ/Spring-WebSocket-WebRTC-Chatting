@@ -8,7 +8,6 @@ branch 는 SAGE_GATE_BRANCH 우선, 없으면 root 기준 git 으로 해석(원�
 """
 import argparse
 import os
-import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))   # .../scripts/sage_harness/hooks/runtime
@@ -21,14 +20,11 @@ import io_codex             # noqa: E402
 _IO = {"claude": io_claude, "codex": io_codex}
 
 
-def dispatch(runtime, hook, root, core_dir, raw_text):
+def dispatch(runtime, hook, root, core_dir, raw_text, direct_path=None):
     """hook id → hook_runtime 실행 (단일소스). 셸 어댑터(run_hook.main)와 `sage-hook`
     콘솔 엔트리포인트(sage.hook_entry)가 공유한다.
 
-    policy 코어(core_adapter)는 hook_runtime 함수로, native 훅(순수 bash, 예: write-guard)은
-    정본 `{core_dir}/{hook}.sh` 를 stdin JSON 으로 실행한다 — sage-hook 등록이 native 훅에 대해
-    조용히 rc 0 로 통과하면(과거 갭) write-guard 가 프로덕션에서 무력화되기 때문. 정본 .sh 도 없는
-    미지원 hook 만 안전 통과(rc 0)."""
+    모든 설치 hook은 Python hook_runtime 함수로 실행한다. 미지원 hook id만 안전 통과(rc 0)."""
     io = _IO[runtime]
     if hook == "pre-implementation-gate":
         return hr.run_pre_implementation_gate(io, root, core_dir, raw_text)
@@ -42,10 +38,8 @@ def dispatch(runtime, hook, root, core_dir, raw_text):
         return hr.run_stop_compliance_report(io, root, core_dir, raw_text)
     if hook == "session-start-snapshot":
         return hr.run_session_start_snapshot(io, root, core_dir, raw_text)
-    native = os.path.join(core_dir, f"{hook}.sh")
-    if os.path.isfile(native):
-        # 정본 .sh 는 stdin JSON(PreToolUse 어댑터 경로)을 읽고 exit 2 로 block 한다.
-        return subprocess.run(["bash", native], input=raw_text or "", text=True).returncode
+    if hook == "generated-artifact-write-guard":
+        return hr.run_generated_artifact_write_guard(raw_text, core_dir, direct_path=direct_path)
     return 0   # 미지원 hook id → 안전 통과
 
 
@@ -55,8 +49,11 @@ def main():
     ap.add_argument("--hook", required=True)
     ap.add_argument("--root", required=True)
     ap.add_argument("--core-dir", required=True)
+    ap.add_argument("--path", default=None,
+                    help="write-guard 직접호출 호환 경로(stdin JSON보다 우선)")
     a = ap.parse_args()
-    sys.exit(dispatch(a.runtime, a.hook, a.root, a.core_dir, sys.stdin.read()))
+    sys.exit(dispatch(
+        a.runtime, a.hook, a.root, a.core_dir, sys.stdin.read(), direct_path=a.path))
 
 
 if __name__ == "__main__":

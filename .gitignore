@@ -269,3 +269,13 @@ venv/
 # >>> SAGE LOCAL PROFILE
 /sage/project-profile.local.yaml
 # <<< SAGE LOCAL PROFILE
+# >>> SAGE LOCAL STATE
+!/.sage/
+/.sage/*
+!/.sage/override.jsonl
+!/.sage/acceptance-waivers.jsonl
+!/.sage/loop_audit.jsonl
+# <<< SAGE LOCAL STATE
+
+# ChatForYou project policy: keep Loop A audit local even though SAGE shares it by default.
+/.sage/loop_audit.jsonl

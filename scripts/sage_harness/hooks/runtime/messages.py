@@ -61,6 +61,15 @@ def _cycle_binding_hint(decision):
     return f"{_BINDING_HINT}. 비-phase 편집이면 `export SAGE_CYCLE_STEM=<stem>` 으로 사이클을 지정하세요"
 
 
+def _cycle_risk_declaration_hint(decision):
+    repair = ("같은 Cycle-Stem의 Phase 00 문서에 `Risk Level: L1`, "
+              "`Risk Level: L2`, `Risk Level: L3` 중 하나를 정확히 한 줄 기록하세요")
+    stem = _inferred_stem(decision)
+    if stem is None:
+        return repair
+    return f"{_declare_hint(stem)}. 이 사이클이 맞으면 {repair}"
+
+
 def _ok_suffix(decision):
     """선언된 stem 은 OK 줄에도 노출한다 — 낡은 선언으로 조용히 통과하는 상태가 보이게."""
     if not decision.get("cycle_stem_declared"):
@@ -74,6 +83,10 @@ def _gate_record(decision, profile):
     rs = decision.get("reason", "")
     risk = decision.get("risk", "")
     miss = ", ".join(decision.get("missing_phases") or [])
+    phase00_risk = decision.get("phase00_risk", "")
+    required_risk = decision.get("required_risk", "")
+    cycle_stem = decision.get("cycle_stem") or "(미상)"
+    phase00_path = decision.get("phase00_path") or decision.get("file_short") or "(미상)"
     return {
         "block_desktop": ("BLOCK", "", "동기화 산출물/금지 경로 직접수정 금지.", False, desktop_hint(profile)),
         # §10-a-C: 미해결 차단성 마커를 남긴 채 그 파일에 쓰는 것을 막는다. 마커를 걷어내는
@@ -93,6 +106,15 @@ def _gate_record(decision, profile):
         "block_phase_incomplete": ("BLOCK", risk, f"의무 PDCA phase 미작성: [{miss}].", True,
                              _phase_incomplete_hint(decision)),
         "warn_phase_incomplete": ("WARN", "L1", f"권장 PDCA phase 미작성: [{miss}].", False, None),
+        "block_cycle_risk_declaration": (
+            "BLOCK", "PDCA",
+            f"cycle `{cycle_stem}`의 Phase 00 Risk Level 선언이 없거나 유효하지 않습니다.", True,
+            _cycle_risk_declaration_hint(decision)),
+        "block_cycle_risk_reconciliation": (
+            "BLOCK", "PDCA",
+            f"Phase 00 Risk Level {phase00_risk}보다 계산 위험도 {required_risk}가 높습니다.", True,
+            f"`{phase00_path}`의 Phase 00 Risk Level을 {required_risk} 이상으로 먼저 상향한 뒤 "
+            "원래 변경을 재시도하세요"),
         "block_report_without_approval": ("BLOCK", "PDCA", f"{rs}.", False,
                              "approve phase 문서에 APPROVED 기록 후 report 작성"),
         "block_report_mixed_evidence": ("BLOCK", "PDCA", f"{rs}.", False,

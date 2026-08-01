@@ -1,6 +1,6 @@
 {
   "sage": {
-    "required_version": "0.9.72"
+    "required_version": "0.9.76"
   },
   "project": {
     "name": "ChatForYou v2",
@@ -585,12 +585,11 @@
     }
   },
   "runtime": {
-    "host": "claude",
     "installed_hosts": [
       "codex",
       "claude"
     ],
-    "active_host": "claude",
+    "active_host": "auto",
     "external_reviewer": "opposite_runtime",
     "asset_ssot": "deferred"
   },

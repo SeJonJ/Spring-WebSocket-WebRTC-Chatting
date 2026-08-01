@@ -12,9 +12,12 @@ L3 changes require an independent review before they are considered done.
    - opposite-runtime review (cross_model on + reachable). If
      `cross_model.reviewer.model` is configured, `sage cross-check` passes it explicitly
      to the peer CLI; otherwise the peer CLI default remains in effect.
-   The opposite runtime is derived from the profile's single `runtime.active_host`
-   (`runtime.host` only for legacy profiles), never from a shared `both` state. The same-runtime
-   command must match this host and must emit process/host/model/mode/status evidence. A missing
+   The peer runtime is whichever installed host is not the one currently executing —
+   resolved from the process environment, never from a shared `both` state. A pinned
+   `runtime.active_host` that disagrees with the running process is reported and ignored, so a
+   host can never review its own work; when the running host cannot be determined, the profile
+   value is the fallback. The same-runtime command must match the running host and must emit
+   process/host/model/mode/status evidence. A missing
    CLI, timeout, nonzero exit, or unparseable output is BLOCKED, not a successful fallback.
 3. The review outcome is recorded in a review/plan document.
 
