@@ -40,7 +40,7 @@ def dispatch(runtime, hook, root, core_dir, raw_text, direct_path=None):
         return hr.run_session_start_snapshot(io, root, core_dir, raw_text)
     if hook == "generated-artifact-write-guard":
         return hr.run_generated_artifact_write_guard(raw_text, core_dir, direct_path=direct_path)
-    return 0   # 미지원 hook id → 안전 통과
+    return hr.run_project_hook(io, root, core_dir, hook, raw_text)
 
 
 def main():

@@ -259,7 +259,32 @@
       "type": "array"
     },
     "checklist_scan_targets": {
-      "type": "array"
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label",
+          "glob"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^(?=.*\\S)[^\\u0000-\\u001f\\u007f\\u0085\\u2028\\u2029]+$"
+          },
+          "glob": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^(?=.*\\S)(?![A-Za-z]:)(?![\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$))[^\\u0000-\\u001f\\u007f\\u0085\\u2028\\u2029]+$"
+          },
+          "is_impl": {
+            "type": "boolean"
+          }
+        }
+      }
     },
     "compliance": {
       "type": "object"

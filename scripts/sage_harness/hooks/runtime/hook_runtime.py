@@ -14,7 +14,7 @@ import errno
 import fnmatch
 import glob
 import hashlib
-import importlib
+import importlib.util
 import json
 import os
 import posixpath
@@ -28,6 +28,15 @@ HOOKS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if HOOKS_DIR not in sys.path:
     sys.path.insert(0, HOOKS_DIR)
 import cycle_binding
+import checklist_contract
+
+
+class ProfileLoadError(RuntimeError):
+    pass
+
+
+class ProjectHookError(RuntimeError):
+    pass
 
 
 def resolve_branch(root, default=""):
@@ -58,6 +67,25 @@ def load_profile_fail_open(hook_id):
         print(f"⛔ [{hook_id}] profile 파싱 실패 → 위험 게이트 무력화(SAGE_PROFILE 수정 필요): "
               f"{type(e).__name__}: {e}", file=sys.stderr)
         return None
+
+
+def load_profile_fail_closed(hook_id):
+    """Load a required compiled profile and preserve absence as the legacy no-op policy."""
+    prof_path = os.environ.get("SAGE_PROFILE", "")
+    if not prof_path or not os.path.exists(prof_path):
+        return None
+    try:
+        with open(prof_path, encoding="utf-8") as stream:
+            profile = json.load(stream)
+    except Exception as exc:
+        raise ProfileLoadError(
+            f"compiled profile 로드 실패: {type(exc).__name__}: {exc}") from exc
+    if not isinstance(profile, dict):
+        raise ProfileLoadError("compiled profile 루트는 mapping이어야 함")
+    issues = checklist_contract.checklist_target_issues(profile)
+    if issues:
+        raise ProfileLoadError("; ".join(issues))
+    return profile
 
 
 def parse_input_fail_open(hook_id, raw_text, surface=True):
@@ -528,8 +556,20 @@ def build_checklist_snapshot(core, event, profile, root):
     """pre-phase4 fs_adapter: core.plan_reads 가 요구한 glob 을 읽어 snapshot 구성(런타임 무관)."""
     reads = core.plan_reads(event, profile)
     glob_results, files = {}, {}
+    root_real = os.path.realpath(root)
     for g in reads["globs"]:
-        matches = sorted(os.path.relpath(p, root) for p in glob.glob(os.path.join(root, g)))
+        absolute_matches = []
+        for path in glob.glob(os.path.join(root, g), recursive=True):
+            path_real = os.path.realpath(path)
+            try:
+                contained = os.path.commonpath((root_real, path_real)) == root_real
+            except ValueError:
+                contained = False
+            if not contained:
+                raise ProfileLoadError(
+                    f"checklist_scan_targets glob이 root 밖 symlink를 매치함: {g}")
+            absolute_matches.append(path)
+        matches = sorted(os.path.relpath(p, root) for p in absolute_matches)
         glob_results[g] = matches
         for rp in matches:
             try:
@@ -551,20 +591,187 @@ def run_pre_phase4_checklist_gate(io, root, core_dir, raw_text):
         return 0
     if io.should_skip(raw):
         return 0
-    profile = load_profile_fail_open(hid)
-    if profile is None:
-        return 0
+    try:
+        profile = load_profile_fail_closed(hid)
+        if profile is None:
+            return 0
 
-    rel = make_rel(root)
-    event = {"hook_id": hid, "hook_event_name": "PreToolUse", "runtime": io.RUNTIME,
-             "session_id": raw.get("session_id", "") or "", "changes": io.extract_phase4_changes(raw, rel)}
-    sys.path.insert(0, core_dir)
-    import pre_phase4_checklist_gate_core as core
-    snapshot = build_checklist_snapshot(core, event, profile, root)
-    decision = core.decide(event, profile, snapshot)
+        rel = make_rel(root)
+        event = {"hook_id": hid, "hook_event_name": "PreToolUse", "runtime": io.RUNTIME,
+                 "session_id": raw.get("session_id", "") or "", "changes": io.extract_phase4_changes(raw, rel)}
+        sys.path.insert(0, core_dir)
+        import pre_phase4_checklist_gate_core as core
+        snapshot = build_checklist_snapshot(core, event, profile, root)
+        decision = core.decide(event, profile, snapshot)
+    except Exception as exc:
+        print(f"⛔ [{hid}] profile/snapshot 계약 오류 → fail-closed BLOCK: "
+              f"{type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
+
     if _maybe_override(hid, root, decision, event["changes"]):   # P1-5: 활성 override 면 BLOCK 우회(감사 기록)
         return 0
     return io.render_phase4(decision)
+
+
+def _project_manifest_entry(root, hook_id):
+    """Return None for genuine version skew; raise for a present but damaged registry."""
+    path = os.path.join(root, "docs", "sage_harness", ".manifest.json")
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as stream:
+            manifest = json.load(stream)
+    except Exception as exc:
+        raise ProjectHookError(
+            f"manifest unreadable: {type(exc).__name__}: {exc}") from exc
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("assets"), dict):
+        raise ProjectHookError("manifest root/assets must be objects")
+    key = f"hooks/{hook_id}"
+    if key not in manifest["assets"]:
+        return None
+    entry = manifest["assets"][key]
+    if not isinstance(entry, dict):
+        raise ProjectHookError("manifest project hook entry must be an object")
+    if entry.get("origin") != "project" or entry.get("form") != "core_adapter":
+        raise ProjectHookError("manifest project hook entry origin/form is invalid")
+    version = entry.get("adapter_contract_version")
+    if not isinstance(version, str) or not version:
+        raise ProjectHookError("manifest project hook contract version is missing")
+    return entry
+
+
+def _load_project_core(root, hook_id, expected_version):
+    if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", hook_id) is None:
+        raise ProjectHookError("project hook id is not strict lowercase kebab-case")
+    project_hooks = os.path.join(root, "scripts", "sage_harness", "hooks")
+    hooks_real = os.path.realpath(project_hooks)
+    path = os.path.join(project_hooks, f"{hook_id.replace('-', '_')}_core.py")
+    if not os.path.isfile(path) or os.path.islink(path):
+        raise ProjectHookError(f"registered project canonical core missing: {path}")
+    path_real = os.path.realpath(path)
+    try:
+        contained = os.path.commonpath((hooks_real, path_real)) == hooks_real
+    except ValueError:
+        contained = False
+    if not contained:
+        raise ProjectHookError("project canonical core escapes the hook root")
+    try:
+        spec = importlib.util.spec_from_file_location(
+            f"sage_project_hook_{hook_id.replace('-', '_')}", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    except Exception as exc:
+        raise ProjectHookError(
+            f"project core import failed: {type(exc).__name__}: {exc}") from exc
+    actual_version = getattr(module, "CONTRACT_VERSION", None)
+    if not isinstance(actual_version, str) or not actual_version:
+        raise ProjectHookError("project core CONTRACT_VERSION is missing")
+    if actual_version != expected_version:
+        raise ProjectHookError(
+            f"project core contract drift: manifest={expected_version}, core={actual_version}")
+    if not callable(getattr(module, "decide", None)):
+        raise ProjectHookError("project core decide(event, profile, snapshot) is missing")
+    return module
+
+
+def _project_snapshot(core, event, profile, root):
+    planner = getattr(core, "plan_reads", None)
+    if planner is None:
+        return {}
+    reads = planner(event, profile)
+    if not isinstance(reads, dict) or set(reads) - {"globs"}:
+        raise ProjectHookError("project plan_reads must return {'globs': [...]} only")
+    globs = reads.get("globs", [])
+    if not isinstance(globs, list):
+        raise ProjectHookError("project plan_reads.globs must be a list")
+    root_real = os.path.realpath(root)
+    results = {}
+    files = {}
+    for pattern in globs:
+        issue = checklist_contract.unsafe_glob(pattern)
+        if issue:
+            raise ProjectHookError(f"unsafe project plan_reads glob {pattern!r}: {issue}")
+        matches = []
+        for path in glob.glob(os.path.join(root, pattern), recursive=True):
+            path_real = os.path.realpath(path)
+            try:
+                contained = os.path.commonpath((root_real, path_real)) == root_real
+            except ValueError:
+                contained = False
+            if not contained:
+                raise ProjectHookError(
+                    f"project plan_reads matched path outside project root: {path}")
+            if os.path.islink(path):
+                raise ProjectHookError(f"project plan_reads matched symlink: {path}")
+            if os.path.isdir(path):
+                continue
+            if not os.path.isfile(path):
+                raise ProjectHookError(
+                    f"project plan_reads matched unsupported non-regular path: {path}")
+            relative = os.path.relpath(path, root)
+            matches.append(relative)
+            try:
+                with open(path, encoding="utf-8") as stream:
+                    files[relative] = stream.read()
+            except OSError as exc:
+                raise ProjectHookError(f"project plan_reads read failed: {relative}: {exc}") from exc
+        results[pattern] = sorted(matches)
+    return {"glob_results": results, "files": files}
+
+
+def _project_decision(value):
+    if not isinstance(value, dict) or set(value) != {"status", "exit_code", "message"}:
+        raise ProjectHookError("project decision must contain exactly status/exit_code/message")
+    status = value.get("status")
+    exit_code = value.get("exit_code")
+    message = value.get("message")
+    if status not in ("block", "ok", "warn", "skip"):
+        raise ProjectHookError("project decision status is invalid")
+    expected = 2 if status == "block" else 0
+    if type(exit_code) is not int or exit_code != expected:
+        raise ProjectHookError(
+            f"project decision status/exit_code mismatch: {status}/{exit_code!r}")
+    if not isinstance(message, str):
+        raise ProjectHookError("project decision message must be a string")
+    return value
+
+
+def run_project_hook(io, root, core_dir, hook_id, raw_text):
+    """Dispatch one registered project hook; preserve true unknown-id version skew."""
+    try:
+        entry = _project_manifest_entry(root, hook_id)
+        if entry is None:
+            return 0
+        raw = json.loads(raw_text or "{}")
+        if not isinstance(raw, dict):
+            raise ProjectHookError("hook input must be a JSON object")
+        if io.should_skip(raw):
+            return 0
+        profile = load_profile_fail_closed(hook_id)
+        if profile is None:
+            raise ProjectHookError("registered project hook compiled profile is missing")
+        rel = make_rel(root)
+        event = {"hook_id": hook_id, "hook_event_name": "PreToolUse", "runtime": io.RUNTIME,
+                 "session_id": raw.get("session_id", "") or "",
+                 "changes": io.extract_phase4_changes(raw, rel)}
+        core = _load_project_core(root, hook_id, entry["adapter_contract_version"])
+        snapshot = _project_snapshot(core, event, profile, root)
+        decision = _project_decision(core.decide(event, profile, snapshot))
+        if decision["message"]:
+            print(decision["message"], file=sys.stderr)
+        return decision["exit_code"]
+    except ProfileLoadError as exc:
+        # 저작자가 고칠 수 있는 profile 계약 오류다. internal dispatch failure 로 묶으면
+        # SAGE 내부 버그처럼 보여 고칠 곳을 못 찾는다.
+        print(f"⛔ [{hook_id}] project hook profile contract failure: {exc}", file=sys.stderr)
+        return 2
+    except ProjectHookError as exc:
+        print(f"⛔ [{hook_id}] project hook contract failure: {exc}", file=sys.stderr)
+        return 2
+    except Exception as exc:
+        print(f"⛔ [{hook_id}] project hook internal dispatch failure: "
+              f"{type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
 
 
 def code_types_of(profile):

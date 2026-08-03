@@ -1,5 +1,5 @@
 sage:
-  required_version: 0.9.76
+  required_version: 0.9.77
 project:
   name: ChatForYou v2
   prefix: chatforyou
@@ -137,7 +137,8 @@ file_type_map:
 skip_untyped: true
 phase4_trigger_glob: "*plan_docs/04-analyze/*.md"
 suffixes: []
-checklist_scan_targets: ["plan_docs/03-implementation/*.md"]
+checklist_scan_targets:
+  - { label: "03 implementation", glob: "plan_docs/03-implementation/*.md", is_impl: true }
 
 compliance:
   activity_groups:

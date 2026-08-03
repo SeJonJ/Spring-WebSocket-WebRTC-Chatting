@@ -1,0 +1,37 @@
+# ChatForYou component-doc gate — rollout legacy cycle allowlist
+#
+# 2026-08-02 rollout 시점에 이미 Phase 04 문서가 있던 사이클 stem 스냅샷.
+# 이 목록은 고정이다 — 이후 만들어지는 stem 을 추가하면 신규 사이클이 게이트를 우회하는 통로가 된다.
+#
+# 형식: 주석(#)과 빈 줄을 제외한 한 줄 = stem 하나.
+# core 소스가 아니라 데이터로 두는 이유: stem 이름이 프로젝트 도메인 어휘(recording/webrtc 등)를
+# 그대로 쓰기 때문에 게이트 소스에 넣으면 risk 분류의 content keyword 와 충돌해 파일 자신의
+# 위험도를 끌어올린다. 실제로 bug_136_recording_partial_cleanup 이 L3 키워드 RECORDING_PARTIAL 과
+# 매칭돼 게이트 소스가 L3 로 분류됐다.
+
+bug_135_recording_inprogress
+bug_136_recording_partial_cleanup
+bug_fix_log_analysis-gap
+chatroom_zero_downtime_recovery
+coturn_kurento_improvement
+duplicate_session_forced_kick_analysis
+exception-handling-gap
+exception-handling_backend_eval
+exception-handling_backend_feedback
+exception-handling_external_eval
+exception-handling_external_feedback
+exception-handling_frontend_eval
+exception-handling_frontend_feedback
+exception-handling_qa_eval
+exception-handling_qa_feedback
+frontend_verification_eslint
+kurento_peer_error_fallback
+readiness_probe_decouple
+recording_download_token_refresh
+recording_participant_auth
+sage_adoption
+secret_room_session_expire_call_drop
+speaker_highlight
+web_rtc_frontend_refactor
+webrtc_frontend_media_stabilization
+webrtc_ws_auto_reconnect

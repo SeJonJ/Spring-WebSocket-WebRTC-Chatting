@@ -215,8 +215,10 @@ imposing SAGE defaults (6th-test: frontmatter/index assumptions didn't match the
 On approval, hand off — do not keep authoring registration artifacts by hand:
 
 ```
-# hook registration + manifest stamp. Default --target claude.
-sage generate --kind hook --write --target claude     # or: --target both (claude + codex)
+# Existing CORE hook regeneration can target one host.
+sage generate --kind hook --write --target claude
+# A new project-authored hook must be registered for both hosts in one transaction.
+sage generate --kind hook --id <id> --write --target both
 # component implementer SCAFFOLDS (only if components[] is set):
 sage generate --kind roster --write
 # materialize the AGENT_GUIDE routing block from the profile (risk.domains + governance_docs):

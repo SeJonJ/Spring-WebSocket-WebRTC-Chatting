@@ -125,6 +125,10 @@
           "enum": ["native", "core_adapter", "interpretive", "declarative"],
           "description": "native=단일 canonical .sh / core_adapter=core+런타임 adapter(hook) / interpretive=spec+claims→런타임 렌더(agent/skill) / declarative=선언 데이터→config 직렬화(mcp, 결정론)"
         },
+        "origin": {
+          "enum": ["project"],
+          "description": "project-authored hook lifecycle marker; absent entries are engine/legacy owned"
+        },
         "runtime_targets": {
           "type": "array",
           "items": { "enum": ["claude", "codex"] },

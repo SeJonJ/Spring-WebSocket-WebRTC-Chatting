@@ -27,7 +27,7 @@ assets), then hand off to `sage generate` to extract and register.
    - hook: spec docs/sage_harness/hooks/<id>.md + scripts/sage_harness/hooks/<id>_core.py
    - agent/skill: BOTH renders — claude (.claude/agents/<id>.md | .claude/skills/<id>/SKILL.md)
      AND codex (.codex/agents/<id>.md | .codex/skills/<id>/SKILL.md), semantically equivalent.
-5. Handoff: hook → `sage generate --kind hook --write --target <...>`;
+5. Handoff: new hook → `sage generate --kind hook --id <id> --write --target both`;
    agent/skill → `sage generate --kind <kind> --id <id> --write`
    (skill that codex must discover: add `--deploy-codex`).
 6. Verify: `sage validate --check --schema --kind all`; never bypass a FAIL.
@@ -36,6 +36,8 @@ assets), then hand off to `sage generate` to extract and register.
 - role_boundary: does not edit generated artifacts to change assets (edit spec/render
   then regenerate); does not bypass validate FAIL; does not author single-runtime
   interpretive assets (codex 함께 — both renders required)
+- hook contract: lowercase kebab id, structured frontmatter bindings for both hosts,
+  `CONTRACT_VERSION` in the core, and first registration with `--target both`
 - uses: sage generate / sage validate / sage doctor, bootstrap-authoring.md
 - convention_doc: AGENT_GUIDE.md
 - self_overlay: unsupported; this unverified CORE skill is not in `COMPOSE_ALLOWED`
