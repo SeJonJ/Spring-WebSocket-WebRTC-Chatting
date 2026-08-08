@@ -15,7 +15,13 @@ report phase 작성 전 approve phase APPROVED 확인. pdca 비활성이면 None
 ## runtime_bindings
 - claude: { event: PreToolUse, matcher: "Write|Edit|MultiEdit", input: file_path + content/new_string/edits }
 - codex:  { event: PreToolUse, matcher: "apply_patch", input: command 본문 다중파일+content }
-- output: block=메시지+exit2 (claude stdout / codex stderr), warn·ok=exit0 (codex hookSpecificOutput)
+- output: block=메시지+exit2 (양 host stderr — host 가 차단 사유를 읽는 채널),
+  warn·ok=exit0 + hookSpecificOutput.additionalContext (양 host — 평문 stdout 은
+  PreToolUse 에서 디버그 로그로만 가고 컨텍스트로 승격되지 않는다)
+- OK·WARN 줄은 판정 cycle stem 과 그 출처(선언 / 브랜치 leaf 추론 / phase 문서)를 표기한다.
+  선언일 때만 보여주면 정작 위험한 추론 결속이 화면에 드러나지 않는다. WARN 에도 붙이는 이유는
+  plan 없이 통과하는 상태가 결속이 가장 의심스러운 자리이기 때문이다. pdca 비활성이면 표기 없고,
+  L1/L0 통과는 message_key 가 없어 줄 자체가 생기지 않는다.
 
 ## canonical (부분추출 — IO-bound gate, 2단계 pure core)
 scripts/sage_harness/hooks/pre_implementation_gate_core.py
@@ -48,13 +54,38 @@ profile.pdca: { enabled, phases[{id,glob}], pre_implementation_required{L1,L2,L3
   선언 삭제·중복·오염은 snapshot fallback 없이 fail-closed 한다.
   phase write는 changed path/declaration, source write는 explicit event stem 또는 exact branch final segment로
   current cycle을 하나만 정한다. 숫자 substring과 recent/mtime은 cycle identity에 쓰지 않는다.
-- explicit event stem 은 `SAGE_CYCLE_STEM` env 로 주입된다(EH-7). 장수 브랜치에서는 branch final segment
-  추론이 영영 맞지 않으므로 이게 정상 경로다. `decide` 는 판정에 `cycle_stem`/`cycle_source`/
-  `cycle_stem_declared` 를 스탬프해서, ① 안내가 추론 사실과 선언 경로를 가리키게 하고 ② 어댑터가 선언
-  사용을 `.sage/override.jsonl` 의 `cycle_stem_declared` 로 세션·stem 1회 기록하게 한다. 선언 stem 은
-  이미 완결된 사이클을 지목해 전 게이트를 통과시킬 수 있어서, 기록 실패 시 통과를 허용하지 않는다
-  (`block_cycle_stem_audit_failure`).
+- explicit event stem 의 선언 통로는 둘이다 — `SAGE_CYCLE_STEM` env 와 `<root>/.sage/cycle.json`
+  (`sage cycle use|show|clear`). 어댑터가 `env > 파일 > 없음` 순으로 해석해 `cycle_stem` 과
+  `cycle_stem_origin`(`env`/`cli`)을 이벤트에 싣는다. 장수 브랜치에서는 branch final segment 추론이
+  영영 맞지 않으므로 이게 정상 경로다. `decide` 는 판정에 `cycle_stem`/`cycle_source`/
+  `cycle_stem_declared`/`cycle_stem_origin` 을 스탬프해서, ① 안내가 추론 사실과 선언 경로를 가리키게
+  하고 ② 어댑터가 선언 사용을 `.sage/override.jsonl` 의 `cycle_stem_declared` 로
+  **세션·stem·기원** 1회 기록하게 한다. 선언 stem 은 이미 완결된 사이클을 지목해 전 게이트를 통과시킬
+  수 있어서, 기록 실패 시 통과를 허용하지 않는다(`block_cycle_stem_audit_failure`).
+  표시·감사는 **읽은 자리만** 말한다(`SAGE_CYCLE_STEM 선언` / `.sage/cycle.json 선언`) — 기원을 빼면
+  env 가 이기는 상태에서 화면이 "파일 선언" 이라 적어 확정적으로 거짓이 된다.
+- 선언 파일은 `sage install` 의 `/.sage/*` 관리 블록이 덮어 커밋되지 않고, 편집 도구로 직접 쓰는 것은
+  generated-artifact write guard 가 차단한다(에이전트가 완결 사이클을 지목해 자기 게이트를 끄는 경로).
+  파일이 있으나 읽지 못하면(손상·스키마 위반) **선언 부재로 degrade 하되** 그 사실을
+  `additionalContext` 로 표면화한다 — 부재와 손상이 똑같이 조용하면 1바이트만 잘라도 아래 완결 사이클
+  차단이 사라진다.
 - core `decide`: ① missing/conflicting/ambiguous binding은 `block_cycle_binding`
+  ①-b 결속된 stem 이 완결된 사이클(그 stem 의 report phase 문서 존재 **그리고**
+  approve phase 문서의 `Final Status` = approve marker)이면 새 소스 편집을 `block_cycle_closed` 로
+  차단한다. 완결 사이클은 00~06 이 다 갖춰져 모든 게이트를 통과하므로, 장수 브랜치에서 새 작업이
+  계획 문서 없이 조용히 진행되는 것을 막는 것이 목적이다. report 문서는 stem 결속을 요구한다 —
+  아무 06 이나 세면 저장소에 06 이 하나라도 있는 순간 모든 stem 이 완결이 된다.
+  **면제는 "변경이 1건 이상이고 전부 phase 문서" 하나뿐이다**(끝난 사이클의 05·06 정정은 정상 작업).
+  결속 출처는 면제 조건이 아니다 — env 선언은 셸과 함께 죽어 무해했지만 파일 선언은 세션을 넘겨
+  살아남아 오래된 선언이 이 차단을 통째로 끈다. 면제를 `any()` 로 쓰면 소스 편집에 문서 한 줄만 섞어
+  차단을 해제할 수 있고, 변경 0건(어댑터 추출 실패)도 면제가 아니다. 차단 사유는 결속 출처를
+  갈라 말한다(`선언된` / `브랜치에서 추론한`) — 낡은 선언 때문에 막힌 사용자를 브랜치로 보내면
+  해제 안내가 무효가 된다. 대상 여부는 경로 tier 가 아니라 **계산 위험도**로 갈리므로,
+  세션 위험도 선언(`declared_max`)이 L0 경로를 상향시키면 문서 편집도 걸린다.
+  두 조건 중 하나라도 판정 불가면 완결로 보지 않는다 — 여기서 fail-closed 하면 정상 진행을 막는다.
+  승인 조건이 실제로 거르는 것은 "작성 중인 06" 이 아니라(report 게이트가 승인 없는 06 작성을 이미
+  막으므로 `06 존재 ⟹ 승인` 이다) 게이트 설치 전 06·override 06·사후 승인 취소다.
+  이 차단은 override 가능하다(탈출구가 선언·신규 사이클로 명확).
   ② Phase 00 위험도 게이트: Phase 01-06 또는 L1/L2/L3 비-phase 변경 전에 current stem의 Phase 00을
   exact 선택하고 fence 밖 `Risk Level: L1|L2|L3` 선언을 정확히 한 개 요구한다. 누락·placeholder·malformed·
   duplicate·읽기 불가·ambiguous는 `block_cycle_risk_declaration`이다. 현재 `classify_risk` 결과

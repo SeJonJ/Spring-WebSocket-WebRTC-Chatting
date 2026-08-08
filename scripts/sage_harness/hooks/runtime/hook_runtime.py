@@ -29,6 +29,7 @@ if HOOKS_DIR not in sys.path:
     sys.path.insert(0, HOOKS_DIR)
 import cycle_binding
 import checklist_contract
+import cycle_state
 
 
 class ProfileLoadError(RuntimeError):
@@ -350,7 +351,7 @@ def _record_declared_cycle_stem(hook_id, root, decision, session_id):
         import override_audit
         override_audit.record_cycle_stem_declaration(
             root, hook_id, decision.get("cycle_stem") or "", session_id,
-            status=decision.get("status") or "")
+            status=decision.get("status") or "", origin=decision.get("cycle_stem_origin") or "")
         return decision
     except Exception as exc:
         if (decision or {}).get("status") == "block":
@@ -437,9 +438,13 @@ def run_pre_implementation_gate(io, root, core_dir, raw_text):
     rel = make_rel(root)
     changes = io.extract_changes(raw, rel)       # ← 런타임별 (file_path vs apply_patch)
     declared = io.read_declared_level(raw, root)  # ← 런타임별 ($host/logs)
+    # 선언은 env(SAGE_CYCLE_STEM) 와 `<root>/.sage/cycle.json` 두 통로다. 기원을 함께 실어야
+    # 표시·감사가 "어느 통로로 읽었는지" 를 갈라 말할 수 있다 — env 가 이기는데 화면이
+    # "파일 선언" 이라고 적으면 확정적으로 거짓이 된다.
+    cycle_stem, cycle_origin, cycle_error = cycle_state.resolve_stem(root)
     event = {"hook_id": hid, "hook_event_name": "PreToolUse", "runtime": io.RUNTIME,
              "session_id": raw.get("session_id", "") or "", "branch": resolve_branch(root, ""),
-             "cycle_stem": os.environ.get("SAGE_CYCLE_STEM", ""),
+             "cycle_stem": cycle_stem, "cycle_stem_origin": cycle_origin,
              "declared_max": declared, "changes": changes}
     snapshot = build_snapshot(profile, root, rel)
     feedback_state = _build_feedback_state(profile, root, changes)
@@ -454,6 +459,10 @@ def run_pre_implementation_gate(io, root, core_dir, raw_text):
     decision = _record_acceptance_waiver_uses(hid, root, decision)
     # override 우회보다 먼저 기록한다 — 우회로 통과하든 게이트가 통과시키든 선언 사실은 남아야 한다.
     decision = _record_declared_cycle_stem(hid, root, decision, event.get("session_id") or "")
+    # 선언 파일이 있는데 못 읽은 상태는 선언 부재로 degrade 하되 반드시 보이게 한다. 부재·손상이
+    # 똑같이 조용하면 파일을 1바이트만 잘라도 완결 사이클 차단이 사라지고 아무도 모른다.
+    if cycle_error and isinstance(decision, dict):
+        decision["cycle_declaration_error"] = cycle_error
     if _maybe_override(hid, root, decision, changes):   # P1-5: 활성 override 면 BLOCK 우회(감사 기록)
         return 0
     return io.render_gate(decision, profile)     # ← 런타임별 채널/포맷/exit
@@ -517,6 +526,25 @@ def run_capture_declared_risk(io, root, core_dir, raw_text):
             io.render_declared_capture(decision["level"])
         except Exception:
             pass
+    elif decision.get("message_key") == "risk_declaration_ambiguous":
+        # 기각을 알리는 것뿐이므로 상태 파일은 건드리지 않는다. UserPromptSubmit 은 exit 0 stdout 이
+        # 컨텍스트로 올라가는 이벤트라 양 런타임에서 실제로 보인다.
+        try:
+            io.render_declared_ambiguous()
+        except Exception:
+            pass
+    elif decision["action"] == "clear":
+        # 잘못 잡힌 선언의 유일한 탈출구다. 파일이 없어도 성공으로 안내한다 — 사용자가 원한
+        # 최종 상태(선언 없음)는 어느 쪽이든 같다.
+        path = os.path.join(log_dir, decision["state_file"])
+        try:
+            existed = os.path.exists(path)
+            if existed:
+                os.remove(path)
+            io.render_declared_clear(existed)
+        except Exception as exc:
+            print(f"[{hid}] 선언 해제 실패 — 수동으로 {path} 를 지우세요: "
+                  f"{type(exc).__name__}: {exc}", file=sys.stderr)
     return decision["exit_code"]
 
 
@@ -677,11 +705,13 @@ def _load_project_core(root, hook_id, expected_version):
 def _project_snapshot(core, event, profile, root):
     planner = getattr(core, "plan_reads", None)
     if planner is None:
-        return {}
+        # plan_reads 는 선택이지만 snapshot 형태는 선택이 아니다. 여기서 {} 를 돌려주면
+        # core 의 snapshot["files"] 가 KeyError 로 죽고 catch-all 이 그것을 내부 버그로 안내한다.
+        return {"glob_results": {}, "files": {}}
     reads = planner(event, profile)
-    if not isinstance(reads, dict) or set(reads) - {"globs"}:
+    if not isinstance(reads, dict) or set(reads) != {"globs"}:
         raise ProjectHookError("project plan_reads must return {'globs': [...]} only")
-    globs = reads.get("globs", [])
+    globs = reads["globs"]
     if not isinstance(globs, list):
         raise ProjectHookError("project plan_reads.globs must be a list")
     root_real = os.path.realpath(root)

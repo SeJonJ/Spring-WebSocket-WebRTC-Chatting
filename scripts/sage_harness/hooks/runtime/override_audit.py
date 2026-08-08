@@ -360,8 +360,12 @@ def _dedupe_scope(session_id, epoch):
     return sid if sid else "date:" + time.strftime("%Y-%m-%d", time.gmtime(epoch))
 
 
-def record_cycle_stem_declaration(root, gate, stem, session_id, status="", now=None):
-    """env(SAGE_CYCLE_STEM) 로 선언된 cycle stem 이 게이트 판정에 쓰인 사실을 기록 → 레코드, 중복이면 None.
+def record_cycle_stem_declaration(root, gate, stem, session_id, status="", now=None, origin=""):
+    """선언된 cycle stem 이 게이트 판정에 쓰인 사실을 기록 → 레코드, 중복이면 None.
+
+    통로가 둘이다 — env(`SAGE_CYCLE_STEM`) 와 `.sage/cycle.json`. 기원은 기록에도 **dedupe 키에도**
+    들어간다. 빼면 한 세션에서 두 통로를 쓸 때 먼저 걸린 쪽만 남아, 세션을 넘겨 살아남는 파일 선언이
+    일회성 env 선언으로 기록된다 — 구분하려고 넣은 필드가 정확히 뒤집힌다.
 
     선언 자체는 막지 않는다 — 장수 브랜치에서는 브랜치 leaf 추론이 영영 맞지 않으므로 이게 정상 경로다.
     문제는 흔적이었다: 이미 완결된 사이클의 stem 을 지목하면 phase 문서와 리뷰 증거가 모두 갖춰진
@@ -374,16 +378,16 @@ def record_cycle_stem_declaration(root, gate, stem, session_id, status="", now=N
     선언을 영구히 dedupe 해서, 기록했다고 믿는 채로 실제로는 기록되지 않는 상태가 된다.
     """
     t = time.time() if now is None else now
-    key = (gate, stem, _dedupe_scope(session_id, t))
+    key = (gate, stem, origin or "", _dedupe_scope(session_id, t))
     for r in read_records(root):
         if r.get("event") != "cycle_stem_declared":
             continue
-        if (r.get("gate"), r.get("cycle_stem"),
+        if (r.get("gate"), r.get("cycle_stem"), r.get("origin") or "",
                 _dedupe_scope(r.get("session_id"), r.get("epoch") or 0)) == key:
             return None
     rec = {"event": "cycle_stem_declared", "ts": _iso(t), "epoch": int(t), "gate": gate,
-           "cycle_stem": stem, "session_id": session_id or "", "status": status,
-           "user": os.environ.get("USER") or "unknown"}
+           "cycle_stem": stem, "origin": origin or "", "session_id": session_id or "",
+           "status": status, "user": os.environ.get("USER") or "unknown"}
     _append(audit_path(root), rec)
     return rec
 

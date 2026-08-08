@@ -81,6 +81,24 @@ def render_declared_capture(level):
     }, ensure_ascii=False))
 
 
+def render_declared_ambiguous():
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": messages.declared_ambiguous_text(RUNTIME)
+        }
+    }, ensure_ascii=False))
+
+
+def render_declared_clear(existed=True):
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": messages.declared_clear_text(RUNTIME, existed)
+        }
+    }, ensure_ascii=False))
+
+
 # --- post-tool-logger IO (Codex: apply_patch 본문 다중파일 + Move) ---
 def logger_tool_name(raw):
     return "apply_patch"
@@ -105,14 +123,31 @@ def extract_logged_changes(raw, rel):
     return changes
 
 
-# --- pre-phase4-checklist-gate IO (Codex: apply_patch Add|Update 만) ---
+# --- pre-phase4-checklist-gate IO (Codex: 파일 블록 단위 — 문서가 "생기는" 경로만) ---
 def extract_phase4_changes(raw, rel):
-    command = (raw.get("tool_input") or {}).get("command") or ""
+    # Move 는 직전 Update 블록의 속성이다: 문서는 목적지에만 생기고 원본 경로에는 아무것도
+    # 쓰이지 않는다. 원본을 남기면 04-analyze 밖으로 빼는 작업이 Phase 04 작성으로 오인돼
+    # 차단되고(J-10 실측), 목적지를 빠뜨리면 이동만으로 게이트를 지나간다(J-8 실측).
+    # Delete 는 증거를 요구할 대상이 아니라 제외하되 블록 경계는 리셋한다.
     changes = []
-    for line in command.splitlines():
+    current = None   # Move 가 대체할 수 있는 직전 Add|Update 블록
+    for line in ((raw.get("tool_input") or {}).get("command") or "").splitlines():
         m = re.match(r"^\*\*\* (Add|Update) File: (.+)$", line)
         if m:
-            changes.append({"path": rel(m.group(2).strip()), "op": m.group(1).lower()})
+            current = {"path": rel(m.group(2).strip()), "op": m.group(1).lower()}
+            changes.append(current)
+            continue
+        if re.match(r"^\*\*\* Delete File: ", line):
+            current = None
+            continue
+        move = re.match(r"^\*\*\* Move to: (.+)$", line)
+        if move:
+            if current is not None:
+                current["path"] = rel(move.group(1).strip())
+                current["op"] = "move"
+                current = None
+            else:
+                changes.append({"path": rel(move.group(1).strip()), "op": "move"})
     return changes
 
 

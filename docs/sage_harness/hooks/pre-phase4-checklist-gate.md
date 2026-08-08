@@ -11,8 +11,10 @@ runtime_bindings:
 
 ## runtime_bindings
 - claude: { event: PreToolUse, matcher: "Write|Edit|MultiEdit", input: tool_input.file_path }
-- codex:  { event: PreToolUse, matcher: "apply_patch", input: command Add/Update targets }
-- output: block=메시지+exit2 (claude stdout / codex stderr), warn·ok=메시지+exit0 (codex hookSpecificOutput)
+- codex:  { event: PreToolUse, matcher: "apply_patch", input: 파일 블록 단위 — Add/Update targets,
+  Move 는 목적지로 대체(원본 미포함 — move-out 오탐 방지), Delete 제외 }
+- output: block=메시지+exit2 (양 host stderr — host 가 차단 사유를 읽는 채널),
+  warn·ok=메시지+exit0 + hookSpecificOutput.additionalContext (양 host)
 
 ## canonical (IO-bound gate — 2단계 pure core)
 scripts/sage_harness/hooks/pre_phase4_checklist_gate_core.py
@@ -24,6 +26,7 @@ scripts/sage_harness/hooks/pre_phase4_checklist_gate_core.py
 ## adapter_contract
 - contract_version: "1"
 - 표준 event: { hook_id, hook_event_name, runtime, session_id, changes:[{path(rel), op}] }
+  op: claude=write · codex=add|update|move (Move 는 목적지만 — 원본은 문서가 생기는 경로가 아님, Delete 제외)
 - fs_snapshot: { glob_results: {glob: [path...]}, files: {path: text|null} }  (root-상대 경로)
 - decision: { kind, status(block|warn|ok|skip), exit_code, base, total_unchecked, evidence[], message_key }
 - adapter 책임: 입력추출(file_path / apply_patch) + fs_adapter(glob/read→snapshot) + 출력렌더 + 경로바인딩
@@ -34,8 +37,8 @@ scripts/sage_harness/hooks/pre_phase4_checklist_gate_core.py
 - suffixes: PDCA 산출물 네이밍 = framework 기본(DEFAULT_SUFFIXES) + profile override 가능
 
 ## reverse_extract 분류
-- structural_io_adapter: file_path 단일 vs apply_patch Add/Update targets
-- output_adapter: WARN/OK 렌더(claude plain vs codex hookSpecificOutput), block 채널
+- structural_io_adapter: file_path 단일 vs apply_patch 파일 블록(Move 는 목적지로 대체)
+- output_adapter: WARN/OK 렌더(양 host hookSpecificOutput — 문구 표기만 런타임별), block 채널
 - token_adapter: PROJECT_ROOT env, 경로
 - profile_bound: 트리거/타겟/suffixes
 - algorithm(공유, core): base 추출(suffix 반복제거), find_match(exact우선+prefix양방향), 미완료 스캔, 판정
@@ -43,6 +46,6 @@ scripts/sage_harness/hooks/pre_phase4_checklist_gate_core.py
 - read_error: evidence 추적만, block 판정엔 미반영(원본 동작 유지)
 
 ## tests
-scripts/sage_harness/hooks/tests/test_pre_phase4_checklist_gate.py (9 PASS)
+scripts/sage_harness/hooks/tests/test_pre_phase4_checklist_gate.py (15 PASS)
 - core(in-memory snapshot): ok/warn/block(03·backend)/suffix/exact우선/read_error
-- adapter(temp tree): claude·codex block·ok 동일 exit
+- adapter(temp tree): claude·codex block·ok 동일 exit, Move 로 생긴 04 문서 트리거, block 사유의 채널

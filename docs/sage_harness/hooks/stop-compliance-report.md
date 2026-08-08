@@ -16,7 +16,8 @@ enforce 미설정(기본 off)이면 종전대로 항상 통과한다.
 ## runtime_bindings
 - claude: { event: Stop, input: .claude/logs/session-{today}.jsonl, output: 파일쓰기 + report path(plain) }
 - codex:  { event: Stop, input: .codex/logs/session-{today}.jsonl, output: 파일쓰기 + 통과 시 무출력 / 차단 시 decision:block }
-- block wire: Claude=exit 2. Codex=exit 0 + 단일 JSON `decision:block`(reason에 compliance 경로 포함).
+- block wire: Claude=exit 2 + 사유를 stderr 로(리포트 저장 알림은 stdout 유지).
+  Codex=exit 0 + 단일 JSON `decision:block`(reason에 compliance 경로 포함).
   Codex Stop은 hookSpecificOutput.additionalContext를 허용하지 않아 단독·결합 모두 hook failure가 된다.
 
 ## canonical (부분추출 — 공유 집계만)

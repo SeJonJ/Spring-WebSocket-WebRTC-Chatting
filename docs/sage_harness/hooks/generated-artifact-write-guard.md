@@ -24,11 +24,17 @@ scripts/sage_harness/hooks/generated_artifact_write_guard_core.py
 
 ## enforcement
 - block(exit 2): `*.claude/{agents,hooks,skills}/*`, `*.codex/{agents,hooks,skills}/*`,
-  repo의 `.mcp.json`, CORE framework 문서(`AGENT_GUIDE.md`, `CLAUDE.md`, `CODEX.md`, `AGENTS.md`)
+  repo의 `.mcp.json`, CORE framework 문서(`AGENT_GUIDE.md`, `CLAUDE.md`, `CODEX.md`, `AGENTS.md`),
+  사이클 선언 상태 `*/.sage/cycle.json`
 - pass(exit 0): 위 소유 경계 밖의 경로. 특히 `docs/sage_harness/**`·`scripts/sage_harness/**` 소스
 - 경로 없음/파싱 실패 → pass (가드 대상 아님, 조용한 오작동 방지)
-- 예외 처리 불필요: `sage generate` CLI 는 편집도구(Write/Edit/apply_patch)를 거치지 않으므로
-  애초에 이 PreToolUse 가드에 걸리지 않는다 (설계 §5.6 G3)
+- 예외 처리 불필요: `sage generate`·`sage cycle` CLI 는 편집도구(Write/Edit/apply_patch)를 거치지
+  않으므로 애초에 이 PreToolUse 가드에 걸리지 않는다 (설계 §5.6 G3)
+- `.sage/cycle.json` 은 **경로 꼬리**로 판정한다(`.mcp.json` 처럼 basename 으로 보면 프로젝트의 아무
+  `cycle.json` 이나 차단된다). 게이트가 "이 편집이 어느 사이클인가" 를 읽는 자리라, 편집 도구로 직접
+  쓸 수 있으면 완결된 사이클을 지목해 자기 게이트를 끌 수 있다 — env 통로에서는 불가능했고 파일로
+  옮기면서 생긴 구멍이다. matcher 가 편집 도구뿐이라 Bash 는 여전히 덮이지 않지만, Bash 를 가진 주체는
+  소스 자체를 게이트 없이 쓸 수 있으므로 새 레버가 아니다.
 
 ## CORE 부트스트랩 렌더 차단 + eligibility-aware 안내 (exit 2)
 CORE hand-shipped 렌더(CORE skill·로스터 에이전트)도 다른 산출물과 동일하게 block 한다. 과거엔

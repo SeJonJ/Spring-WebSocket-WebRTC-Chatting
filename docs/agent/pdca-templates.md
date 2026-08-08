@@ -348,7 +348,9 @@ as "phase documents missing" even though all of them exist.
 Declare the cycle instead of renaming the branch:
 
 ```bash
-export SAGE_CYCLE_STEM=<phase-document-basename>   # e.g. sage_project_profile_refresh
+sage cycle use <phase-document-basename>   # e.g. sage_project_profile_refresh
+sage cycle show                            # what is declared, and where it was read
+sage cycle clear                           # release it when the cycle ends
 ```
 
 This does not weaken the gate — it supplies the cycle identity the gate could not
@@ -358,8 +360,23 @@ whose evidence is fully in place, each session's first use is recorded in
 `.sage/override.jsonl` as a `cycle_stem_declared` entry; if that log cannot be
 written, the gate blocks rather than passing unaudited.
 
-Export it per shell session. Do not wire it into a settings file: a stored value
-silently binds every later non-phase edit to a stale cycle.
+The declaration is a single file, `<project-root>/.sage/cycle.json`, kept out of
+version control by the `/.sage/*` block that `sage install` writes into
+`.gitignore`. `sage cycle use` prints the absolute root and file it wrote, checks
+that git actually ignores it, and warns when the compiled profile the gate reads
+is absent — check that output rather than assuming the declaration landed where
+the gate looks.
+
+Do not write the file with an editor; the write guard blocks that, because a
+hand-planted declaration can point at a completed cycle and switch the gate off.
+
+**Release it when the cycle ends.** Unlike a shell export, the declaration
+survives every session, and a stale one binds new work to a finished cycle. The
+gate blocks that case and names `sage cycle clear` in the block message.
+
+`SAGE_CYCLE_STEM=<stem>` still works and takes precedence over the file. Prefer it
+only where a single process needs the stem, such as CI; in an interactive shell the
+export outlives the cycle with none of the file's visibility.
 
 Write Phase 06 only after all 00–05 updates have completed. A single change that
 co-modifies 06 with any other phase is blocked because the pre-write evidence snapshot

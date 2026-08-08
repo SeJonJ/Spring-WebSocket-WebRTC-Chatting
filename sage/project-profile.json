@@ -1,6 +1,6 @@
 {
   "sage": {
-    "required_version": "0.9.77"
+    "required_version": "0.9.79"
   },
   "project": {
     "name": "ChatForYou v2",

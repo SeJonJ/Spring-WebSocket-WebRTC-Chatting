@@ -155,9 +155,12 @@ For edits outside phase documents there is no path to bind to, so the stem is
 inferred from the git branch's last segment. On a long-lived branch shared by many
 cycles that inference never matches, and governed edits are blocked as "phase
 documents missing" while the documents exist. Declare the cycle explicitly with
-`export SAGE_CYCLE_STEM=<phase-document-basename>`; the gate then enforces every
-requirement against that stem, and the first use in a session is recorded in
-`.sage/override.jsonl`. See `docs/agent/pdca-templates.md`.
+`sage cycle use <phase-document-basename>` (`sage cycle show` / `sage cycle clear`
+to inspect and release it); the gate then enforces every requirement against that
+stem, and the first use in a session is recorded in `.sage/override.jsonl`. The
+declaration outlives the shell, so release it when the cycle ends — a stale
+declaration blocks the next cycle instead of the one you meant. See
+`docs/agent/pdca-templates.md`.
 
 ### Pre-implementation declaration
 

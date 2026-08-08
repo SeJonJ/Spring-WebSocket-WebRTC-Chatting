@@ -1,12 +1,14 @@
 """io_claude — pre-implementation-gate 의 Claude 전용 IO (입력추출/declared/렌더). R1 분리.
 
 런타임이 진짜 다른 부분만: Write/Edit/MultiEdit 입력추출, .claude/logs declared 읽기,
-stdout 평문 렌더(채널). 본문 로직(snapshot/전략/decide)은 hook_runtime 공유,
+채널 렌더(BLOCK=stderr / PreToolUse 비차단=hookSpecificOutput JSON / UserPromptSubmit=평문).
+본문 로직(snapshot/전략/decide)은 hook_runtime 공유,
 사용자 문구는 messages 모듈 공유(5-3 — io_codex 와의 테이블 중복 제거).
 """
 import json
 import os
 import re
+import sys
 
 import messages
 
@@ -49,17 +51,45 @@ def read_declared_level(raw, root):
         return None
 
 
+def _pre_tool_context(text):
+    """PreToolUse 비차단 메시지의 컨텍스트 봉투.
+
+    Claude Code 는 exit 0 hook 의 평문 stdout 을 디버그 로그에만 쓴다 — 컨텍스트로 승격되는
+    이벤트는 UserPromptSubmit/UserPromptExpansion/SessionStart 뿐이다. 그래서 PreToolUse 는
+    hookSpecificOutput.additionalContext 로 실어야 모델과 사용자에게 닿는다.
+    ensure_ascii=False: 이스케이프되면 디버그 로그에서 한글을 읽을 수 없다.
+    """
+    return json.dumps({"hookSpecificOutput": {
+        "hookEventName": "PreToolUse", "additionalContext": text}}, ensure_ascii=False)
+
+
 def render_gate(decision, profile):
-    # 문구는 messages 공유(SSOT), 채널은 Claude=stdout 평문.
+    # 문구는 messages 공유(SSOT), 채널만 여기 소유.
+    # BLOCK 은 stderr 평문 — Claude Code 는 exit 2 의 차단 사유를 stderr 에서 읽고 stdout 을
+    # 무시하므로, 여기에 JSON 을 얹으면 무의미하고 형식 오류 시 진단만 흐려진다.
     m = messages.gate_text(decision, profile, RUNTIME)
-    if m:
-        print(m)
+    if not m:
+        return decision["exit_code"]
+    if decision["status"] == "block":
+        print(m, file=sys.stderr)
+    else:
+        print(_pre_tool_context(m))
     return decision["exit_code"]
 
 
 def render_declared_capture(level):
-    # Claude 출력 프로토콜: plain text (stdout = additionalContext)
+    # UserPromptSubmit 은 exit 0 평문 stdout 이 그대로 컨텍스트가 되는 세 이벤트 중 하나라
+    # 봉투가 필요 없다(PreToolUse 와 다르다). JSON 도 파싱되지만 바꿀 이유가 없으므로
+    # 기존 동작을 유지한다 — 이 사이클의 범위는 '닿지 않는 메시지'를 닿게 하는 것이다.
     print(messages.declared_capture_text(level, RUNTIME))
+
+
+def render_declared_ambiguous():
+    print(messages.declared_ambiguous_text(RUNTIME))
+
+
+def render_declared_clear(existed=True):
+    print(messages.declared_clear_text(RUNTIME, existed))
 
 
 # --- post-tool-logger IO (Claude: tool_input.file_path 단일) ---
@@ -100,7 +130,10 @@ def render_phase4(decision):
     else:
         msg = ""
     if msg:
-        print(msg)
+        if s == "block":
+            print(msg, file=sys.stderr)
+        else:
+            print(_pre_tool_context(msg))
     return dec["exit_code"]
 
 
@@ -111,8 +144,10 @@ def attach_policy_results(model, profile, entries, raw_text, kc_result):
 
 
 def render_stop_result(today, block_reason=None):
+    # 저장 알림은 차단 사유가 아니므로 stdout 유지. 차단 사유만 stderr — Stop hook 도
+    # exit 2 일 때 host 가 읽는 채널은 stderr 다.
     print(messages.report_saved_text(HOST_DIR, today, RUNTIME))
     if block_reason:
-        print(f"[stop-compliance-report] ❌ {block_reason}")
+        print(f"[stop-compliance-report] ❌ {block_reason}", file=sys.stderr)
         return 2
     return 0
