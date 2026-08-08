@@ -8,8 +8,10 @@ filesystem/clock/environment 에 직접 접근하지 않는다. 읽을 경로는
 런타임이 읽어 snapshot['files'] 로 넘긴다.
 """
 
+import hashlib
 import posixpath
 import re
+import unicodedata
 
 CONTRACT_VERSION = "1"
 
@@ -24,6 +26,12 @@ PHASE4_DIR = "plan_docs/04-analyze"
 # content keyword 와 매칭돼 이 파일 자신의 위험도가 올라간다.
 LEGACY_CYCLES_FILE = "sage/chatforyou-legacy-cycles.txt"
 
+# rollout 스냅샷은 얼어 있어야 한다. 고정하지 않으면 면제 목록에 stem 을 먼저 한 번 추가하고
+# (그 변경 자체는 Phase 04 가 아니라 이 게이트를 지나간다) 다음 변경에서 그 Phase 04 를 쓰는
+# 두-단계 우회가 성립한다. 파싱된 stem 집합의 digest 라 주석·순서·공백 정리는 깨지 않고
+# 집합이 바뀔 때만 어긋난다.
+LEGACY_CYCLES_DIGEST = "2eb0a760c28a71aaa59eddfa53f43d3624c886e813ba96018c927802c0599b1d"
+
 # 선언 이름 → 그 컴포넌트가 REQUIRED 일 때 있어야 하는 구현 문서 디렉터리.
 COMPONENTS = (
     ("Backend", "springboot-backend/plan_docs"),
@@ -34,9 +42,13 @@ COMPONENTS = (
 _SAFE_STEM = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,159}\Z")
 _FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
 _UNCHECKED_BOX = re.compile(r"^\s*[-*+]\s+\[ \]\s*(.*)$")
-_ANY_COMPONENT = re.compile(r"^Component-([A-Za-z0-9_-]+)\s*:")
+_ANY_COMPONENT = re.compile(r"^Component-([^:]*):")
 
 _KNOWN_LABELS = frozenset(label for label, _ in COMPONENTS)
+
+# 유니코드 카테고리로는 문자(Lo)·기호(So)인데 화면에는 공백으로 그려지는 것들.
+# 카테고리만 보면 "가시 문자 1개 있음" 으로 세어져 사유 검사를 그대로 통과한다.
+_BLANK_GLYPHS = frozenset("\u2800\u115f\u1160\u3164\uffa0")
 
 _MAX_EVIDENCE_LINES = 10
 
@@ -54,6 +66,12 @@ def _plain_lines(text):
         if marker:
             token = marker.group(1)
             if not in_fence:
+                # CommonMark: backtick fence 의 info string 은 backtick 을 가질 수 없다.
+                # 이걸 안 보면 ```bad` 같은 평범한 줄이 fence 를 열어 그 뒤 본문 선언 전체가
+                # 코드로 취급되고, 멀쩡한 문서가 marker 누락으로 차단된다.
+                if token[0] == "`" and "`" in raw[marker.end():]:
+                    yield number, raw
+                    continue
                 in_fence, fence_char, fence_len = True, token[0], len(token)
                 continue
             # CommonMark: closing fence 는 info string 을 가질 수 없다. 이걸 안 보면
@@ -66,10 +84,46 @@ def _plain_lines(text):
             yield number, raw
 
 
-def _legacy_stems(snapshot):
-    """allowlist 파일 → stem 집합. 파일이 없으면 빈 집합(=아무것도 면제하지 않음).
+def _canon_path(path):
+    """관할 판정용 경로 키.
 
-    없을 때 전면 skip 이 아니라 전면 검사인 이유는 파일 삭제가 곧 게이트 해제가 되면 안 되기 때문이다.
+    호스트 파일시스템의 case 동작에 판정이 좌우되면 안 된다. macOS 처럼 case 를 구분하지 않는
+    볼륨에서는 `PLAN_DOCS/04-ANALYZE/x.md` 가 관할 디렉터리와 같은 실제 경로인데, 문자열
+    그대로 비교하면 관할 밖으로 읽혀 그대로 통과한다. case 를 구분하는 볼륨에서는 반대로 별개
+    경로를 관할로 끌어들이지만 그쪽은 차단 방향이라 안전하다.
+
+    `.`·`..`·중복 구분자 정리는 런타임의 root-상대 변환이 이미 끝내고 넘긴다.
+    """
+    return (path or "").replace("\\", "/").casefold()
+
+
+def _has_visible_text(value):
+    """공백을 걷어낸 뒤 눈에 보이는 문자가 하나라도 남는가.
+
+    `strip()` 만으로 검사하면 U+200B 같은 zero-width 나 방향 제어 문자만으로 이루어진 값이
+    "사유를 적었다" 로 통과한다. 사람이 읽을 근거를 요구하는 자리라 가시성이 곧 조건이다.
+    """
+    for ch in unicodedata.normalize("NFKC", value or ""):
+        # C* = 제어·format·미할당, Z* = 각종 구분자(일반 공백 포함).
+        if unicodedata.category(ch)[0] not in ("C", "Z") and ch not in _BLANK_GLYPHS:
+            return True
+    return False
+
+
+def _readable(value):
+    """메시지에 끼워 넣기 전 제어 문자를 걷어낸다.
+
+    사유·경로·체크박스 본문은 전부 문서에서 온 텍스트다. 판정 결과를 사람이 읽는 채널이라
+    터미널 제어열이 섞여 나가면 차단 메시지를 지우고 통과처럼 보이게 덮어쓸 수 있다.
+    """
+    return "".join(ch for ch in (value or "") if unicodedata.category(ch)[0] != "C")
+
+
+def _legacy_stems(snapshot):
+    """allowlist 파일 → (stem 집합, 집합 digest).
+
+    파일이 없으면 빈 집합(=아무것도 면제하지 않음). 전면 skip 이 아니라 전면 검사인 이유는
+    파일 삭제가 곧 게이트 해제가 되면 안 되기 때문이다.
     """
     text = ((snapshot or {}).get("files") or {}).get(LEGACY_CYCLES_FILE)
     stems = set()
@@ -77,7 +131,8 @@ def _legacy_stems(snapshot):
         line = raw.strip()
         if line and not line.startswith("#"):
             stems.add(line)
-    return stems
+    digest = hashlib.sha256("\n".join(sorted(stems)).encode("utf-8")).hexdigest()
+    return stems, digest
 
 
 def _stem_of(path):
@@ -88,20 +143,23 @@ def _stem_of(path):
     return name if _SAFE_STEM.match(name) else None
 
 
-def _phase4_stem(event):
-    """이 이벤트가 건드리는 Phase 04 문서의 stem. 없거나 둘 이상이면 None(=판정 안 함).
+def _phase4_targets(event):
+    """이 이벤트의 Phase 04 대상 -> (stem 집합, 유효하지 않은 경로 목록).
 
-    둘 이상을 None 으로 두는 이유는 어느 사이클로 판정할지 고를 근거가 없기 때문이다.
+    "Phase 04 를 안 건드림" 과 "Phase 04 인데 stem 을 읽을 수 없음" 은 다르다. 후자를 묶어서
+    skip 하면 `_new.md` 같은 이름만으로 게이트 전체를 지나간다.
     """
-    stems = set()
+    stems, invalid = set(), []
     for change in (event or {}).get("changes") or []:
         path = ((change or {}).get("path") or "").replace("\\", "/")
-        if posixpath.dirname(path) != PHASE4_DIR:
+        if _canon_path(posixpath.dirname(path)) != _canon_path(PHASE4_DIR):
             continue
         stem = _stem_of(path)
         if stem:
             stems.add(stem)
-    return stems.pop() if len(stems) == 1 else None
+        elif path.lower().endswith(".md"):
+            invalid.append(path)
+    return stems, invalid
 
 
 def _base_plan_path(stem):
@@ -119,9 +177,10 @@ def plan_reads(event, profile=None):
     리터럴 경로는 자기 자신만 매칭하는 glob 이라 prefix 유사 파일이나 최근 파일 fallback 이
     끼어들 여지가 없다. 경로 안전(절대·상대탈출·symlink·root 이탈)은 런타임이 검사한다.
     """
-    stem = _phase4_stem(event)
-    if stem is None:
+    stems, _ = _phase4_targets(event)
+    if len(stems) != 1:
         return {"globs": []}
+    stem = next(iter(stems))
     globs = [LEGACY_CYCLES_FILE, _base_plan_path(stem)]
     globs.extend(_component_doc_path(directory, stem) for _, directory in COMPONENTS)
     return {"globs": globs}
@@ -154,7 +213,7 @@ def _declaration(lines, label):
         return None, None, "empty_na_reason"
     if body.startswith("N/A:"):
         reason = body[len("N/A:"):].strip()
-        if not reason:
+        if not _has_visible_text(reason):
             return None, None, "empty_na_reason"
         return "N/A", reason, None
     return None, None, "invalid_component_status"
@@ -169,8 +228,8 @@ def _unknown_component_labels(lines):
     seen = []
     for _, line in lines:
         match = _ANY_COMPONENT.match(line.strip())
-        if match and match.group(1) not in _KNOWN_LABELS:
-            seen.append(match.group(1))
+        if match and match.group(1).strip() not in _KNOWN_LABELS:
+            seen.append(match.group(1).strip() or "(빈 이름)")
     return seen
 
 
@@ -180,12 +239,14 @@ def _conflicting_paths(event, stem):
     snapshot 은 쓰기 **전** 디스크 상태라, 한 번의 patch 로 00 을 무효화하면서 04 를 쓰면
     아직 유효한 00 으로 판정돼 게이트가 통과한다. 그 조합은 판정할 수 없으므로 거부한다.
     """
-    governed = {_base_plan_path(stem)}
+    governed = {_base_plan_path(stem), LEGACY_CYCLES_FILE}
     governed.update(_component_doc_path(directory, stem) for _, directory in COMPONENTS)
+    governed = {_canon_path(path) for path in governed}
     hit = []
     for change in (event or {}).get("changes") or []:
         path = ((change or {}).get("path") or "").replace("\\", "/")
-        if path in governed:
+        # 비교는 정규화 키로, 안내는 작성자가 실제로 쓴 경로로.
+        if _canon_path(path) in governed:
             hit.append(path)
     return sorted(set(hit))
 
@@ -200,16 +261,26 @@ def _unchecked(text):
 
 
 def _block(key, stem, detail):
-    body = "\n".join("  " + line for line in detail)
-    header = "[chatforyou-dual-implementation-doc-gate/" + key + "] cycle=" + stem
+    # 정제는 조립 지점 한 곳에서만 한다 — 호출자마다 기억해야 하면 언젠가 빠진다.
+    body = "\n".join("  " + _readable(line) for line in detail)
+    header = "[chatforyou-dual-implementation-doc-gate/" + key + "] cycle=" + _readable(stem)
     return {"status": "block", "exit_code": 2, "message": header + "\n" + body}
 
 
 def decide(event, profile, snapshot):
-    stem = _phase4_stem(event)
-    if stem is None or stem in _legacy_stems(snapshot):
+    stems, invalid = _phase4_targets(event)
+    if invalid:
+        return _block("invalid_phase4_stem", "(미상)", [
+            "Phase 04 문서 이름에서 사이클을 읽을 수 없습니다: " + ", ".join(sorted(invalid)),
+            "파일명은 영숫자로 시작하고 [A-Za-z0-9._-] 만 쓸 수 있습니다.",
+        ])
+
+    stem = stems.pop() if len(stems) == 1 else None
+    if stem is None:
         return {"status": "skip", "exit_code": 0, "message": ""}
 
+    # legacy 면제보다 충돌 검사가 먼저다 — allowlist 를 같은 patch 로 고치면서 04 를 쓰면
+    # 아직 그 stem 이 남아 있는 옛 snapshot 으로 면제돼 영구 통과한다.
     conflicting = _conflicting_paths(event, stem)
     if conflicting:
         return _block("mixed_change_scope", stem, [
@@ -217,6 +288,20 @@ def decide(event, profile, snapshot):
             "함께 변경된 문서: " + ", ".join(conflicting),
             "문서를 먼저 확정한 뒤 Phase 04 를 별도 변경으로 작성하세요.",
         ])
+
+    # 면제를 실제로 쓰는 순간에만 목록의 무결성을 따진다. 목록이 없거나 이 stem 과 무관하면
+    # 어차피 전면 검사로 가므로, 파일 부재가 전면 차단으로 뒤집히지 않는다.
+    legacy, legacy_digest = _legacy_stems(snapshot)
+    if stem in legacy:
+        if legacy_digest != LEGACY_CYCLES_DIGEST:
+            return _block("legacy_allowlist_changed", stem, [
+                LEGACY_CYCLES_FILE + " 의 면제 목록이 고정된 rollout 스냅샷과 다릅니다.",
+                "기대 digest: " + LEGACY_CYCLES_DIGEST,
+                "현재 digest: " + legacy_digest,
+                "이 사이클의 면제를 신뢰할 수 없습니다. 목록 변경이 정당하다면 게이트 소스의"
+                " LEGACY_CYCLES_DIGEST 를 같은 변경에서 함께 갱신하세요.",
+            ])
+        return {"status": "skip", "exit_code": 0, "message": ""}
 
     files = (snapshot or {}).get("files") or {}
     base_path = _base_plan_path(stem)
@@ -278,4 +363,4 @@ def decide(event, profile, snapshot):
     summary = ", ".join([label + "=REQUIRED" for label, _ in required] + waived)
     return {"status": "ok", "exit_code": 0,
             "message": "[chatforyou-dual-implementation-doc-gate/gate_ok] cycle="
-                       + stem + " | " + summary}
+                       + _readable(stem) + " | " + _readable(summary)}

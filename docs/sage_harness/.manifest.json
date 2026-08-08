@@ -126,7 +126,7 @@
         "claude": "sha256:dd4155c7a38974f513d9fdadeccbe9b914e9a2dd40ab5b6002dc976699be4b56",
         "codex": "sha256:dfd1c978994ea5bd6da91b39ae7940d8daebb69b81123ebf19d153f668249687"
       },
-      "canonical_hash": "sha256:eaf95e8df3c5521a3b1f3eabd735a8e8937573090a6a60e8ac0c0f80dfba9e7a",
+      "canonical_hash": "sha256:0644a53fbc4cf41abbdf5339cf9ca1f5c08e938b86dc0bb2974c9768f6abd58e",
       "conformance": "UNKNOWN",
       "form": "core_adapter",
       "render_hash": {
@@ -134,7 +134,7 @@
         "codex": "sha256:dfd1c978994ea5bd6da91b39ae7940d8daebb69b81123ebf19d153f668249687"
       },
       "risk": [],
-      "spec_hash": "sha256:00175ddf67e2ba9a492e73a5cfd259283164b653808092081accdb82ad3f7d74",
+      "spec_hash": "sha256:827b565e3fbd165d9ff21a98b3bcac8d09e69070145cb70632b06809b6177a92",
       "unresolved": []
     },
     "hooks/chatforyou-dual-implementation-doc-gate": {
@@ -143,7 +143,7 @@
         "claude": "sha256:94e0c74f110cb4b4cad9abcf42cb6ee375cb9196c14af7ee316ab3387dbf07d8",
         "codex": "sha256:cfdaf9e4faefb4a994391354fd39963ffa460269e76c153cb44f60ce3309cbde"
       },
-      "canonical_hash": "sha256:e05daf1816e7c36eb56cbd6b0ab5d458b4e3911e1a950adf61534373e35bc5c6",
+      "canonical_hash": "sha256:df96a6caee320d3c064f490e176de8a5092bc3486e96486fa561847ab63a9c10",
       "conformance": "UNKNOWN",
       "form": "core_adapter",
       "origin": "project",
@@ -151,7 +151,7 @@
         "claude": "sha256:94e0c74f110cb4b4cad9abcf42cb6ee375cb9196c14af7ee316ab3387dbf07d8",
         "codex": "sha256:cfdaf9e4faefb4a994391354fd39963ffa460269e76c153cb44f60ce3309cbde"
       },
-      "spec_hash": "sha256:4a19f0a00a83a0c408d7f899af33336b0f84900c0d058ee5b3f20226009cd5a7"
+      "spec_hash": "sha256:1450438d382348b89e6f5bb6cf212e8307c3e32bed9b0394e889b9fcf0d848c9"
     },
     "hooks/generated-artifact-write-guard": {
       "adapter_contract_version": "2",
@@ -159,7 +159,7 @@
         "claude": "sha256:ec506d9e4e881f66ca7f8a8a4081b517c0b86d2cdafdf9e9f7f6a869e5facf93",
         "codex": "sha256:eef506545ad80aa90064de2471fce4350ce5454730d2473d988a6d1593b995de"
       },
-      "canonical_hash": "sha256:25fbc671664217bab7f45073121ae3f7b84924e75b5fc0a6f58f0b6973e8a6d0",
+      "canonical_hash": "sha256:166e6394ebf00edea3e8235fa4c42797977a414c74c91ae7dffb27c8b2158473",
       "conformance": "UNKNOWN",
       "form": "core_adapter",
       "render_hash": {
@@ -167,7 +167,7 @@
         "codex": "sha256:eef506545ad80aa90064de2471fce4350ce5454730d2473d988a6d1593b995de"
       },
       "risk": [],
-      "spec_hash": "sha256:7fd1eb07f28e8d9d38748fafc8696b2ff4b56a4b360bb1e8fae499bcacf99ac8",
+      "spec_hash": "sha256:abad0d2e9e1285b906a590a390b6cca79e91ba13fd70a23334db2b130abf89d0",
       "unresolved": []
     },
     "hooks/post-tool-logger": {
@@ -193,7 +193,7 @@
         "claude": "sha256:54e765c0dad01e4c5bce287e95c29564eb4d77995dbafa7681413090f7574486",
         "codex": "sha256:c0fd9948b1af347c797bcd460671c7a33b8a98d7cc6d8b3464773a4acf031ded"
       },
-      "canonical_hash": "sha256:c541bee4e08cc6036c4e77199ceb0e2259dfe1b3075fe4423be75ba2a277aca8",
+      "canonical_hash": "sha256:b082b60c659a489892cf8964bd422ceec884dbe0629bff126ddbf1494ea63f8f",
       "conformance": "UNKNOWN",
       "form": "core_adapter",
       "render_hash": {
@@ -201,7 +201,7 @@
         "codex": "sha256:c0fd9948b1af347c797bcd460671c7a33b8a98d7cc6d8b3464773a4acf031ded"
       },
       "risk": [],
-      "spec_hash": "sha256:57e35d36cd61301513629cfe40583d05000a2b2bc43ec61f644b94c610a4ebd1",
+      "spec_hash": "sha256:cccc699161bcb221519f9383fff76052719479cec548f6b474345317db868c81",
       "unresolved": []
     },
     "hooks/pre-phase4-checklist-gate": {
@@ -218,7 +218,7 @@
         "codex": "sha256:90a0205df56a47207e6e610a4a7f32dea87b2a42d893eef4ec59529f65e1747a"
       },
       "risk": [],
-      "spec_hash": "sha256:9d1f8a28c5cd2b44158b7bf64b8addfc2fcdb5f9152ae225d5e41978c2dabf9d",
+      "spec_hash": "sha256:efefbbe4a9eb20485cc5bc48c5d09dd6c697b31153c86714d202a43425acfa44",
       "unresolved": []
     },
     "hooks/session-start-snapshot": {
@@ -252,7 +252,7 @@
         "codex": "sha256:1e3437fb58f182aa65a1c36669f008db6c61d9ca92a3b9b6c8d1cb0e4d4e79b1"
       },
       "risk": [],
-      "spec_hash": "sha256:8ea6a8dd1d9207f27259aee7e9479725d02fa70fce5de46bf6d30c61d01d9a47",
+      "spec_hash": "sha256:7c5c1d5546c0631e123cee48ae2a01699900f9038cc43a1675f9b30ddd698e76",
       "unresolved": []
     },
     "skills/backend-convention": {
@@ -352,139 +352,139 @@
   "core_renders": {
     "claude/agents/convention-checker": {
       "base_sha256": "3925aabf6aa28abf6cc66757c64aef8c482d82226b569103f155455118a9ab50",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/agents/implementer-a": {
       "base_sha256": "4a245377b2804f93182a9150ac4a05b72ce576da033a9745c189c5e9a939112c",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/agents/implementer-b": {
       "base_sha256": "4b2753e0ba4746d153c99eeee7b613b152e24f396a192354fbf3cd237c36ff95",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/agents/leader": {
       "base_sha256": "bfdea822c6eabefa95c3f38a86a44c9316157fea7aeb106840e5add0037b3bf6",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/agents/qa": {
       "base_sha256": "5446067cf0829c1a5c967470b7153dab591f92493f052b70db122533d489d3ed",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/agents/reviewer": {
       "base_sha256": "be241674e9e087c83f89033efc413f12f4c4965f34cf1c8fa0fa8b0770b11c6f",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/framework/AGENT_GUIDE": {
-      "base_sha256": "75133abd6efdfbacdd3eef0db4b23dc5078e701579d369fbf601fbeb00a0cb62",
-      "sage_version": "0.9.77"
+      "base_sha256": "f5289561cf6bcc9d493fb6c6da2486078c3489cc5687a8e83976827740172712",
+      "sage_version": "0.9.79"
     },
     "claude/framework/CLAUDE": {
       "base_sha256": "f1ea3893407e36fc6b3b5c9db50af1230220a99e8a6896821d54a274e68b7805",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-asset": {
       "base_sha256": "5d7e5ec7a920d8906238d90bc85743c844052ede273faa0bdce219a2f6069701",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-asset-override": {
       "base_sha256": "fd74302b8f0ea9e59a2bf7bb0ea647bb92a06884a908356f7fd92d56c11fde35",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-cycle": {
       "base_sha256": "3d5bfb65e0cf50d12adb545e26a751c5d397d5aa9e4490db238f7f2ffd432f97",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-feedback": {
       "base_sha256": "9bd7ae1a868cfb191246ce61c0d592e720bfd9fb4ac24a1f641e0460010b319b",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-init": {
       "base_sha256": "d4623e7f5ee2bf748721326aaaf2a91439f7c07ee1ee90a009a5360c98aaf870",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-init-local": {
       "base_sha256": "bc9970dc12278e6c8b754b612d7620a9c74cd7d488798746fe8172a1e037066c",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-plan": {
       "base_sha256": "373dadf703739eae54dbc72b5d7b0563d776e7fb3bd2c78bd4fdc7eab0a4974c",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-profile-modify": {
       "base_sha256": "f2ce5eba8bcb7f47c57f26cab0be02c604dfa8a69d118718c47da5bb8321ecdb",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-review": {
       "base_sha256": "8502b2becd0fc878c9f8a5f6b7f27b313f854ca1195bccdbf9bf6330c9a62d88",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "claude/skills/sage-team": {
       "base_sha256": "3c81a30241db43c817e0d918f4cdf4545a64269055b82e50aaca8e15925df2e7",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "codex/agents/convention-checker": {
       "base_sha256": "84156230368c6491e8f3acf702b2a6efe6e794cf2131784d41019b7feae2d4a9",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "codex/agents/implementer-a": {
       "base_sha256": "c6c66d303872152500e0c334fc02b2e6e7f12379168a248425d6ef9b033b5a1e",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "codex/agents/implementer-b": {
       "base_sha256": "477fbe1fd724c545eb95e918505030a1bcd9203385239a89870b5574cb9f82a7",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "codex/agents/leader": {
       "base_sha256": "1d5c893cd00fb2035d42eb9c63409e1181eaed11a6b28435d483f915070e08d9",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "codex/agents/qa": {
       "base_sha256": "f8bd65e245eab1090ad702e22c5d81d81c1a214aed5a592e41bdd6a79cad8daa",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "codex/agents/reviewer": {
       "base_sha256": "b51c4827fc8e8f991ae47a456b88d6738248be987594073a7965fc518426988b",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "codex/framework/AGENTS": {
       "base_sha256": "80d150a7a1dfb3b9489b2e089999704bdd0b6f6d8b877a2725ea5b6684317d81",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     },
     "codex/framework/AGENT_GUIDE": {
-      "base_sha256": "75133abd6efdfbacdd3eef0db4b23dc5078e701579d369fbf601fbeb00a0cb62",
-      "sage_version": "0.9.77"
+      "base_sha256": "f5289561cf6bcc9d493fb6c6da2486078c3489cc5687a8e83976827740172712",
+      "sage_version": "0.9.79"
     },
     "codex/framework/CODEX": {
       "base_sha256": "03525f5b911ed4fa9cc0e6c7243235756697dea1ecc35b3d8c3013169bb7be08",
-      "sage_version": "0.9.77"
+      "sage_version": "0.9.79"
     }
   },
   "core_skill_receipts": {
     "claude": {
-      "sage_version": "0.9.77",
+      "sage_version": "0.9.79",
       "scope": "project-local"
     },
     "codex": {
-      "sage_version": "0.9.77",
+      "sage_version": "0.9.79",
       "scope": "global"
     }
   },
   "dirty_flag": false,
-  "generator_version": "0.9.77",
+  "generator_version": "0.9.79",
   "hook_runtime_hash": {
-    "claude": "sha256:6991dff9a466ef7f0fb3e926df2119c2617f8d534bdb14c5ce3d42fa2576a464",
-    "codex": "sha256:97549092cb66b9226f8766b8f229679bc8024f27a21682d96bdee49f96f4b843",
-    "shared": "sha256:71c6ed6766049e267b5f4dcb70704d55654d23397d8950cfb68e14b72d65b334"
+    "claude": "sha256:b4bffc51b3ca3d0b8cc5a62b3490af09a4c7935936d177cb4e11336edf0797a7",
+    "codex": "sha256:016abcf7122b1c23950365e17e5d7161b07347fb83aad725ee6ddeab11624f53",
+    "shared": "sha256:41243ec36f881f89d552950350ae04c510257e72fd4372811db26778b8c02b96"
   },
   "host_runtime": "codex",
-  "installed_core_content_hash": "sha256:5502c7c90aebeed36f9571beee286d3d1a0b348ab9b830928e57da83f7593065",
+  "installed_core_content_hash": "sha256:a0fe18805fbc40b6b67e4078ad723ef86491f76f7b47188c07262ee54ab3b408",
   "installed_hosts": [
     "codex",
     "claude"
   ],
   "installed_instance": true,
   "sage_source_commit": "unknown",
-  "sage_version": "0.9.77",
-  "source_core_content_hash": "sha256:5502c7c90aebeed36f9571beee286d3d1a0b348ab9b830928e57da83f7593065",
+  "sage_version": "0.9.79",
+  "source_core_content_hash": "sha256:a0fe18805fbc40b6b67e4078ad723ef86491f76f7b47188c07262ee54ab3b408",
   "template_version": "1"
 }
