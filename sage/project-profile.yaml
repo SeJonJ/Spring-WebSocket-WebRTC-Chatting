@@ -1,5 +1,5 @@
 sage:
-  required_version: 0.9.79
+  required_version: 0.9.80
 project:
   name: ChatForYou v2
   prefix: chatforyou
@@ -204,7 +204,7 @@ verification:
   commands:
     syntax: "bash scripts/test-verify-changes.sh"
     build: "bash scripts/verify-changes.sh --level L2"
-    test: "bash .claude/hooks/tests/run-tests.sh && bash .codex/hooks/tests/run-tests.sh"
+    test: "bash scripts/test-claude-hooks.sh && bash .codex/hooks/tests/run-tests.sh"
     lint: "bash scripts/test-verify-doc-mapping.sh"
   acceptance:
     enabled: true

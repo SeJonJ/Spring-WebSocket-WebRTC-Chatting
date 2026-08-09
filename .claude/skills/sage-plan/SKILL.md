@@ -97,6 +97,15 @@ line outside code fences (not the `<L1|L2|L3>` placeholder). If it is missing,
 unfilled, malformed, or duplicated, block and ask the leader to repair Phase 00 before
 handoff. Later-phase and governed source writes fail closed without this declaration.
 
+After all stem and risk checks pass, declare the verified identity:
+
+```bash
+sage cycle set <stem>
+```
+
+Do not declare before these checks. If the command reports that `SAGE_CYCLE_STEM`
+still wins, surface that warning and resolve the environment declaration before handoff.
+
 ## Step 4 — Report ownership map
 
 Present the ownership map to the user:

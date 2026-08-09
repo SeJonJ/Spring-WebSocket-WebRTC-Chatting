@@ -50,7 +50,20 @@ Identify the **single cycle** by its plan-doc stem (the feature name `/sage-plan
 used). Require every 00–06 markdown basename and its exactly-one `Cycle-Stem`
 declaration to equal that stem. Match every phase doc and audit run to it — ignore stale
 docs from other cycles and never use recency as identity. Missing/conflicting/ambiguous
-stems are a hard stop. Then find the first incomplete stage using **evidence anchors**, not bare
+stems are a hard stop.
+
+Only after that hard stop passes, reconcile the machine-local declaration before
+choosing a resume point:
+
+```bash
+sage cycle show
+sage cycle set <stem>   # only when show does not report this verified stem
+```
+
+Do not set a stem before identity validation. If `SAGE_CYCLE_STEM` wins, surface the
+CLI warning and require `unset SAGE_CYCLE_STEM` when it names another cycle.
+
+Then find the first incomplete stage using **evidence anchors**, not bare
 file existence:
 
 - **03 complete** = pre-code ownership/checklist exists, implementation files exist for
@@ -312,6 +325,17 @@ closed loop-audit run for this cycle, and **both** closing captures are accounte
 - `sage retro` has run, and — when it wrote a note — that note passes
   `sage retro --check … --run-id <RUN_ID>`; otherwise 06 records why it was skipped (vault
   disabled counts). A note left as the blank template does not count as retro having run.
+
+After every required write-back, retro check, phase-boundary snapshot, and closing gate
+check succeeds, release the file declaration immediately before reporting `## Done`:
+
+```bash
+sage cycle clear
+```
+
+Do not clear on red verification, `BLOCKED`, or `FAIL`; the unfinished cycle must remain
+resumable. Relay the command output. When an environment declaration still wins, tell the
+user to run `unset SAGE_CYCLE_STEM` because `clear` removes only `.sage/cycle.json`.
 
 Report to the user:
 - per-phase outcome + the recorded review `run_id`;

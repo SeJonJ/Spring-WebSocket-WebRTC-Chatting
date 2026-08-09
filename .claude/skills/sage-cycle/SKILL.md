@@ -23,6 +23,21 @@ re-drives orchestration — those belong to `/sage-plan` and `/sage-team`. SAGE 
 owns every deterministic gate (`pre-implementation-gate`, `verify-changes`,
 `sage review-loop` audit, the 06←05 report←approve backstop).
 
+This umbrella does not run `sage cycle set` or `sage cycle clear` directly. The
+ownership is deliberate and complete:
+
+- `/sage-plan` runs `set` only after the 00–02 basename, `Cycle-Stem`, and risk
+  declarations have passed validation.
+- `/sage-team` runs `show` and reconciles `set` after resume context and cycle identity
+  validation, then runs `clear` only after write-back, retro, snapshots, and closing
+  gates have completed.
+- `BLOCKED`, `FAIL`, or red verification retains the declaration for resume. An
+  environment declaration also survives file `clear`; inspect with `sage cycle show`
+  and remove it with `unset SAGE_CYCLE_STEM` when appropriate.
+
+Do not duplicate those calls here. In Step 4, relay whether sage-team cleared the file
+declaration or retained it, and whether an environment declaration remains effective.
+
 > Prefer the sub-skills directly for partial or resume work: `/sage-plan` when you
 > only need the plan, `/sage-team` to resume 03–06 on an existing plan. Use
 > `/sage-cycle` when you want the whole thing driven from one call.

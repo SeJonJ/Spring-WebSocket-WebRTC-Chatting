@@ -41,7 +41,7 @@ def _inferred_stem(decision):
 
 def _declare_hint(stem):
     return (f"cycle stem 을 브랜치 leaf `{stem}` 에서 추론했습니다 — 지금 사이클이 이게 아니면 "
-            f"`sage cycle use <stem>` 으로 선언하세요(장수 브랜치에서는 필수, "
+            f"`sage cycle set <stem>` 으로 선언하세요(장수 브랜치에서는 필수, "
             f"CI 처럼 프로세스 1회용이면 `export SAGE_CYCLE_STEM=<stem>`, "
             f".sage/override.jsonl 에 감사 기록)")
 
@@ -69,7 +69,7 @@ def _cycle_binding_hint(decision):
     source = decision.get("cycle_source") or []
     if source and "branch-leaf" not in source:
         return f"{_BINDING_HINT}. {_CLEAR_HINT}"
-    return (f"{_BINDING_HINT}. 비-phase 편집이면 `sage cycle use <stem>` 으로 사이클을 지정하세요"
+    return (f"{_BINDING_HINT}. 비-phase 편집이면 `sage cycle set <stem>` 으로 사이클을 지정하세요"
             f"(CI 는 `export SAGE_CYCLE_STEM=<stem>`). {_CLEAR_HINT}")
 
 
@@ -105,7 +105,7 @@ def _cycle_origin_label(decision):
 
     선언 통로가 둘이라 "선언" 한 마디로 뭉치면 안 된다 — env 가 파일을 이기는 상태에서 화면이
     "파일 선언" 이라고 적으면 확정적으로 거짓이다. 반대 방향도 같다.
-    또 "누가 `sage cycle use` 로 선언했다" 는 확인 불가능한 단언이라 하지 않는다. 선언 파일은
+    또 "누가 `sage cycle set` 으로 선언했다" 는 확인 불가능한 단언이라 하지 않는다. 선언 파일은
     프로젝트 안에 있어 무엇이든 직접 쓸 수 있고, 게이트가 아는 것은 읽은 자리뿐이다.
     """
     source = decision.get("cycle_source") or []
@@ -126,7 +126,7 @@ def _declaration_notice(decision, runtime):
     if not error:
         return ""
     core = (f"[사이클 선언 무시됨] {error} — 선언 없음으로 진행합니다. "
-            f"`sage cycle use <stem>` 으로 다시 쓰거나 `sage cycle clear` 로 지우세요.")
+            f"`sage cycle set <stem>` 으로 다시 쓰거나 `sage cycle clear` 로 지우세요.")
     return core if runtime == "codex" else f"⚠️  {core}"
 
 
@@ -195,7 +195,7 @@ def _gate_record(decision, profile):
         "block_cycle_closed": ("BLOCK", "PDCA",
                              f"cycle `{cycle_stem}` 은 이미 완결된 사이클입니다 — 새 소스 편집을 여기에 결속할 수 없습니다.",
                              True,
-                             "새 사이클의 Phase 00 을 먼저 작성한 뒤 `sage cycle use <새 stem>` 으로 "
+                             "새 사이클의 Phase 00 을 먼저 작성한 뒤 `sage cycle set <새 stem>` 으로 "
                              "선언하세요(CI 는 `export SAGE_CYCLE_STEM=<새 stem>`). "
                              + _CLEAR_HINT),
         "block_report_without_acceptance": ("BLOCK", "PDCA", f"{rs}.", False,

@@ -348,7 +348,8 @@ as "phase documents missing" even though all of them exist.
 Declare the cycle instead of renaming the branch:
 
 ```bash
-sage cycle use <phase-document-basename>   # e.g. sage_project_profile_refresh
+sage cycle set <phase-document-basename>   # e.g. sage_project_profile_refresh
+sage cycle set <new-stem> --create --risk L2  # create Phase 00 when none exists
 sage cycle show                            # what is declared, and where it was read
 sage cycle clear                           # release it when the cycle ends
 ```
@@ -362,7 +363,7 @@ written, the gate blocks rather than passing unaudited.
 
 The declaration is a single file, `<project-root>/.sage/cycle.json`, kept out of
 version control by the `/.sage/*` block that `sage install` writes into
-`.gitignore`. `sage cycle use` prints the absolute root and file it wrote, checks
+`.gitignore`. `sage cycle set` prints the absolute root and file it wrote, checks
 that git actually ignores it, and warns when the compiled profile the gate reads
 is absent — check that output rather than assuming the declaration landed where
 the gate looks.
@@ -370,13 +371,29 @@ the gate looks.
 Do not write the file with an editor; the write guard blocks that, because a
 hand-planted declaration can point at a completed cycle and switch the gate off.
 
+Switching to `set B` changes only the pointer. It does not edit cycle A's phase
+documents, evidence, or audits, and `set A` restores A's evaluation. `--create`
+creates only Phase 00; complete required Phases 01-03 before source edits. For an
+urgent waivable phase gap, use a short grant such as
+`sage override --reason "hotfix" --ttl 1h`. Phase 00 risk declaration and
+reconciliation blocks are non-waivable.
+
 **Release it when the cycle ends.** Unlike a shell export, the declaration
 survives every session, and a stale one binds new work to a finished cycle. The
 gate blocks that case and names `sage cycle clear` in the block message.
 
+Lifecycle ownership belongs to the sub-skills, not the thin `sage-cycle` umbrella.
+`sage-plan` runs `set` after validating the 00–02 identity. `sage-team` runs `show`
+and reconciles `set` after resume context and cycle identity validation, then runs
+`clear` only after write-back, retro, snapshots, and closing gates. It retains the
+declaration on red verification, `BLOCKED`, or `FAIL`. The umbrella delegates these
+steps and reports their outcome; it does not duplicate them.
+
 `SAGE_CYCLE_STEM=<stem>` still works and takes precedence over the file. Prefer it
 only where a single process needs the stem, such as CI; in an interactive shell the
-export outlives the cycle with none of the file's visibility.
+export outlives the cycle with none of the file's visibility. `sage cycle clear`
+removes only the file declaration; use `sage cycle show` and
+`unset SAGE_CYCLE_STEM` when the environment remains effective.
 
 Write Phase 06 only after all 00–05 updates have completed. A single change that
 co-modifies 06 with any other phase is blocked because the pre-write evidence snapshot

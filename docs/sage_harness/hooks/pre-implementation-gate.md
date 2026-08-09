@@ -55,7 +55,7 @@ profile.pdca: { enabled, phases[{id,glob}], pre_implementation_required{L1,L2,L3
   phase write는 changed path/declaration, source write는 explicit event stem 또는 exact branch final segment로
   current cycle을 하나만 정한다. 숫자 substring과 recent/mtime은 cycle identity에 쓰지 않는다.
 - explicit event stem 의 선언 통로는 둘이다 — `SAGE_CYCLE_STEM` env 와 `<root>/.sage/cycle.json`
-  (`sage cycle use|show|clear`). 어댑터가 `env > 파일 > 없음` 순으로 해석해 `cycle_stem` 과
+  (`sage cycle set|show|clear`). 어댑터가 `env > 파일 > 없음` 순으로 해석해 `cycle_stem` 과
   `cycle_stem_origin`(`env`/`cli`)을 이벤트에 싣는다. 장수 브랜치에서는 branch final segment 추론이
   영영 맞지 않으므로 이게 정상 경로다. `decide` 는 판정에 `cycle_stem`/`cycle_source`/
   `cycle_stem_declared`/`cycle_stem_origin` 을 스탬프해서, ① 안내가 추론 사실과 선언 경로를 가리키게

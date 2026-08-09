@@ -80,8 +80,8 @@ decision = gate.decide(event, profile, {"plan_files": [], "review_candidates": [
 assert decision["message_key"] == "block_l3_no_plan", decision
 assert "content_l3" in gate.classify_risk(event, profile)["trigger_sources"]
 
-valid = {"path": "r.md", "content": "---\ncycle_id: chatforyou_v2_sage\nround: [1, 2]\ndomain_ref: webrtc\n---\n"}
-signals = {"cycle_ids": {"chatforyou_v2_sage"}, "matched_domains": {"webrtc"}}
+valid = {"path": "r.md", "content": "---\ncycle_stem: chatforyou_v2_sage\nround: [1, 2]\ndomain_ref: webrtc\n---\n"}
+signals = {"cycle_stem": "chatforyou_v2_sage", "matched_domains": {"webrtc"}}
 assert review.find_l3_review(signals, {"l3_review_docs": [valid]})["found"]
 for bad in (
     {"path": "r.md", "content": valid["content"].replace("chatforyou_v2_sage", "old-cycle")},

@@ -9,7 +9,7 @@
 찾으면 파일이 `install` 이 `.gitignore` 를 쓴 앵커 밖에 놓여 커밋 대상이 된다.
 
 root 해석은 CLI 전용이다. 게이트는 자기 root 를 이미 알고 들어오므로 `read_declaration` 만 쓴다.
-둘이 어긋날 수 있다는 사실은 설계의 알려진 한계이고, `sage cycle use` 가 절대경로를 찍어 보이게 한다.
+둘이 어긋날 수 있다는 사실은 설계의 알려진 한계이고, `sage cycle set` 이 절대경로를 찍어 보이게 한다.
 """
 import json
 import os

@@ -67,7 +67,7 @@ def is_guarded(path: object) -> bool:
     # 선언 파일은 게이트가 "어느 사이클인가" 를 읽는 자리다. 편집 도구로 직접 쓸 수 있으면
     # 에이전트가 완결 사이클을 지목해 자기 게이트를 끌 수 있다 — env 통로에서는 불가능했던
     # 구멍이고(hook 프로세스는 호스트가 띄운다), 파일로 옮기면서 생겼으므로 여기서 닫는다.
-    # CLI(`sage cycle use`)는 편집 도구 밖이라 그대로 동작한다.
+    # CLI(`sage cycle set`)는 편집 도구 밖이라 그대로 동작한다.
     if _is_cycle_declaration(parts):
         return True
     return _host_asset(parts) is not None
@@ -104,7 +104,7 @@ def block_message(path: str) -> str:
     if _is_cycle_declaration(_parts(path)):
         return "\n".join([
             f"⛔ SAGE write guard: '{path}' 는 사이클 선언 상태입니다. 직접수정 금지.",
-            "→ 선언: `sage cycle use <stem>` / 조회: `sage cycle show` / 해제: `sage cycle clear`",
+            "→ 선언: `sage cycle set <stem>` / 조회: `sage cycle show` / 해제: `sage cycle clear`",
             "→ 게이트가 '이 편집이 어느 사이클인가' 를 여기서 읽습니다 — 직접 쓰면 완결된 "
             "사이클을 지목해 게이트를 통과시킬 수 있습니다.",
         ])
