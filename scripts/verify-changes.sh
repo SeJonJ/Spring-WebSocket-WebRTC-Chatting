@@ -13,7 +13,7 @@
 # 사용:
 #   scripts/verify-changes.sh                 # 작업트리(unstaged+staged) 변경분, 레벨 자동감지
 #   scripts/verify-changes.sh --level L3       # 레벨 강제 지정
-#   scripts/verify-changes.sh --base chatforyou_v2   # base 대비 커밋 diff 포함
+#   scripts/verify-changes.sh --base chatforyou_v2_sage   # base 대비 커밋 diff 포함
 #
 # EXIT:
 #   0  → PASS 또는 advisory(L1) — 추론 단계 진입 허용

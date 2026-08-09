@@ -4,7 +4,7 @@ kind: skill
 # AUTO-DRAFT (reverse_extract) — 사람이 intent/when_to_use/procedure 검토·수정
 ---
 ## intent
-기능/버그 개발 완료 후 chatforyou_v2 브랜치에 버전 태그와 함께 배포
+기능/버그 개발 완료 후 chatforyou_v2_sage 브랜치에 버전 태그와 함께 배포
 
 ## when_to_use
 - (미검출)

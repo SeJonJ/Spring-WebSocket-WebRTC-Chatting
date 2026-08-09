@@ -1,6 +1,6 @@
 ---
 name: chatforyou-ship
-description: 기능/버그 개발 완료 후 chatforyou_v2 브랜치에 버전 태그와 함께 배포. Electron 빌드 GitHub Action 트리거 포함.
+description: 기능/버그 개발 완료 후 chatforyou_v2_sage 브랜치에 버전 태그와 함께 배포. Electron 빌드 GitHub Action 트리거 포함.
 type: rigid
 ---
 
@@ -86,7 +86,7 @@ CURRENT_BRANCH=$(git branch --show-current)
 VERSION=X.Y.Z   # Step 3에서 확정된 버전
 
 # 메인 브랜치로 전환 및 머지
-git checkout chatforyou_v2
+git checkout chatforyou_v2_sage
 git merge $CURRENT_BRANCH --no-ff -m "chore: release v$VERSION - merge $CURRENT_BRANCH"
 
 # 버전 파일 변경이 있는 경우 commit
@@ -95,7 +95,7 @@ git diff --cached --quiet || git commit -m "chore: bump version to v$VERSION"
 
 # 태그 생성 및 push
 git tag v$VERSION
-git push origin chatforyou_v2
+git push origin chatforyou_v2_sage
 git push origin v$VERSION
 ```
 

@@ -17,7 +17,7 @@ description: >
 
 `frontend-convention-checker` agent를 사용해 아래 작업을 수행한다:
 
-1. **변경 파일 감지**: `git diff --name-only HEAD` 또는 `git diff --name-only origin/chatforyou_v2...HEAD` 로 변경된 파일 목록 추출
+1. **변경 파일 감지**: `git diff --name-only HEAD` 또는 `git diff --name-only origin/chatforyou_v2_sage...HEAD` 로 변경된 파일 목록 추출
 2. **프론트엔드 파일 필터링**: `nodejs-frontend/` 또는 `chatforyou-desktop/src/` 경로 하위 파일만 선별 (`.js`, `.ts`, `.jsx`, `.tsx`, `.html`, `.ejs`, `.scss`, `.css`)
 3. **컨벤션 기준 로드**: `docs/nodejs_frontend.md` 파일의 코드 컨벤션 규칙 참조
 4. **검증 수행**: 변경된 각 파일에 대해 컨벤션 위반 여부 확인

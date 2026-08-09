@@ -70,7 +70,7 @@ Backend lint is not a runnable command (no checkstyle/spotless); the `backend-co
 ```bash
 scripts/verify-changes.sh                 # working tree changes, auto level
 scripts/verify-changes.sh --level L3       # force level
-scripts/verify-changes.sh --base chatforyou_v2   # include committed diff vs base
+scripts/verify-changes.sh --base chatforyou_v2_sage   # include committed diff vs base
 ```
 
 Exit codes:

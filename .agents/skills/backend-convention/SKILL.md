@@ -17,7 +17,7 @@ description: >
 
 `backend-convention-checker` agent를 사용해 아래 작업을 수행한다:
 
-1. **변경 파일 감지**: `git diff --name-only HEAD` 또는 `git diff --name-only origin/chatforyou_v2...HEAD` 로 변경된 파일 목록 추출
+1. **변경 파일 감지**: `git diff --name-only HEAD` 또는 `git diff --name-only origin/chatforyou_v2_sage...HEAD` 로 변경된 파일 목록 추출
 2. **백엔드 파일 필터링**: `springboot-backend/` 경로 하위 파일만 선별
 3. **컨벤션 기준 로드**: `docs/springboot_backend.md` 파일의 코드 컨벤션 규칙 참조
 4. **검증 수행**: 변경된 각 파일에 대해 컨벤션 위반 여부 확인
