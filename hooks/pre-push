@@ -16,7 +16,7 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
 VERIFY="$ROOT/scripts/verify-committed-tree.sh"
 ZERO="0000000000000000000000000000000000000000"
 
-[ -x "$VERIFY" ] || { echo "[pre-push] verify-committed-tree.sh 없음 — 검증 생략"; exit 0; }
+[ -f "$VERIFY" ] || { echo "[pre-push] verify-committed-tree.sh 없음 — 검증 생략"; exit 0; }
 
 # 중복 oid 제거하여 동일 tip 을 여러 번 빌드하지 않음
 declare -a SEEN=()

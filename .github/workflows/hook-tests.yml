@@ -30,7 +30,7 @@ jobs:
 
       - name: 'Run hook regression tests'
         run: |
-          bash .claude/hooks/tests/run-tests.sh
+          bash scripts/test-claude-hooks.sh
 
   codex-hook-regression:
     name: 'Codex Hook Regression (23 cases)'

@@ -64,6 +64,31 @@ else
     record_fail "bad_ref_exit1" "exit $rc (expected 1)" "$out"
 fi
 
+# ── 5. pre-push가 실행 비트 없는 검증 스크립트도 bash로 호출 ───────────────
+tmp="$(mktemp -d "${TMPDIR:-/tmp}/pre-push-nonexec.XXXXXX")"
+git -C "$tmp" init -q
+git -C "$tmp" config user.name "pre-push smoke"
+git -C "$tmp" config user.email "pre-push-smoke@example.invalid"
+mkdir -p "$tmp/hooks" "$tmp/scripts"
+cp "$PROJECT_ROOT/hooks/pre-push" "$tmp/hooks/pre-push"
+cat > "$tmp/scripts/verify-committed-tree.sh" <<'VERIFY_STUB'
+#!/usr/bin/env bash
+echo "VERIFY_STUB_CALLED $*"
+exit 0
+VERIFY_STUB
+chmod 0644 "$tmp/scripts/verify-committed-tree.sh"
+printf "tracked\n" > "$tmp/tracked.txt"
+git -C "$tmp" add .
+git -C "$tmp" commit -q -m "pre-push fixture"
+tip=$(git -C "$tmp" rev-parse HEAD)
+out=$(cd "$tmp" && printf "refs/heads/main %s refs/heads/main %040d\n" "$tip" 0 | bash hooks/pre-push 2>&1); rc=$?
+if [ "$rc" -eq 0 ] && echo "$out" | grep -q "VERIFY_STUB_CALLED" && ! echo "$out" | grep -q "검증 생략"; then
+    record_pass "pre_push_runs_nonexecutable_script"
+else
+    record_fail "pre_push_runs_nonexecutable_script" "exit $rc or verifier skipped" "$out"
+fi
+rm -rf "$tmp"
+
 echo ""
 echo "=== verify-committed-tree smoke: $pass passed, $fail failed ==="
 [ "$fail" -eq 0 ]
