@@ -15,18 +15,8 @@ on:
       - 'CODEX.md'
       - 'AGENTS.md'
   pull_request:
-    paths:
-      - '.claude/**'
-      - '.codex/**'
-      - 'sage/**'
-      - 'schema/**'
-      - 'scripts/sage_harness/**'
-      - 'scripts/test-sage-adoption.sh'
-      - 'docs/sage_harness/**'
-      - 'AGENT_GUIDE.md'
-      - 'CLAUDE.md'
-      - 'CODEX.md'
-      - 'AGENTS.md'
+    branches:
+      - 'chatforyou_v2_sage'
   workflow_dispatch:
 
 jobs:

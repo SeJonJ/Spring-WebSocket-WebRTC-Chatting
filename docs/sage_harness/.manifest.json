@@ -350,6 +350,42 @@
     }
   },
   "core_renders": {
+    "codex/agents/convention-checker": {
+      "base_sha256": "84156230368c6491e8f3acf702b2a6efe6e794cf2131784d41019b7feae2d4a9",
+      "sage_version": "0.9.80"
+    },
+    "codex/agents/implementer-a": {
+      "base_sha256": "c6c66d303872152500e0c334fc02b2e6e7f12379168a248425d6ef9b033b5a1e",
+      "sage_version": "0.9.80"
+    },
+    "codex/agents/implementer-b": {
+      "base_sha256": "477fbe1fd724c545eb95e918505030a1bcd9203385239a89870b5574cb9f82a7",
+      "sage_version": "0.9.80"
+    },
+    "codex/agents/leader": {
+      "base_sha256": "1d5c893cd00fb2035d42eb9c63409e1181eaed11a6b28435d483f915070e08d9",
+      "sage_version": "0.9.80"
+    },
+    "codex/agents/qa": {
+      "base_sha256": "f8bd65e245eab1090ad702e22c5d81d81c1a214aed5a592e41bdd6a79cad8daa",
+      "sage_version": "0.9.80"
+    },
+    "codex/agents/reviewer": {
+      "base_sha256": "b51c4827fc8e8f991ae47a456b88d6738248be987594073a7965fc518426988b",
+      "sage_version": "0.9.80"
+    },
+    "codex/framework/AGENT_GUIDE": {
+      "base_sha256": "001740629463f65c4fb0e466462f4e77df15c4603ddd5eedbad9d5190e007f55",
+      "sage_version": "0.9.80"
+    },
+    "codex/framework/CODEX": {
+      "base_sha256": "03525f5b911ed4fa9cc0e6c7243235756697dea1ecc35b3d8c3013169bb7be08",
+      "sage_version": "0.9.80"
+    },
+    "codex/framework/AGENTS": {
+      "base_sha256": "80d150a7a1dfb3b9489b2e089999704bdd0b6f6d8b877a2725ea5b6684317d81",
+      "sage_version": "0.9.80"
+    },
     "claude/agents/convention-checker": {
       "base_sha256": "3925aabf6aa28abf6cc66757c64aef8c482d82226b569103f155455118a9ab50",
       "sage_version": "0.9.80"
@@ -372,14 +408,6 @@
     },
     "claude/agents/reviewer": {
       "base_sha256": "be241674e9e087c83f89033efc413f12f4c4965f34cf1c8fa0fa8b0770b11c6f",
-      "sage_version": "0.9.80"
-    },
-    "claude/framework/AGENT_GUIDE": {
-      "base_sha256": "001740629463f65c4fb0e466462f4e77df15c4603ddd5eedbad9d5190e007f55",
-      "sage_version": "0.9.80"
-    },
-    "claude/framework/CLAUDE": {
-      "base_sha256": "f1ea3893407e36fc6b3b5c9db50af1230220a99e8a6896821d54a274e68b7805",
       "sage_version": "0.9.80"
     },
     "claude/skills/sage-asset": {
@@ -422,40 +450,12 @@
       "base_sha256": "a283aafd33f6ed7276640a4aa2e4ec2492980d2413b032cbaf5bc709ca87a0fb",
       "sage_version": "0.9.80"
     },
-    "codex/agents/convention-checker": {
-      "base_sha256": "84156230368c6491e8f3acf702b2a6efe6e794cf2131784d41019b7feae2d4a9",
-      "sage_version": "0.9.80"
-    },
-    "codex/agents/implementer-a": {
-      "base_sha256": "c6c66d303872152500e0c334fc02b2e6e7f12379168a248425d6ef9b033b5a1e",
-      "sage_version": "0.9.80"
-    },
-    "codex/agents/implementer-b": {
-      "base_sha256": "477fbe1fd724c545eb95e918505030a1bcd9203385239a89870b5574cb9f82a7",
-      "sage_version": "0.9.80"
-    },
-    "codex/agents/leader": {
-      "base_sha256": "1d5c893cd00fb2035d42eb9c63409e1181eaed11a6b28435d483f915070e08d9",
-      "sage_version": "0.9.80"
-    },
-    "codex/agents/qa": {
-      "base_sha256": "f8bd65e245eab1090ad702e22c5d81d81c1a214aed5a592e41bdd6a79cad8daa",
-      "sage_version": "0.9.80"
-    },
-    "codex/agents/reviewer": {
-      "base_sha256": "b51c4827fc8e8f991ae47a456b88d6738248be987594073a7965fc518426988b",
-      "sage_version": "0.9.80"
-    },
-    "codex/framework/AGENTS": {
-      "base_sha256": "80d150a7a1dfb3b9489b2e089999704bdd0b6f6d8b877a2725ea5b6684317d81",
-      "sage_version": "0.9.80"
-    },
-    "codex/framework/AGENT_GUIDE": {
+    "claude/framework/AGENT_GUIDE": {
       "base_sha256": "001740629463f65c4fb0e466462f4e77df15c4603ddd5eedbad9d5190e007f55",
       "sage_version": "0.9.80"
     },
-    "codex/framework/CODEX": {
-      "base_sha256": "03525f5b911ed4fa9cc0e6c7243235756697dea1ecc35b3d8c3013169bb7be08",
+    "claude/framework/CLAUDE": {
+      "base_sha256": "f1ea3893407e36fc6b3b5c9db50af1230220a99e8a6896821d54a274e68b7805",
       "sage_version": "0.9.80"
     }
   },

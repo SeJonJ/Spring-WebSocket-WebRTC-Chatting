@@ -11,14 +11,8 @@ on:
       - 'scripts/test-verify-*.sh'
       - 'hooks/**'
   pull_request:
-    paths:
-      - '.claude/hooks/**'
-      - '.codex/hooks/**'
-      - 'scripts/verify-changes.sh'
-      - 'scripts/verify-committed-tree.sh'
-      - 'scripts/verify-doc-mapping.sh'
-      - 'scripts/test-verify-*.sh'
-      - 'hooks/**'
+    branches:
+      - 'chatforyou_v2_sage'
   workflow_dispatch:
 
 jobs:
