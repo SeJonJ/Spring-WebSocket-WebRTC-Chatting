@@ -26,20 +26,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout pinned SAGE adoption source
-        uses: actions/checkout@v4
-        with:
-          repository: SeJonJ/SAGE
-          ref: v0.9.80
-          path: .sage-engine
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      - name: Read required SAGE version
+        id: sage_version
+        run: |
+          version=$(grep -m1 'required_version:' sage/project-profile.yaml | sed -E 's/.*required_version:[[:space:]]*//')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Install SAGE with schema validation
-        run: pip install -e './.sage-engine[schema]'
+        run: pip install "sage-harness[schema]==${{ steps.sage_version.outputs.version }}"
 
       - name: Validate governed assets
         run: sage validate --check --kind all --schema --strict
